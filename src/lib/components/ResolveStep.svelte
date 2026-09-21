@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatMoney } from '$lib/game/economy';
+	import { formatMoney, formatMoneyExact } from '$lib/game/economy';
 	import type { Action, RunState } from '$lib/game/types';
 	import Money from './Money.svelte';
 
@@ -51,7 +51,7 @@
 			<div class="flex items-baseline justify-between border-b border-dashed border-[var(--line)] py-2">
 				<span class="text-sm text-[var(--muted)]">Interest credited</span>
 				<span class="figure text-sm {close.interest > 0 ? 'text-[var(--up)]' : ''}">
-					{formatMoney(close.interest)}
+					{formatMoneyExact(close.interest)}
 				</span>
 			</div>
 			<div class="flex items-baseline justify-between py-2">

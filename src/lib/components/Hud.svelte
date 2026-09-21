@@ -1,5 +1,13 @@
 <script lang="ts">
-	import { formatMoney, goalTarget, netWorth, savedTowardGoal, spendable, STAGES } from '$lib/game/economy';
+	import {
+		formatMoney,
+		formatMoneyExact,
+		goalTarget,
+		netWorth,
+		savedTowardGoal,
+		spendable,
+		STAGES
+	} from '$lib/game/economy';
 	import type { RunState } from '$lib/game/types';
 	import Avatar from './Avatar.svelte';
 	import Money from './Money.svelte';
@@ -40,7 +48,7 @@
 		<div class="mt-2 flex items-baseline justify-between">
 			<span class="kicker">{run.stage === 5 && run.path === 'study' ? 'Buffer' : 'Emergency fund'}</span>
 			<span class="figure text-xs text-[var(--muted)]">
-				{formatMoney(saved)} / {formatMoney(goal)}
+				{formatMoneyExact(saved)} / {formatMoney(goal)}
 			</span>
 		</div>
 	</div>

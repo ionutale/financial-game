@@ -134,7 +134,17 @@ export function netWorth(
 	return available(state) + state.savings + state.fund - state.debt;
 }
 
-/** The neutral currency glyph (ticket 01). */
+/** The neutral currency glyph (ticket 01). Whole numbers, except where noted. */
 export function formatMoney(n: number): string {
 	return '\u25c8' + Math.round(n).toLocaleString('en-US');
+}
+
+/**
+ * Ticket 15: interest and the balance it lands in are the one place decimals
+ * survive. At 3%/yr a small balance earns ◈0.10 a month — rounded away, the
+ * compounding lesson becomes invisible exactly when it is first taught.
+ */
+export function formatMoneyExact(n: number): string {
+	const value = Math.round(n * 100) / 100;
+	return '\u25c8' + value.toLocaleString('en-US', { maximumFractionDigits: 2 });
 }

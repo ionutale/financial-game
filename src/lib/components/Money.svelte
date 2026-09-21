@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatMoney } from '$lib/game/economy';
+	import { formatMoney, formatMoneyExact } from '$lib/game/economy';
 
 	type Size = 'hero' | 'lg' | 'md' | 'sm';
 	type Tone = 'money' | 'ink' | 'muted' | 'up' | 'down';
@@ -8,8 +8,9 @@
 		amount,
 		size = 'md',
 		tone = 'ink',
-		sign = false
-	}: { amount: number; size?: Size; tone?: Tone; sign?: boolean } = $props();
+		sign = false,
+		exact = false
+	}: { amount: number; size?: Size; tone?: Tone; sign?: boolean; exact?: boolean } = $props();
 
 	const SIZES: Record<Size, string> = {
 		hero: 'text-[40px] leading-[1.18] font-medium',
@@ -25,11 +26,10 @@
 		down: 'text-[var(--down)]'
 	};
 
+	const format = $derived(exact ? formatMoneyExact : formatMoney);
 	// A negative amount takes a leading minus; a positive one can show a leading plus.
 	const shown = $derived(
-		amount < 0
-			? '\u2212' + formatMoney(Math.abs(amount))
-			: (sign ? '+' : '') + formatMoney(amount)
+		amount < 0 ? '\u2212' + format(Math.abs(amount)) : (sign ? '+' : '') + format(amount)
 	);
 </script>
 

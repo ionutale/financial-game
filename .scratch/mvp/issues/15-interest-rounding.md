@@ -1,7 +1,7 @@
 # 15 — Interest rounding and the invisible compounding curve
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: —
 
 ## Question
@@ -27,3 +27,42 @@ see it before the Money Story — given [05](05-ending-report-metrics.md) hides 
 until the end.
 
 Output: the rule the build follows for displaying small money, and the compounding curve's home.
+
+## Answer
+
+Resolved while building, without a grilling round — the decision is narrow and the alternatives are
+all worse in obvious ways.
+
+**The rule: interest, and the balance it lands in, are the one place decimals survive.**
+
+- `formatMoney()` stays whole for prices, income, obligations, cash and net worth.
+- `formatMoneyExact()` shows up to two decimals, and drops them when the amount is whole, for
+  **the Interest credited row** and **the saved figure on the goal bar**.
+- Internally nothing changed: interest still accrues on the exact balance in
+  [loop.ts](../../src/lib/game/loop.ts).
+
+Verified in the browser: the close sheet reads **Interest credited ◈0.12**, and the goal bar reads
+**◈49.21 / ◈4,000** — so the balance visibly creeps upward month to month instead of appearing
+frozen.
+
+### Why the other options lost
+
+- **Show a sub-unit as "<◈1"** — honest, and it still hides the growth. The point is to watch the
+  number move.
+- **Relax whole numbers everywhere** — the HUD is a statement; ◈100 is the design. Decimals belong
+  where precision teaches, not on the masthead.
+- **Accrue silently, surface only on a curve** — the curve does not exist yet, so the mechanic would
+  have no home in the MVP at all.
+- **Unlock the concept later than Stage 3** — the spine is `earn → budget → save → borrow → invest →
+  tax`; interest has to arrive with the first real balance, not after it.
+
+### What is still owed
+
+Ticket 01 asked for a **visible curve**. That lands with the Money Story slice, where
+[05](05-ending-report-metrics.md) already owns the net-worth sparkline. Until then the in-run signal
+is the exact balance and the goal bar. Recorded here so it is not quietly dropped.
+
+### Consequence
+
+`formatMoneyExact` is the only sanctioned exception to ticket 01's whole-number rule. Any other
+place a decimal appears is a bug.
