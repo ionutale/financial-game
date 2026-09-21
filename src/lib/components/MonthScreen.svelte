@@ -8,12 +8,12 @@
 	import PlanStep from './PlanStep.svelte';
 	import ResolveStep from './ResolveStep.svelte';
 
-	let { initial = null }: { initial?: RunState | null } = $props();
+	let { initial = null, seed = 1 }: { initial?: RunState | null; seed?: number } = $props();
 
 	// `$state.raw` rather than `$state`: the reducer replaces the whole state object,
 	// and a deep proxy cannot be structuredClone'd (which is how the reducer copies).
 	// `untrack` because the saved run is a starting point, not something to follow.
-	let run = $state.raw<RunState>(untrack(() => initial ?? createRun()));
+	let run = $state.raw<RunState>(untrack(() => initial ?? createRun(seed)));
 
 	function dispatch(action: Action) {
 		run = applyAction(run, action);

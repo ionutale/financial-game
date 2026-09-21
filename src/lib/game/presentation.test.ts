@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { chipsFor } from './presentation';
-import { cardById } from './cards';
+import { CARDS, cardById } from './cards';
 import type { Choice } from './types';
 
 function choice(cardId: string, choiceId: string): Choice {
@@ -30,5 +30,18 @@ describe('cost chips', () => {
 
 	it('says so when a choice costs nothing now', () => {
 		expect(chipsFor(choice('bnpl_trainers', 'skip'), false)).toEqual([]);
+	});
+});
+
+describe('every card', () => {
+	it('gives each Choice a visible difference from its siblings', () => {
+		// Under ticket 03's reveal model costs are visible and outcomes are not,
+		// so two Choices that chip identically are a coin flip, not a decision.
+		const offenders: string[] = [];
+		for (const card of CARDS) {
+			const signatures = card.choices.map((c) => chipsFor(c, false).join(' | '));
+			if (new Set(signatures).size !== card.choices.length) offenders.push(card.id);
+		}
+		expect(offenders).toEqual([]);
 	});
 });

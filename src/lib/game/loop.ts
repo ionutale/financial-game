@@ -13,6 +13,8 @@ import {
 	obligationsFor,
 	stageOf
 } from './economy';
+import { turnRng } from './rng';
+import { spineCardId } from './spine';
 import type { Action, Card, Category, DrawResult, PayResult, RunState } from './types';
 
 export const RUN_MONTHS = 60;
@@ -53,21 +55,72 @@ export function payFromCash(s: RunState, amount: number): PayResult {
 	return { fromCash, fromSavings, toDebt: rest };
 }
 
-/** Which card this Turn deals. Weight 0 means spine-only, never drawn at random. */
+/** Cards already dealt this Run — a card plays at most once (ticket 03). */
+function played(s: RunState): Set<string> {
+	return new Set(s.log.map((entry) => entry.card));
+}
+
+/**
+ * Which card this Turn deals.
+ *
+ * 1. The **spine** wins: fixed beats guarantee every Teachable Moment lands.
+ * 2. Otherwise a **seeded weighted draw** from the Stage's pool, with concepts
+ *    behind their quota of two boosted, so a Stage cannot skip a Concept.
+ * 3. Weight 0 means spine-only; a card already played never returns.
+ */
 export function pickCard(s: RunState): Card | null {
 	if (s.forcedCard) {
 		const forced = cardById(s.forcedCard);
 		s.forcedCard = null;
 		return forced ?? null;
 	}
-	let pool = CARDS.filter((c) => c.stages.includes(s.stage) && (c.weight ?? 1) > 0);
-	// The Fork is a spine beat; it is not drawn twice.
-	if (s.path) pool = pool.filter((c) => c.id !== 'the_fork');
+
+	const seen = played(s);
+
+	const spineId = spineCardId(s.month);
+	if (spineId && !seen.has(spineId)) {
+		const spine = cardById(spineId);
+		if (spine) return spine;
+	}
+
+	const stageConcepts = new Set(stageOf(s).concepts);
+	let pool = CARDS.filter(
+		(c) =>
+			c.stages.includes(s.stage) &&
+			(c.weight ?? 1) > 0 &&
+			!seen.has(c.id) &&
+			(c.branch === undefined || c.branch === 'shared' || c.branch === s.path)
+	);
+
+	// A long Stage can exhaust its pool; repeating beats stalling.
+	if (pool.length === 0) {
+		pool = CARDS.filter((c) => c.stages.includes(s.stage) && (c.weight ?? 1) > 0);
+	}
 	if (pool.length === 0) return null;
-	return pool[(s.month + s.stage) % pool.length];
+
+	const counts = new Map<string, number>();
+	for (const id of seen) {
+		const concept = cardById(id)?.concept;
+		if (concept) counts.set(concept, (counts.get(concept) ?? 0) + 1);
+	}
+
+	const weights = pool.map((c) => {
+		const behind =
+			c.concept && stageConcepts.has(c.concept) && (counts.get(c.concept) ?? 0) < 2;
+		return (c.weight ?? 1) * (behind ? 3 : 1);
+	});
+
+	const random = turnRng(s.seed, s.month);
+	const total = weights.reduce((sum, w) => sum + w, 0);
+	let roll = random() * total;
+	for (let i = 0; i < pool.length; i++) {
+		roll -= weights[i];
+		if (roll <= 0) return pool[i];
+	}
+	return pool[pool.length - 1];
 }
 
-export function createRun(): RunState {
+export function createRun(seed = 1): RunState {
 	return {
 		month: 1,
 		stage: 1,
@@ -106,7 +159,9 @@ export function createRun(): RunState {
 		log: [],
 		forcedCard: null,
 		lastPlan: null,
-		showIntro: true
+		showIntro: true,
+		seed,
+		flags: []
 	};
 }
 
@@ -255,11 +310,20 @@ export function applyAction(state: RunState, action: Action): RunState {
 
 			if (choice.sets?.insurance) s.insurance = true;
 			if (choice.sets?.bnpl) s.bnpl = { amount: 30, monthsLeft: choice.sets.bnpl };
+			if (choice.sets?.overdraft) {
+				// Ticket 01: borrowing without agreeing to it costs a fee.
+				s.debt += 15;
+				s.flags.push({ month: s.month, kind: 'overdraft' });
+			}
+			if (choice.sets?.minimumStreak) {
+				s.flags.push({ month: s.month, kind: 'minimum_payment' });
+			}
 			if (choice.sets?.path) {
 				s.path = choice.sets.path;
 				s.freeTimeMax = stageOf(s).freeTime;
 				s.obligations = obligationsFor(s);
 				if (s.path === 'study') s.debt += STUDENT_LOAN;
+				s.flags.push({ month: s.month, kind: `fork:${s.path}` });
 			}
 
 			s.chosen = choice.id;

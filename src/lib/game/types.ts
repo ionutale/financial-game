@@ -37,7 +37,13 @@ export interface Choice {
 	/** Cost when the player holds insurance — a shock the cover absorbs. */
 	insuredCost?: number;
 	feedback: string;
-	sets?: { insurance?: boolean; bnpl?: number; path?: PathId };
+	sets?: {
+		insurance?: boolean;
+		bnpl?: number;
+		path?: PathId;
+		overdraft?: number;
+		minimumStreak?: number;
+	};
 }
 
 export interface Card {
@@ -139,6 +145,12 @@ export interface RunState {
 
 	/** The three-screen intro (ticket 04) shows before the first month. */
 	showIntro: boolean;
+
+	/** Seeds the per-Turn draw (ticket 03). Same seed, same Run. */
+	seed: number;
+
+	/** Turning points, for the Money Story (ticket 05). */
+	flags: Array<{ month: number; kind: string }>;
 }
 
 export type Action =

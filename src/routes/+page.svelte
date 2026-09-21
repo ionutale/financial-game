@@ -4,4 +4,4 @@
 	let { data } = $props();
 </script>
 
-<MonthScreen initial={data.saved} />
+<MonthScreen initial={data.saved} seed={data.seed} />
