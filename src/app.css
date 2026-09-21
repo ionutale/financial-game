@@ -1,7 +1,98 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource/dm-mono/400.css';
+@import '@fontsource/dm-mono/500.css';
 
-/* Ticket 13: light theme only in the MVP. DaisyUI otherwise follows
-   prefers-color-scheme, which would ship a dark theme nobody has checked. */
+/* Ticket 13: light theme only. DaisyUI otherwise follows prefers-color-scheme
+   and would ship a dark theme nobody has contrast-checked. */
 @plugin 'daisyui' {
 	themes: light --default;
+}
+
+@theme {
+	--font-sans: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-mono: 'DM Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+/*
+ * "The Statement" — warm paper, editorial text, ledger figures.
+ * The accent means money and nothing else (ticket 13), so it is never used
+ * for decoration and never carries meaning on its own.
+ */
+:root {
+	--paper: #f7f3ea;
+	--surface: #fffdf9;
+	--ink: #191714;
+	--muted: #6f6a61;
+	--line: #e6dfd1;
+	--money: #1f6feb;
+	--up: #16794a;
+	--down: #ad4f1c;
+	--wash: rgb(25 23 20 / 0.055);
+	--money-wash: rgb(31 111 235 / 0.1);
+	/* Explicit tints: opacity modifiers on var() colours are not reliable. */
+	--money-35: rgb(31 111 235 / 0.35);
+	--money-60: rgb(31 111 235 / 0.6);
+	--ink-25: rgb(25 23 20 / 0.25);
+	--ink-40: rgb(25 23 20 / 0.4);
+	--shadow: 0 1px 2px rgb(25 23 20 / 0.04), 0 10px 28px -12px rgb(25 23 20 / 0.14);
+}
+
+[data-theme='light'] {
+	--color-base-100: var(--surface);
+	--color-base-200: var(--paper);
+	--color-base-300: var(--line);
+	--color-base-content: var(--ink);
+	--color-primary: var(--money);
+	--color-primary-content: #ffffff;
+	--color-success: var(--up);
+	--color-warning: var(--down);
+}
+
+body {
+	background: var(--paper);
+	color: var(--ink);
+	font-family: var(--font-sans);
+	font-synthesis-weight: none;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Micro-label: the small caps that name things. Ledger voice. */
+.kicker {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 500;
+	letter-spacing: 0.13em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+/* Every figure in the game is set in the mono face with tabular numerals,
+   so columns of money line up like a statement. */
+.figure {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: -0.015em;
+}
+
+.rule {
+	height: 1px;
+	background: var(--line);
+}
+
+.surface {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: 16px;
+	box-shadow: var(--shadow);
+}
+
+/* Motion carries meaning and nothing else (ticket 13). */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+	}
 }

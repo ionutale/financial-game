@@ -15,7 +15,7 @@
 	}
 </script>
 
-<main class="mx-auto flex min-h-dvh w-full max-w-[420px] flex-col gap-4 p-5">
+<main class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col gap-7 px-5 py-7">
 	<Hud {run} />
 
 	{#if run.phase === 'plan'}
@@ -25,11 +25,10 @@
 	{:else if run.phase === 'resolve'}
 		<ResolveStep {run} {dispatch} />
 	{:else}
-		<section class="card border border-base-300 bg-base-100">
-			<div class="card-body p-4">
-				<h2 class="font-semibold">Run over</h2>
-				<p class="text-sm opacity-60">That is month 60 — the Money Story follows.</p>
-			</div>
+		<section class="surface p-5">
+			<p class="kicker">The run is over</p>
+			<h2 class="mt-2 text-xl font-semibold tracking-tight">Sixty months, done.</h2>
+			<p class="mt-2 text-sm text-[var(--muted)]">Your Money Story would follow here.</p>
 		</section>
 	{/if}
 </main>

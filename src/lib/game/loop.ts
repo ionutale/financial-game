@@ -95,6 +95,7 @@ export function createRun(): RunState {
 		bnpl: null,
 		obligations: 0,
 		inflationIndex: 1,
+		netWorthAtStart: 60,
 
 		phase: 'plan',
 		card: null,
@@ -103,13 +104,15 @@ export function createRun(): RunState {
 		cascade: null,
 		close: null,
 		log: [],
-		forcedCard: null
+		forcedCard: null,
+		lastPlan: null
 	};
 }
 
 /** Open a month: obligations and Free Time refreshed, plan and card cleared. */
 export function startMonth(s: RunState): RunState {
 	const st = stageOf(s);
+	s.netWorthAtStart = netWorth(s);
 	s.obligations = obligationsFor(s);
 	s.freeTimeMax = st.freeTime;
 	s.freeTime = st.freeTime - s.hours;
@@ -130,7 +133,7 @@ export function startMonth(s: RunState): RunState {
 
 /** Resolve the month: envelopes settle, obligations pay, interest credits. */
 export function closeMonth(s: RunState): RunState {
-	const netWorthBefore = netWorth(s);
+	const netWorthBefore = s.netWorthAtStart;
 
 	// Unspent envelopes come back to cash; the Save envelope lands in savings.
 	s.cash += s.pots.need + s.pots.want;
@@ -165,6 +168,7 @@ export function closeMonth(s: RunState): RunState {
 		interest,
 		netWorthBefore,
 		netWorthAfter: netWorth(s),
+		monthChange: netWorth(s) - netWorthBefore,
 		adherence: { need: s.spent.need <= s.need, want: s.spent.want <= s.want },
 		nextObligations: obligationsFor(s)
 	};
@@ -197,10 +201,24 @@ export function applyAction(state: RunState, action: Action): RunState {
 			return s;
 		}
 
+		case 'REPEAT_PLAN': {
+			if (!s.lastPlan) return s;
+			s.hours = Math.max(0, Math.min(s.lastPlan.hours, s.freeTimeMax));
+			s.freeTime = s.freeTimeMax - s.hours;
+			s.income = expectedIncome(s);
+			s.need = Math.max(0, Math.min(s.lastPlan.need, s.income));
+			s.want = Math.max(0, Math.min(s.lastPlan.want, s.income - s.need));
+			s.saveAlloc = Math.max(0, s.income - s.need - s.want);
+			return s;
+		}
+
 		case 'CONFIRM_PLAN': {
 			if (s.phase !== 'plan') return s;
 			s.income = expectedIncome(s);
 			s.saveAlloc = Math.max(0, s.income - s.need - s.want);
+
+			// Remember the plan so next month can repeat it.
+			s.lastPlan = { hours: s.hours, need: s.need, want: s.want };
 
 			// Income lands, then the plan is moved into envelopes.
 			s.cash += s.income;

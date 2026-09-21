@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyAction, createRun, runActions } from './loop';
 import type { RunState } from './types';
-import { netWorth } from './economy';
+import { netWorth, savedTowardGoal, spendable } from './economy';
 
 /** A fresh Run, with the loop driven to a known Stage. */
 function atStage(stage: number): RunState {
@@ -109,6 +109,8 @@ describe('the month close', () => {
 		expect(s.close?.interest).toBeCloseTo(0.1, 6);
 		expect(s.close?.obligations).toBe(0); // Stage 1 has none
 		expect(netWorth(s)).toBeCloseTo(100.1, 6);
+		// The month's real movement: ◈40 earned + ◈0.10 interest.
+		expect(s.close?.monthChange).toBeCloseTo(40.1, 6);
 	});
 
 	it('cascades an unpayable Obligation through savings into Debt', () => {
@@ -182,6 +184,44 @@ describe('the Fork', () => {
 		expect(s.debt).toBe(3000);
 		expect(s.obligations).toBe(750);
 		expect(s.freeTimeMax).toBe(55);
+	});
+});
+
+describe('repeating a plan', () => {
+	it('carries last month’s allocation into this month', () => {
+		const first = runActions(
+			createRun(),
+			{ type: 'SET_HOURS', hours: 6 },
+			{ type: 'SET_NEED', amount: 10 },
+			{ type: 'SET_WANT', amount: 20 },
+			{ type: 'FORCE_CARD', id: 'birthday_gift' },
+			{ type: 'CONFIRM_PLAN' },
+			{ type: 'CHOOSE', choiceId: 'skip' },
+			{ type: 'CONTINUE' },
+			{ type: 'NEXT_MONTH' }
+		);
+		expect(first.lastPlan).toEqual({ hours: 6, need: 10, want: 20 });
+		expect(first.need).toBe(0); // a new month starts unplanned
+
+		const repeated = applyAction(first, { type: 'REPEAT_PLAN' });
+		expect(repeated.hours).toBe(6);
+		expect(repeated.need).toBe(10);
+		expect(repeated.want).toBe(20);
+	});
+});
+
+describe('the HUD figures', () => {
+	it('keeps the Save envelope out of spendable cash but inside the goal', () => {
+		const s = runActions(
+			createRun(),
+			{ type: 'SET_HOURS', hours: 0 },
+			{ type: 'SET_WANT', amount: 20 },
+			{ type: 'CONFIRM_PLAN' }
+		);
+		// ◈40 income: ◈20 to Want, ◈20 earmarked for Save.
+		expect(spendable(s)).toBe(80); // ◈60 held + ◈20 Want
+		expect(savedTowardGoal(s)).toBe(20); // the earmark already counts toward the goal
+		expect(netWorth(s)).toBe(100); // ◈60 + ◈20 + ◈20
 	});
 });
 

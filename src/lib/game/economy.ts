@@ -118,6 +118,16 @@ export function available(state: Pick<RunState, 'cash' | 'pots'>): number {
 	return state.cash + state.pots.need + state.pots.want + state.pots.save;
 }
 
+/** Money still spendable this month — the Save envelope is earmarked, not spare. */
+export function spendable(state: Pick<RunState, 'cash' | 'pots'>): number {
+	return state.cash + state.pots.need + state.pots.want;
+}
+
+/** What counts toward the Named Goal: banked savings plus this month's earmark. */
+export function savedTowardGoal(state: Pick<RunState, 'savings' | 'fund' | 'pots'>): number {
+	return state.savings + state.fund + state.pots.save;
+}
+
 export function netWorth(
 	state: Pick<RunState, 'cash' | 'pots' | 'savings' | 'fund' | 'debt'>
 ): number {

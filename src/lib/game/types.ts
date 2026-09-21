@@ -83,8 +83,11 @@ export interface Close {
 	obligationCascade: PayResult;
 	bnpl: PayResult | null;
 	interest: number;
+	/** Net worth when the month opened, before income landed. */
 	netWorthBefore: number;
 	netWorthAfter: number;
+	/** The month's real movement: income and interest in, spending and obligations out. */
+	monthChange: number;
 	adherence: { need: boolean; want: boolean };
 	nextObligations: number;
 }
@@ -117,6 +120,8 @@ export interface RunState {
 	obligations: number;
 	/** Cumulative inflation applied to Obligations across the run. */
 	inflationIndex: number;
+	/** Net worth as this month opened, so the close can show the month's real movement. */
+	netWorthAtStart: number;
 
 	phase: Phase;
 	card: Card | null;
@@ -128,12 +133,16 @@ export interface RunState {
 
 	/** Prototype/test scaffolding: force the next card to be drawn. */
 	forcedCard: string | null;
+
+	/** The previous month's plan, so it can be repeated (ticket 04). */
+	lastPlan: { hours: number; need: number; want: number } | null;
 }
 
 export type Action =
 	| { type: 'SET_HOURS'; hours: number }
 	| { type: 'SET_NEED'; amount: number }
 	| { type: 'SET_WANT'; amount: number }
+	| { type: 'REPEAT_PLAN' }
 	| { type: 'CONFIRM_PLAN' }
 	| { type: 'CHOOSE'; choiceId: string }
 	| { type: 'CONTINUE' }

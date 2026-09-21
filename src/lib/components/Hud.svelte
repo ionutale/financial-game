@@ -1,48 +1,68 @@
 <script lang="ts">
-	import { available, formatMoney, goalTarget, netWorth, STAGES } from '$lib/game/economy';
+	import { formatMoney, goalTarget, netWorth, savedTowardGoal, spendable, STAGES } from '$lib/game/economy';
 	import type { RunState } from '$lib/game/types';
+	import Avatar from './Avatar.svelte';
+	import Money from './Money.svelte';
 
 	let { run }: { run: RunState } = $props();
 
 	const stage = $derived(STAGES[run.stage]);
 	const goal = $derived(goalTarget(run));
-	const saved = $derived(run.savings + run.fund);
-	const pct = $derived(Math.max(0, Math.min(100, Math.round((saved / goal) * 100))));
+	const saved = $derived(savedTowardGoal(run));
+	const pct = $derived(Math.max(0, Math.min(100, (saved / goal) * 100)));
 </script>
 
-<header class="flex flex-col gap-3">
-	<div class="grid grid-cols-3 gap-2">
-		<div class="rounded-xl border border-base-300 px-3 py-2">
-			<div class="text-[10px] tracking-wide uppercase opacity-50">Cash</div>
-			<div class="text-lg tabular-nums">{formatMoney(available(run))}</div>
+<header class="flex flex-col gap-6">
+	<div class="flex items-center gap-3">
+		<div class="h-11 w-11 shrink-0 rounded-full bg-[var(--wash)] p-1.5 text-[var(--ink-40)]">
+			<Avatar stage={run.stage} />
 		</div>
-		<div class="rounded-xl border border-base-300 px-3 py-2">
-			<div class="text-[10px] tracking-wide uppercase opacity-50">Net worth</div>
-			<div class="text-lg tabular-nums">{formatMoney(netWorth(run))}</div>
-		</div>
-		<div class="rounded-xl border border-base-300 px-3 py-2">
-			<div class="text-[10px] tracking-wide uppercase opacity-50">Free time</div>
-			<div class="text-lg tabular-nums">{Math.max(0, Math.round(run.freeTime))}h</div>
+		<div class="min-w-0">
+			<p class="kicker">Month {run.month} of 60</p>
+			<p class="truncate text-sm">
+				{run.age} · {stage.name}{run.path ? ` · ${run.path}` : ''}
+			</p>
 		</div>
 	</div>
 
 	<div>
-		<div class="h-2 overflow-hidden rounded-full bg-base-200">
-			<div class="h-full bg-primary transition-[width] duration-300" style="width: {pct}%"></div>
+		<p class="kicker">Net worth</p>
+		<Money amount={netWorth(run)} size="hero" />
+	</div>
+
+	<div>
+		<div class="h-1.5 overflow-hidden rounded-full bg-[var(--wash)]">
+			<div
+				class="h-full rounded-full bg-[var(--money)] transition-[width] duration-500 ease-out"
+				style="width: {pct}%"
+			></div>
 		</div>
-		<div class="mt-1 flex justify-between text-xs opacity-60">
-			<span>{run.stage === 5 && run.path === 'study' ? 'Buffer' : 'Emergency fund'}</span>
-			<span class="tabular-nums">{formatMoney(saved)} / {formatMoney(goal)}</span>
+		<div class="mt-2 flex items-baseline justify-between">
+			<span class="kicker">{run.stage === 5 && run.path === 'study' ? 'Buffer' : 'Emergency fund'}</span>
+			<span class="figure text-xs text-[var(--muted)]">
+				{formatMoney(saved)} / {formatMoney(goal)}
+			</span>
+		</div>
+	</div>
+
+	<div class="flex gap-8">
+		<div>
+			<p class="kicker">Cash</p>
+			<Money amount={spendable(run)} size="lg" />
+		</div>
+		<div>
+			<p class="kicker">Free time</p>
+			<p class="figure text-2xl font-medium">
+				{Math.max(0, Math.round(run.freeTime))}<span class="text-base text-[var(--muted)]">h</span>
+			</p>
 		</div>
 	</div>
 
 	{#if run.bnpl}
-		<div class="badge badge-primary badge-sm">
+		<p
+			class="w-fit rounded-full bg-[var(--money-wash)] px-3 py-1 text-xs text-[var(--money)]"
+		>
 			Open thread — {run.bnpl.monthsLeft} payments of {formatMoney(run.bnpl.amount)} left
-		</div>
+		</p>
 	{/if}
-
-	<p class="text-xs tracking-wide uppercase opacity-50">
-		Month {run.month} of 60 · age {run.age} · {stage.name}{run.path ? ` · ${run.path}` : ''}
-	</p>
 </header>
