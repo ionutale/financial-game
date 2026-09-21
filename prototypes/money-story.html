@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE — Money Story framings (ticket 10)</title>
+<style>
+  :root {
+    --ink:#1c1b1a; --muted:#6b6763; --line:#e2ded8; --bg:#faf8f5;
+    --accent:#1f6feb; --accent-soft:#e8f0fe; --warn:#b3541e; --good:#1a7f4b;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  header { padding:28px 24px 10px; max-width:760px; margin:0 auto; }
+  h1 { font-size:20px; margin:0 0 6px; letter-spacing:-.01em; }
+  .q { color:var(--muted); margin:0; }
+  .q strong { color:var(--ink); }
+
+  /* the phone */
+  .stage { max-width:760px; margin:0 auto; padding:14px 24px 120px; }
+  .phone { width:420px; max-width:100%; margin:0 auto; background:#fff; border:1px solid var(--line);
+    border-radius:22px; padding:20px; box-shadow:0 1px 2px rgba(0,0,0,.04), 0 12px 32px rgba(0,0,0,.06); }
+
+  /* shared report atoms */
+  .band { display:inline-block; font-size:12px; font-weight:600; letter-spacing:.04em;
+    background:#e7f5ec; color:#14603a; border-radius:99px; padding:4px 11px; margin-bottom:12px; }
+  .headline { font-size:26px; line-height:1.15; letter-spacing:-.02em; margin:0 0 6px; }
+  .sub { color:var(--muted); margin:0 0 18px; font-size:14px; }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:22px 0 10px; }
+  h3 { font-size:15px; margin:0 0 4px; }
+  p { margin:0 0 12px; }
+  .prose p { font-size:15px; }
+  .tp { border-left:2px solid var(--line); padding:0 0 0 12px; margin-bottom:14px; }
+  .tp .m { font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); }
+  .tp .t { font-size:14px; }
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .stat { border:1px solid var(--line); border-radius:10px; padding:8px 10px; }
+  .stat .k { font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .stat .v { font-size:16px; font-variant-numeric:tabular-nums; }
+  .next { display:flex; gap:8px; margin-top:8px; }
+  .next button { flex:1; font:inherit; border-radius:10px; border:1px solid var(--line); background:#fff;
+    padding:11px 12px; cursor:pointer; }
+  .next button.p { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+
+  /* sparkline */
+  .spark { width:100%; height:110px; display:block; }
+  .spark-wrap { border:1px solid var(--line); border-radius:12px; padding:10px 10px 4px; margin-bottom:6px; }
+  .spark-cap { font-size:12px; color:var(--muted); display:flex; justify-content:space-between; }
+
+  /* variant C atoms */
+  .cmp { margin-bottom:16px; }
+  .cmp .rowlab { display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px; }
+  .cmp .rowlab .now { font-weight:600; font-variant-numeric:tabular-nums; }
+  .bar { height:10px; border-radius:99px; margin-bottom:4px; }
+  .bar.y1 { background:#e6e1da; }
+  .bar.y5 { background:var(--accent); }
+  .cmp .yr { font-size:11px; color:var(--muted); display:flex; gap:10px; }
+  .bigbadge { font-size:34px; letter-spacing:-.03em; margin:0; font-variant-numeric:tabular-nums; }
+  .small { font-size:12px; color:var(--muted); }
+  .annot { font-size:12px; color:var(--muted); margin:2px 0 0; }
+
+  /* switcher */
+  .switcher { position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+    display:flex; align-items:center; gap:10px; background:#1c1b1a; color:#fff;
+    border-radius:99px; padding:7px 10px; box-shadow:0 8px 24px rgba(0,0,0,.22); z-index:50; }
+  .switcher button { background:transparent; border:0; color:#fff; font-size:20px; line-height:1;
+    width:30px; height:30px; border-radius:50%; cursor:pointer; }
+  .switcher button:hover { background:rgba(255,255,255,.14); }
+  .switcher .lab { font-size:13px; letter-spacing:.02em; min-width:190px; text-align:center; }
+  .switcher .lab b { font-weight:600; }
+  .switcher .lab span { color:#b9b4ae; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PROTOTYPE — Money Story framings</h1>
+  <p class="q">
+    <strong>The question:</strong> could a player point at one line and say “I got better at that”?
+    Three radically different framings of the <em>same</em> fake run, switchable below. Ticket 05
+    chose story-first; this is where that gets challenged. The fake run carries flags — a
+    minimum-payment streak, a skipped obligation, a scam, the crash — because the turning points are
+    the part being tested.
+  </p>
+</header>
+
+<div class="stage">
+  <div class="phone" id="report"></div>
+</div>
+
+<div class="switcher" id="switcher">
+  <button id="prev" aria-label="Previous variant">‹</button>
+  <div class="lab" id="lab"></div>
+  <button id="next" aria-label="Next variant">›</button>
+</div>
+
+<script>
+/* ============================================================================
+ * The fake run. One dataset, three framings — so the comparison is fair.
+ * ========================================================================== */
+
+function buildTrajectory() {
+  const pts = []; let v = 60;
+  for (let m = 1; m <= 60; m++) {
+    let d = 70 + Math.sin(m / 7) * 18;
+    if (m >= 12 && m <= 20) d -= 30;      // first card debt
+    if (m >= 34 && m <= 38) d -= 55;      // minimum-payment streak
+    if (m === 28) d -= 220;               // the scam
+    if (m === 41) d -= 180;               // skipped obligation
+    if (m === 47) d -= 320;               // the crash
+    if (m >= 48) d += 42;                 // recovery
+    if (m >= 52) d += 62;                 // goal passed
+    v += d; pts.push(Math.round(v));
+  }
+  return pts;
+}
+
+const TRAJ = buildTrajectory();
+const FINAL = TRAJ[TRAJ.length - 1];
+
+const RUN = {
+  path: 'work', band: 'Ahead',
+  metrics: {
+    adherence: [3, 6, 8, 9, 10],       // months inside budget, per year
+    savingsRate: '18%', wantShare: '22%',
+    debtTaken: '\u25c81,400', peakDebt: '\u25c8900',
+    finalScore: '690', goal: '\u25c84,000',
+  },
+  turningPoints: [
+    { m: 12, t: 'You took the card and put \u25c8340 on it in the first month.' },
+    { m: 28, t: 'A “guaranteed return” took \u25c8220 and never came back.' },
+    { m: 34, t: 'Four months of paying only the minimum. It cost \u25c831 in interest and took nothing off the balance.' },
+    { m: 41, t: 'You skipped a payment to go on the trip. Late fee, and the score dropped 40.' },
+    { m: 47, t: 'The fund fell 25% in two months. You held, and did not sell.' },
+    { m: 52, t: 'The emergency fund passed \u25c84,000 — a year earlier than the plan.' },
+  ],
+  youVsYou: [
+    { label: 'Months inside budget', y1: '3 / 12', y5: '10 / 12', p1: 25, p5: 83 },
+    { label: 'Income saved', y1: '4%', y5: '18%', p1: 4, p5: 18 },
+    { label: 'Income spent on wants', y1: '41%', y5: '22%', p1: 41, p5: 22 },
+  ],
+  story: [
+    'You started at 14 with \u25c860 and an allowance. You finished at 19 with \u25c8' + FINAL.toLocaleString('en-US') + ' and a flat you pay for yourself.',
+    'The first two years were cheap and slow. The middle went wrong in the ordinary way — a card, a scam that looked like an opportunity, four months of minimum payments — and the last two were mostly about undoing that.',
+    'You never went bankrupt and you never had a windfall. You just slowly stopped spending the money you had not earned yet.',
+  ],
+  annotation: { m: 47, t: 'the crash' },
+};
+
+/* ---------- shared renderers ---------- */
+
+function sparkline(points, opts) {
+  const o = opts || {};
+  const w = 400, h = o.height || 110, pad = 6;
+  const min = Math.min(0, ...points), max = Math.max(...points);
+  const x = i => pad + (i / (points.length - 1)) * (w - pad * 2);
+  const y = v => h - pad - ((v - min) / (max - min || 1)) * (h - pad * 2);
+  const line = points.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+  const area = line + ' L' + x(points.length - 1).toFixed(1) + ' ' + (h - pad) + ' L' + x(0).toFixed(1) + ' ' + (h - pad) + ' Z';
+  let marker = '';
+  if (o.mark) {
+    const i = o.mark - 1;
+    marker = `<circle cx="${x(i).toFixed(1)}" cy="${y(points[i]).toFixed(1)}" r="3.5" fill="#b3541e"></circle>`;
+  }
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <path d="${area}" fill="#e8f0fe"></path>
+    <path d="${line}" fill="none" stroke="#1f6feb" stroke-width="2" stroke-linejoin="round"></path>
+    ${marker}
+  </svg>`;
+}
+
+const statGrid = () => `<div class="stats">
+  <div class="stat"><div class="k">Months inside budget</div><div class="v">36 / 60</div></div>
+  <div class="stat"><div class="k">Income saved</div><div class="v">${RUN.metrics.savingsRate}</div></div>
+  <div class="stat"><div class="k">Spent on wants</div><div class="v">${RUN.metrics.wantShare}</div></div>
+  <div class="stat"><div class="k">Debt taken</div><div class="v">${RUN.metrics.debtTaken}</div></div>
+  <div class="stat"><div class="k">Peak debt</div><div class="v">${RUN.metrics.peakDebt}</div></div>
+  <div class="stat"><div class="k">Final credit score</div><div class="v">${RUN.metrics.finalScore}</div></div>
+</div>`;
+
+const nextButtons = () => `<div class="next">
+  <button class="p">Play again</button><button>Try the Study path</button>
+</div>`;
+
+/* ============================================================================
+ * Variant A — story-led. Narrative first, numbers last. Ticket 05's choice.
+ * ========================================================================== */
+
+function variantA() {
+  return `
+    <span class="band">${RUN.band}</span>
+    <p class="headline">From \u25c860 to \u25c8${FINAL.toLocaleString('en-US')}.</p>
+    <p class="sub">Five years, month by month, and the six moments that decided it.</p>
+
+    <div class="prose">${RUN.story.map(p => `<p>${p}</p>`).join('')}</div>
+
+    <h2>Six moments that made it</h2>
+    ${RUN.turningPoints.map(t => `<div class="tp"><div class="m">Month ${t.m}</div><div class="t">${t.t}</div></div>`).join('')}
+
+    <h2>Then the numbers</h2>
+    ${statGrid()}
+    <div class="spark-wrap" style="margin-top:10px">
+      ${sparkline(TRAJ)}
+      <div class="spark-cap"><span>Age 14</span><span>Net worth, 60 months</span><span>Age 19</span></div>
+    </div>
+
+    <h2>What next</h2>
+    ${nextButtons()}`;
+}
+
+/* ============================================================================
+ * Variant B — chart-led. The trajectory dominates; the story shrinks to captions.
+ * ========================================================================== */
+
+function variantB() {
+  return `
+    <span class="band">${RUN.band}</span>
+    <p class="headline">\u25c8${FINAL.toLocaleString('en-US')}</p>
+    <p class="sub">Net worth at 19, from \u25c860 at 14.</p>
+
+    <div class="spark-wrap">
+      ${sparkline(TRAJ, { height: 150, mark: RUN.annotation.m })}
+      <div class="spark-cap"><span>Month 1</span><span>\u25c8${RUN.metrics.goal} goal</span><span>Month 60</span></div>
+    </div>
+    <p class="annot">The dip at month ${RUN.annotation.m} is ${RUN.annotation.t} \u2014 \u25c8320 in two months. You held.</p>
+
+    <h2>The numbers</h2>
+    ${statGrid()}
+
+    <h2>What the chart does not show</h2>
+    ${RUN.turningPoints.slice(0, 4).map(t => `<div class="tp"><div class="m">Month ${t.m}</div><div class="t">${t.t}</div></div>`).join('')}
+
+    <h2>What next</h2>
+    ${nextButtons()}`;
+}
+
+/* ============================================================================
+ * Variant C — you vs you. The proof of improvement leads; money is context.
+ * ========================================================================== */
+
+function variantC() {
+  return `
+    <p class="headline">You got better at this.</p>
+    <p class="sub">Year 1 against year 5, on the three things you can actually change.</p>
+
+    ${RUN.youVsYou.map(c => `<div class="cmp">
+      <div class="rowlab"><span>${c.label}</span><span class="now">${c.y5}</span></div>
+      <div class="bar y5" style="width:${c.p5}%"></div>
+      <div class="bar y1" style="width:${c.p1}%"></div>
+      <div class="yr"><span>Year 1: ${c.y1}</span><span>Year 5: ${c.y5}</span></div>
+    </div>`).join('')}
+
+    <h2>Where that left you</h2>
+    <span class="band">${RUN.band}</span>
+    <p class="bigbadge">\u25c8${FINAL.toLocaleString('en-US')}</p>
+    <p class="small">Net worth at 19 \u2014 ${RUN.metrics.goal} emergency fund, ${RUN.metrics.debtTaken} of debt taken across the run, final score ${RUN.metrics.finalScore}.</p>
+    <div class="spark-wrap" style="margin-top:10px">
+      ${sparkline(TRAJ, { height: 80 })}
+    </div>
+
+    <h2>Where it nearly went wrong</h2>
+    ${RUN.turningPoints.filter(t => t.m === 28 || t.m === 34 || t.m === 41).map(t => `<p class="small">Month ${t.m} \u2014 ${t.t}</p>`).join('')}
+
+    <h2>What next</h2>
+    ${nextButtons()}`;
+}
+
+/* ---------- switcher ---------- */
+
+const VARIANTS = [
+  { key: 'A', name: 'Story-led', render: variantA },
+  { key: 'B', name: 'Chart-led', render: variantB },
+  { key: 'C', name: 'You vs you', render: variantC },
+];
+
+const report = document.getElementById('report');
+const lab = document.getElementById('lab');
+
+function current() {
+  const k = (location.hash || '#A').slice(1).toUpperCase();
+  return VARIANTS.findIndex(v => v.key === k) === -1 ? 0 : VARIANTS.findIndex(v => v.key === k);
+}
+function show(i) {
+  const v = VARIANTS[i];
+  location.hash = v.key;
+  report.innerHTML = v.render();
+  lab.innerHTML = `<b>${v.key}</b> <span>\u2014 ${v.name}</span>`;
+}
+function step(d) {
+  const i = (current() + d + VARIANTS.length) % VARIANTS.length;
+  show(i);
+}
+
+document.getElementById('prev').addEventListener('click', () => step(-1));
+document.getElementById('next').addEventListener('click', () => step(1));
+window.addEventListener('hashchange', () => show(current()));
+window.addEventListener('keydown', e => {
+  const t = document.activeElement;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  if (e.key === 'ArrowLeft') step(-1);
+  if (e.key === 'ArrowRight') step(1);
+});
+
+show(current());
+</script>
+</body>
+</html>

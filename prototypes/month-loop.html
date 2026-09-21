@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE — Month-turn loop (ticket 09)</title>
+<style>
+  :root {
+    --ink:#1c1b1a; --muted:#6b6763; --line:#e2ded8; --bg:#faf8f5;
+    --accent:#1f6feb; --accent-soft:#e8f0fe; --warn:#b3541e; --good:#1a7f4b;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  header { padding:28px 24px 12px; max-width:1180px; margin:0 auto; }
+  h1 { font-size:20px; margin:0 0 6px; letter-spacing:-.01em; }
+  .q { color:var(--muted); max-width:72ch; margin:0; }
+  .q strong { color:var(--ink); }
+  main { max-width:1180px; margin:0 auto; padding:12px 24px 80px; display:grid;
+    grid-template-columns:420px 1fr; gap:28px; align-items:start; }
+  @media (max-width:900px) { main { grid-template-columns:1fr; } }
+
+  .phone-wrap { position:sticky; top:16px; }
+  .phone { width:420px; max-width:100%; height:720px; overflow-y:auto; background:#fff;
+    border:1px solid var(--line); border-radius:22px; padding:18px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04), 0 12px 32px rgba(0,0,0,.06); }
+  .phone-label { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0 0 8px; }
+  .hud { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .stat { flex:1 1 0; min-width:92px; border:1px solid var(--line); border-radius:10px; padding:8px 10px; }
+  .stat .k { font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); }
+  .stat .v { font-size:17px; font-variant-numeric:tabular-nums; }
+  .goalbar { margin:0 0 14px; }
+  .goalbar .track { height:8px; background:#eee9e2; border-radius:99px; overflow:hidden; }
+  .goalbar .fill { height:100%; background:var(--accent); }
+  .goalbar .lab { font-size:12px; color:var(--muted); display:flex; justify-content:space-between; margin-top:4px; }
+  .chip { display:inline-block; font-size:12px; background:var(--accent-soft); color:#14428f;
+    border-radius:99px; padding:3px 9px; margin-bottom:12px; }
+  .phase { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0 0 6px; }
+  .card { border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
+  .card h3 { margin:0 0 8px; font-size:16px; }
+  .card p { margin:0 0 12px; }
+  .row { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; font-size:14px; }
+  .row .num { font-variant-numeric:tabular-nums; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .alloc { margin-bottom:12px; }
+  .alloc .lab { display:flex; justify-content:space-between; font-size:13px; margin-bottom:2px; }
+  .alloc .lab .amt { font-variant-numeric:tabular-nums; font-weight:600; }
+  button { font:inherit; border-radius:10px; border:1px solid var(--line); background:#fff;
+    color:var(--ink); padding:10px 12px; cursor:pointer; text-align:left; }
+  button:hover { border-color:#cfc9c1; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .primary { background:var(--accent); border-color:var(--accent); color:#fff; text-align:center;
+    width:100%; font-weight:600; }
+  .primary:hover { filter:brightness(1.05); }
+  .choice { display:block; width:100%; margin-bottom:8px; }
+  .choice .label { font-weight:600; }
+  .choice .chips { font-size:12px; color:var(--muted); margin-top:3px; font-variant-numeric:tabular-nums; }
+  .choice .why { font-size:12px; color:var(--warn); margin-top:3px; }
+  .feedback { border-left:3px solid var(--accent); background:var(--accent-soft); padding:10px 12px;
+    border-radius:0 8px 8px 0; margin:10px 0 12px; font-size:14px; }
+  .cascade { font-size:12px; color:var(--warn); margin:0 0 12px; }
+  .close-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--line); font-size:14px; }
+  .close-row:last-of-type { border-bottom:0; }
+  .close-row .v { font-variant-numeric:tabular-nums; }
+  .delta-up { color:var(--good); } .delta-down { color:var(--warn); }
+  .proto-note { font-size:12px; color:var(--muted); margin:8px 0 0; }
+
+  .panel > section { border:1px solid var(--line); border-radius:14px; padding:14px 16px;
+    margin-bottom:14px; background:#fff; }
+  .panel h2 { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0 0 10px; }
+  .changed { font-size:13px; color:var(--warn); min-height:20px; margin-bottom:10px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px 14px; }
+  .field { font-size:13px; display:flex; justify-content:space-between; gap:8px;
+    border-bottom:1px dotted var(--line); padding:3px 0; }
+  .field .k { color:var(--muted); } .field .v { font-variant-numeric:tabular-nums; }
+  .pacing { display:flex; gap:18px; flex-wrap:wrap; }
+  .pacing .big { font-size:24px; font-variant-numeric:tabular-nums; }
+  .pacing .k { font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); }
+  .taps { display:flex; flex-wrap:wrap; gap:6px; }
+  .taps button { font-size:13px; padding:7px 10px; }
+  .tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .tabs button { font-size:13px; padding:6px 10px; }
+  .tabs button.on { background:var(--ink); border-color:var(--ink); color:#fff; }
+  .walk p { margin:0 0 10px; color:var(--muted); font-size:14px; }
+  .step { display:block; width:100%; margin-bottom:6px; font-size:14px; }
+  .step.done { opacity:.5; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PROTOTYPE — Month-turn loop</h1>
+  <p class="q">
+    <strong>The question:</strong> does a month feel like a decision or a formality? Is the Feedback
+    read or skipped? And — the number that decides whether this game works at all — <strong>how many
+    taps and how many seconds does one month take on a phone</strong>, when 60 of them is the whole
+    game? Throwaway code answering that for ticket 09; the state module behind it is the part worth
+    keeping.
+  </p>
+</header>
+
+<main>
+  <section class="phone-wrap">
+    <p class="phone-label">The month screen (as a phone)</p>
+    <div class="phone" id="phone"></div>
+  </section>
+
+  <aside class="panel">
+    <section>
+      <h2>Pacing</h2>
+      <div class="pacing">
+        <div><div class="big" id="p-taps">0</div><div class="k">taps this month</div></div>
+        <div><div class="big" id="p-secs">0.0</div><div class="k">seconds this month</div></div>
+        <div><div class="big" id="p-avg">—</div><div class="k">avg seconds / month</div></div>
+      </div>
+      <p class="proto-note" id="p-log">No month completed yet.</p>
+    </section>
+    <section>
+      <h2>Current state</h2>
+      <div class="changed" id="changed"></div>
+      <div class="grid" id="state"></div>
+    </section>
+    <section>
+      <h2>Free play</h2>
+      <div class="taps" id="freeplay"></div>
+    </section>
+    <section class="walk">
+      <h2>Guided walkthroughs</h2>
+      <div class="tabs" id="tabs"></div>
+      <div id="walk-body"></div>
+    </section>
+  </aside>
+</main>
+
+<script>
+/* ============================================================================
+ * PURE MODULE — liftable. No DOM, no timers. (state, action) -> state.
+ * The month loop of ticket 04 as data + a reducer.
+ * Envelopes hold real money: that is what makes the cascade real.
+ * ========================================================================== */
+
+const SAVINGS_MONTHLY = 0.0025;   // 3%/yr
+const GOAL_TARGET     = 4000;
+const STUDY_BUFFER    = 1000;
+const STUDENT_LOAN    = 3000;
+
+const STAGES = {
+  1: { age:14, name:'Pocket Money', base:40,   rate:10,   freeTime:100, obligations:0    },
+  2: { age:15, name:'First Budget', base:40,   rate:10,   freeTime:90,  obligations:15   },
+  3: { age:16, name:'First Wage',   base:0,    rate:10,   freeTime:80,  obligations:120  },
+  4: { age:17, name:'First Credit', base:0,    rate:10,   freeTime:70,  obligations:180  },
+  5: { age:18, name:'The Fork',     base:1600, rate:12.5, freeTime:60,  obligations:1150 },
+};
+
+const PATHS = {
+  work:  { base:1600, obligations:1150, freeTime:60 },
+  study: { base:900,  obligations:750,  freeTime:55 },
+};
+
+const CARDS = [
+  { id:'extra_shift', kind:'decision', stages:[2,3,4],
+    title:'An extra shift',
+    situation:'Your manager is short-staffed on Saturday and asks if you can cover. It is the same day as the match.',
+    choices:[
+      { id:'take', label:'Take the shift', gain:80, freeTime:-12, category:null,
+        feedback:'You worked 8 hours at 10 an hour and it landed as \u25c880. Money you earn is hours you do not get back — that is the trade, every time.' },
+      { id:'pass', label:'Keep your Saturday', gain:0, freeTime:0, category:null,
+        feedback:'You kept the day. Nothing wrong with that — but the \u25c880 does not exist, and next month\u2019s plan has to live without it.' },
+    ] },
+  { id:'birthday_gift', kind:'decision', stages:[1,2,3,4],
+    title:'A birthday you forgot',
+    situation:'Your best friend\u2019s birthday is on Friday. You have nothing for them yet.',
+    choices:[
+      { id:'buy', label:'Buy the gift everyone is chipping in for', cost:25, category:'want',
+        feedback:'\u25c825 out of the Want envelope. That is exactly what a Want envelope is for — the only question is whether it was still there when Friday came.' },
+      { id:'make', label:'Make something instead', cost:0, freeTime:-6, category:'want',
+        feedback:'Six hours of your time instead of \u25c825. Free is never free — you paid in the only currency you cannot borrow.' },
+      { id:'skip', label:'Show up empty-handed', cost:0, category:null,
+        feedback:'You saved the money and spent something else. The game will not tell you that was wrong — you will find out.' },
+    ] },
+  { id:'phone_cracked', kind:'shock', stages:[1,2,3,4,5],
+    title:'The phone goes down',
+    situation:'It slipped out of your hand on the stairs. The screen is a spiderweb.',
+    choices:[
+      { id:'ack', label:'Deal with it', cost:120, category:'need', insuredCost:0,
+        feedback:'A repair bill you did not plan for. This is what an emergency fund is for — and if it came out of the Save envelope or went onto Debt, that is the cascade doing its job.' },
+    ] },
+  { id:'insurance_offer', kind:'risk_moment', stages:[1,2,3],
+    title:'Cover, or risk it',
+    situation:'Your phone is still in one piece — for now. Cover costs \u25c86 a month.',
+    odds:'About 1 in 3 of phones this age take a knock this year.',
+    choices:[
+      { id:'insure', label:'Take the cover', cost:6, category:'need', sets:{ insurance:true },
+        feedback:'\u25c86 a month buys certainty. You will probably not claim — that is what insurance is: paying a small known amount to delete a big unknown one.' },
+      { id:'risk', label:'Risk it', cost:0, category:null,
+        feedback:'You kept the \u25c86 and took the risk. Fine odds — until the month the phone lands on the stairs and you are paying the whole repair yourself.' },
+    ] },
+  { id:'bnpl_trainers', kind:'decision', stages:[3,4,5],
+    title:'Four easy payments',
+    situation:'The trainers are \u25c8120. The shop offers four monthly payments of \u25c830, interest-free.',
+    choices:[
+      { id:'now', label:'Pay for them now', cost:120, category:'want',
+        feedback:'Paid and done. Painful in one month, and the whole thing is behind you.' },
+      { id:'bnpl', label:'Take the four payments', cost:0, category:'want', sets:{ bnpl:4 },
+        feedback:'Four payments of \u25c830 — and here is the part nobody says out loud: it built you no credit score. Paying it perfectly changes nothing about your file. It is a debt, not a credit history.' },
+      { id:'skip', label:'Leave them', cost:0, category:null,
+        feedback:'Not this month. Nothing was lost.' },
+    ] },
+  { id:'the_fork', kind:'decision', stages:[5],
+    title:'School is over',
+    situation:'That is it — school done. Study, or start working? This one you do not get back.',
+    choices:[
+      { id:'study', label:'Study — part-time work, and a 3,000 loan', cost:0, category:null, sets:{ path:'study' },
+        feedback:'You took the loan. It is on the balance sheet from today, which is the point: deferred debt is still debt, and your net worth starts this year flat rather than rich.' },
+      { id:'work', label:'Work — full time, and a flat of your own', cost:0, category:null, sets:{ path:'work' },
+        feedback:'Full-time wage, and rent the moment you move. Your obligations are about to take most of what you earn — this is why the Save envelope mattered in year one.' },
+    ] },
+];
+
+function stageOf(s) {
+  const base = STAGES[s.stage];
+  if (s.stage === 5 && s.path) {
+    const p = PATHS[s.path];
+    return { ...base, base:p.base, obligations:p.obligations, freeTime:p.freeTime };
+  }
+  return base;
+}
+const expectedIncome = s => stageOf(s).base + s.hours * stageOf(s).rate;
+const goalTarget     = s => (s.stage === 5 && s.path === 'study') ? STUDY_BUFFER : GOAL_TARGET;
+const available      = s => s.cash + s.pots.need + s.pots.want + s.pots.save;
+const netWorth       = s => available(s) + s.savings + s.fund - s.debt;
+
+/** Draw a cost from a category's pot; overflow comes from Save, then Debt. The cascade. */
+function drawFromPot(s, category, amount) {
+  const pot = s.pots[category] || 0;
+  const fromPot = Math.min(pot, amount);
+  s.pots[category] -= fromPot;
+  let rest = amount - fromPot;
+  let fromSave = 0, toDebt = 0;
+  if (rest > 0) {
+    fromSave = Math.min(s.pots.save, rest);
+    s.pots.save -= fromSave;
+    rest -= fromSave;
+    toDebt = rest;
+    s.debt += toDebt;
+  }
+  return { fromPot, fromSave, toDebt };
+}
+
+/** Pay from real money: cash, then savings, then debt. Used for obligations. */
+function payFromCash(s, amount) {
+  const fromCash = Math.min(s.cash, amount);
+  s.cash -= fromCash;
+  let rest = amount - fromCash;
+  const fromSavings = Math.min(s.savings, rest);
+  s.savings -= fromSavings;
+  rest -= fromSavings;
+  s.debt += Math.max(0, rest);
+  return { fromCash, fromSavings, toDebt: Math.max(0, rest) };
+}
+
+function pickCard(s) {
+  if (s.forcedCard) {
+    const c = CARDS.find(c => c.id === s.forcedCard);
+    s.forcedCard = null;
+    return c || null;
+  }
+  let pool = CARDS.filter(c => c.stages.includes(s.stage));
+  if (s.path) pool = pool.filter(c => c.id !== 'the_fork');
+  if (!pool.length) return null;
+  return pool[(s.month + s.stage) % pool.length];
+}
+
+function createRun() {
+  return {
+    month:1, stage:1, age:14, path:null,
+    cash:60, pots:{ need:0, want:0, save:0 }, savings:0, fund:0, debt:0,
+    freeTimeMax:100, freeTime:100, hours:0, income:0,
+    need:0, want:0, saveAlloc:0, spent:{ need:0, want:0 },
+    insurance:false, bnpl:null, obligations:0, goal:0,
+    phase:'plan', card:null, chosen:null, feedback:null, cascade:null, close:null,
+    log:[], forcedCard:null,
+  };
+}
+
+function startMonth(s) {
+  const st = stageOf(s);
+  s.obligations = st.obligations;
+  s.freeTimeMax = st.freeTime;
+  s.freeTime = st.freeTime - s.hours;
+  s.income = 0; s.need = 0; s.want = 0; s.saveAlloc = 0;
+  s.spent = { need:0, want:0 };
+  s.pots = { need:0, want:0, save:0 };
+  s.phase = 'plan'; s.card = null; s.chosen = null;
+  s.feedback = null; s.cascade = null; s.close = null;
+  return s;
+}
+
+function closeMonth(s) {
+  const before = netWorth(s);
+  s.cash += s.pots.need + s.pots.want;          // unspent envelopes come back
+  s.pots.need = 0; s.pots.want = 0;
+  s.savings += s.pots.save; s.pots.save = 0;    // Save envelope lands
+  const ob = payFromCash(s, s.obligations);
+  let bn = null;
+  if (s.bnpl && s.bnpl.monthsLeft > 0) {
+    bn = payFromCash(s, s.bnpl.amount);
+    s.bnpl.monthsLeft -= 1;
+    if (s.bnpl.monthsLeft === 0) s.bnpl = null;
+  }
+  const interest = s.savings * SAVINGS_MONTHLY;
+  s.savings += interest;
+  s.goal = s.savings + s.fund;
+  s.close = {
+    income:s.income, spentNeed:s.spent.need, spentWant:s.spent.want,
+    obligations:s.obligations, obligationCascade:ob, bnpl:bn, interest,
+    netWorthBefore:before, netWorthAfter:netWorth(s),
+    adherence:{ need:s.spent.need <= s.need, want:s.spent.want <= s.want },
+    nextObligations:stageOf(s).obligations,
+  };
+  return s;
+}
+
+function applyAction(state, action) {
+  const s = JSON.parse(JSON.stringify(state));
+  switch (action.type) {
+    case 'SET_HOURS':
+      s.hours = action.hours;
+      s.freeTime = s.freeTimeMax - s.hours;
+      s.income = expectedIncome(s);
+      s.saveAlloc = Math.max(0, s.income - s.need - s.want);
+      return s;
+    case 'SET_NEED':
+      s.need = Math.max(0, Math.min(action.amount, expectedIncome(s) - s.want));
+      s.saveAlloc = Math.max(0, expectedIncome(s) - s.need - s.want);
+      return s;
+    case 'SET_WANT':
+      s.want = Math.max(0, Math.min(action.amount, expectedIncome(s) - s.need));
+      s.saveAlloc = Math.max(0, expectedIncome(s) - s.need - s.want);
+      return s;
+    case 'CONFIRM_PLAN': {
+      s.income = expectedIncome(s);
+      s.saveAlloc = Math.max(0, s.income - s.need - s.want);
+      s.cash += s.income;
+      s.pots = { need:s.need, want:s.want, save:s.saveAlloc };
+      s.cash -= (s.pots.need + s.pots.want + s.pots.save);
+      s.freeTime = s.freeTimeMax - s.hours;
+      s.card = pickCard(s);
+      s.phase = 'event';
+      return s;
+    }
+    case 'CHOOSE': {
+      const c = s.card && s.card.choices.find(x => x.id === action.choiceId);
+      if (!c) return s;
+      if (c.freeTime < 0 && Math.abs(c.freeTime) > s.freeTime) return s;   // time is hard
+      const cost = (c.insuredCost !== undefined && s.insurance) ? c.insuredCost : (c.cost || 0);
+      if (c.gain) s.cash += c.gain;
+      s.cascade = cost ? drawFromPot(s, c.category || 'want', cost) : null;
+      if (cost && c.category) s.spent[c.category] += cost;
+      if (c.freeTime) s.freeTime += c.freeTime;
+      if (c.sets && c.sets.insurance) s.insurance = true;
+      if (c.sets && c.sets.bnpl) s.bnpl = { amount:30, monthsLeft:c.sets.bnpl };
+      if (c.sets && c.sets.path) {
+        s.path = c.sets.path;
+        s.obligations = PATHS[s.path].obligations;
+        s.freeTimeMax = PATHS[s.path].freeTime;
+        if (s.path === 'study') s.debt += STUDENT_LOAN;
+      }
+      s.chosen = c.id; s.feedback = c.feedback;
+      s.log.push({ month:s.month, card:s.card.id, choice:c.id });
+      return s;
+    }
+    case 'CONTINUE':
+      closeMonth(s);
+      s.phase = 'resolve';
+      return s;
+    case 'NEXT_MONTH':
+      s.month += 1;
+      if (s.month > 60) { s.phase = 'done'; return s; }
+      const year = Math.floor((s.month - 1) / 12) + 1;
+      if (year !== s.stage) { s.stage = Math.min(5, year); s.age = STAGES[s.stage].age; }
+      return startMonth(s);
+    case 'JUMP_STAGE':
+      s.stage = action.stage; s.age = STAGES[action.stage].age;
+      s.month = (action.stage - 1) * 12 + 1; s.hours = 0;
+      return startMonth(s);
+    case 'FORCE_CARD': s.forcedCard = action.id; return s;
+    case 'RESET': { const f = createRun(); return startMonth(f); }
+    default: return s;
+  }
+}
+
+/* ============================================================================
+ * SHELL — throwaway. Renders the module, counts taps, times the month.
+ * ========================================================================== */
+
+const money  = n => '\u25c8' + Math.round(n).toLocaleString('en-US');
+const signed = n => (n >= 0 ? '+' : '\u2212') + money(Math.abs(n));
+
+let state = startMonth(createRun());
+let changed = '';
+let pacing = { taps:0, start:Date.now(), done:[] };
+const $ = id => document.getElementById(id);
+const phone = $('phone');
+
+function chipText(c) {
+  const bits = [];
+  const cost = (c.insuredCost !== undefined && state.insurance) ? c.insuredCost : (c.cost || 0);
+  if (cost) bits.push('\u2212' + money(cost));
+  if (c.gain) bits.push('+' + money(c.gain));
+  if (c.freeTime) bits.push((c.freeTime > 0 ? '+' : '\u2212') + Math.abs(c.freeTime) + 'h');
+  if (c.sets && c.sets.bnpl) bits.push(c.sets.bnpl + ' \u00d7 ' + money(30));
+  return bits.join(' \u00b7 ');
+}
+
+function renderPhone() {
+  const s = state, st = STAGES[s.stage];
+  let html = '';
+
+  html += `<div class="hud">
+    <div class="stat"><div class="k">Cash</div><div class="v">${money(available(s))}</div></div>
+    <div class="stat"><div class="k">Net worth</div><div class="v">${money(netWorth(s))}</div></div>
+    <div class="stat"><div class="k">Free time</div><div class="v">${Math.max(0, Math.round(s.freeTime))}h</div></div>
+  </div>`;
+
+  const target = goalTarget(s);
+  const pct = Math.max(0, Math.min(100, Math.round((s.savings + s.fund) / target * 100)));
+  html += `<div class="goalbar">
+    <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+    <div class="lab"><span>${s.stage === 5 && s.path === 'study' ? 'Buffer' : 'Emergency fund'}</span>
+      <span>${money(s.savings + s.fund)} / ${money(target)}</span></div>
+  </div>`;
+
+  if (s.bnpl) html += `<div class="chip">Open thread — ${s.bnpl.monthsLeft} payments of ${money(s.bnpl.amount)} left</div>`;
+
+  html += `<p class="phase">Month ${s.month} of 60 \u00b7 age ${s.age} \u00b7 ${st.name}${s.path ? ' \u00b7 ' + s.path : ''}</p>`;
+
+  if (s.phase === 'plan') {
+    const income = expectedIncome(s);
+    html += `<div class="card">
+      <h3>The plan</h3>
+      <p>Decide before the month decides for you. Income lands as the month starts.</p>
+      <div class="alloc">
+        <div class="lab"><span>Work hours</span><span class="amt" id="l-hours">${s.hours}h</span></div>
+        <input type="range" min="0" max="${Math.round(st.freeTime)}" value="${s.hours}" data-act="hours">
+      </div>
+      <div class="alloc">
+        <div class="lab"><span>Need</span><span class="amt" id="l-need">${money(s.need)}</span></div>
+        <input type="range" min="0" max="600" step="5" value="${s.need}" data-act="need">
+      </div>
+      <div class="alloc">
+        <div class="lab"><span>Want</span><span class="amt" id="l-want">${money(s.want)}</span></div>
+        <input type="range" min="0" max="600" step="5" value="${s.want}" data-act="want">
+      </div>
+      <div class="row"><span>Income</span><span class="num" id="l-income">${money(income)}</span></div>
+      <div class="row"><span>Save (left over)</span><span class="num" id="l-save">${money(Math.max(0, income - s.need - s.want))}</span></div>
+      <button class="primary" data-act="confirm">Start the month</button>
+    </div>`;
+  }
+
+  if (s.phase === 'event' && s.card) {
+    html += `<div class="card"><h3>${s.card.title}</h3><p>${s.card.situation}</p>`;
+    if (s.card.odds) html += `<p class="proto-note">${s.card.odds}</p>`;
+    if (!s.chosen) {
+      s.card.choices.forEach(c => {
+        const blocked = c.freeTime < 0 && Math.abs(c.freeTime) > s.freeTime;
+        html += `<button class="choice" data-act="choose" data-id="${c.id}" ${blocked ? 'disabled' : ''}>
+          <div class="label">${c.label}</div>
+          <div class="chips">${chipText(c) || 'no cost now'}</div>
+          ${blocked ? `<div class="why">Not enough free time \u2014 you cannot borrow hours.</div>` : ''}
+        </button>`;
+      });
+    }
+    if (s.feedback) {
+      html += `<div class="feedback">${s.feedback}</div>`;
+      if (s.cascade && s.cascade.toDebt > 0)
+        html += `<div class="cascade">Cascade: ${money(s.cascade.fromSave)} came out of the Save envelope, ${money(s.cascade.toDebt)} went onto Debt.</div>`;
+      else if (s.cascade && s.cascade.fromSave > 0)
+        html += `<div class="cascade">Cascade: ${money(s.cascade.fromSave)} came out of the Save envelope.</div>`;
+      html += `<button class="primary" data-act="continue">Continue</button>`;
+    }
+    html += `</div>`;
+  }
+
+  if (s.phase === 'resolve' && s.close) {
+    const c = s.close, d = c.netWorthAfter - c.netWorthBefore;
+    html += `<div class="card"><h3>Month ${s.month} closes</h3>
+      <div class="close-row"><span>Income in</span><span class="v">${money(c.income)}</span></div>
+      <div class="close-row"><span>Spent \u2014 Need</span><span class="v">${money(c.spentNeed)}${c.adherence.need ? '' : ' \u00b7 over'}</span></div>
+      <div class="close-row"><span>Spent \u2014 Want</span><span class="v">${money(c.spentWant)}${c.adherence.want ? '' : ' \u00b7 over'}</span></div>
+      <div class="close-row"><span>Obligations paid</span><span class="v">${money(c.obligations)}</span></div>
+      ${c.bnpl ? `<div class="close-row"><span>BNPL instalment</span><span class="v">${money(c.bnpl.fromCash + c.bnpl.fromSavings + c.bnpl.toDebt)}</span></div>` : ''}
+      <div class="close-row"><span>Interest credited</span><span class="v">${money(c.interest)}</span></div>
+      <div class="close-row"><span>Net worth change</span><span class="v ${d >= 0 ? 'delta-up' : 'delta-down'}">${signed(d)}</span></div>
+      <div class="close-row"><span>Next month\u2019s obligations</span><span class="v">${money(c.nextObligations)}</span></div>
+      <button class="primary" data-act="next" style="margin-top:12px">Next month</button>
+    </div>`;
+  }
+
+  if (s.phase === 'done')
+    html += `<div class="card"><h3>Run over</h3><p>That is month 60 \u2014 the Money Story would follow (ticket 05).</p></div>`;
+
+  phone.innerHTML = html;
+  wirePhone();
+}
+
+function updatePlanLabels() {
+  const s = state;
+  const income = expectedIncome(s);
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('l-hours', s.hours + 'h');
+  set('l-need', money(s.need));
+  set('l-want', money(s.want));
+  set('l-income', money(income));
+  set('l-save', money(Math.max(0, income - s.need - s.want)));
+}
+
+function wirePhone() {
+  phone.querySelectorAll('input[type=range]').forEach(el => {
+    el.addEventListener('input', () => {
+      const v = Number(el.value);
+      if (el.dataset.act === 'hours') dispatch({ type:'SET_HOURS', hours:v });
+      if (el.dataset.act === 'need')  dispatch({ type:'SET_NEED',  amount:v });
+      if (el.dataset.act === 'want')  dispatch({ type:'SET_WANT',  amount:v });
+      updatePlanLabels(); renderPanel();
+    });
+    // one drag = one interaction; 'input' fires dozens of times and would inflate the count
+    el.addEventListener('change', () => tap());
+  });
+  phone.querySelectorAll('button[data-act]').forEach(el => {
+    el.addEventListener('click', () => {
+      tap();
+      const act = el.dataset.act;
+      if (act === 'confirm')  dispatch({ type:'CONFIRM_PLAN' });
+      if (act === 'choose')   dispatch({ type:'CHOOSE', choiceId:el.dataset.id });
+      if (act === 'continue') dispatch({ type:'CONTINUE' });
+      if (act === 'next')     dispatch({ type:'NEXT_MONTH' });
+      renderPhone(); renderPanel();
+    });
+  });
+}
+
+function dispatch(action) {
+  const prevMonth = state.month;
+  state = applyAction(state, action);
+  changed = describe(action);
+  if (action.type === 'NEXT_MONTH') {
+    pacing.done.push({ month:prevMonth, taps:pacing.taps, secs:(Date.now() - pacing.start) / 1000 });
+    pacing = { taps:0, start:Date.now(), done:pacing.done };
+  }
+  if (action.type === 'RESET' || action.type === 'JUMP_STAGE')
+    pacing = { taps:0, start:Date.now(), done:pacing.done };
+}
+
+function describe(action) {
+  switch (action.type) {
+    case 'CONFIRM_PLAN': return 'Income landed; the month\u2019s card is up.';
+    case 'CHOOSE': {
+      const c = state.card && state.card.choices.find(x => x.id === state.chosen);
+      const bits = [];
+      if (c && c.gain) bits.push('+' + money(c.gain) + ' earned');
+      if (state.cascade && state.cascade.fromSave) bits.push(money(state.cascade.fromSave) + ' pulled from the Save envelope');
+      if (state.cascade && state.cascade.toDebt) bits.push(money(state.cascade.toDebt) + ' pushed onto Debt');
+      if (c && c.freeTime) bits.push(Math.abs(c.freeTime) + 'h ' + (c.freeTime > 0 ? 'back' : 'spent'));
+      return bits.length ? 'Choice applied \u2014 ' + bits.join(', ') + '.' : 'Choice applied.';
+    }
+    case 'CONTINUE': {
+      const d = state.close.netWorthAfter - state.close.netWorthBefore;
+      return 'Month closed \u2014 net worth ' + signed(d) + '.';
+    }
+    case 'NEXT_MONTH': return 'New month: plan again before you see the card.';
+    case 'JUMP_STAGE': return 'Jumped to stage ' + action.stage + ' (prototype scaffolding).';
+    case 'RESET': return 'Reset to month 1.';
+    default: return '';
+  }
+}
+
+function tap() { pacing.taps += 1; }
+
+function renderPanel() {
+  const s = state;
+  $('changed').textContent = changed;
+  const f = (k, v) => `<div class="field"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  $('state').innerHTML = [
+    f('Phase', s.phase),
+    f('Month / age', s.month + ' / ' + s.age),
+    f('Stage', STAGES[s.stage].name + (s.path ? ' (' + s.path + ')' : '')),
+    f('Cash (incl. envelopes)', money(available(s))),
+    f('Pots N/W/S', money(s.pots.need) + ' / ' + money(s.pots.want) + ' / ' + money(s.pots.save)),
+    f('Savings', money(s.savings)),
+    f('Debt', money(s.debt)),
+    f('Credit score', s.score === undefined || s.score === null ? '\u2014 (no card yet)' : s.score),
+    f('Net worth', money(netWorth(s))),
+    f('Free time', Math.max(0, Math.round(s.freeTime)) + 'h'),
+    f('Hours worked', s.hours + 'h'),
+    f('Planned N/W/S', money(s.need) + ' / ' + money(s.want) + ' / ' + money(s.saveAlloc)),
+    f('Spent N/W', money(s.spent.need) + ' / ' + money(s.spent.want)),
+    f('Obligations', money(s.obligations)),
+    f('Insurance', s.insurance ? 'yes' : 'no'),
+    f('BNPL', s.bnpl ? s.bnpl.monthsLeft + ' \u00d7 ' + money(s.bnpl.amount) : 'none'),
+    f('Card', s.card ? s.card.id + ' (' + s.card.kind + ')' : '\u2014'),
+  ].join('');
+
+  const done = pacing.done;
+  $('p-taps').textContent = pacing.taps;
+  $('p-secs').textContent = ((Date.now() - pacing.start) / 1000).toFixed(1);
+  $('p-avg').textContent = done.length ? (done.reduce((a, d) => a + d.secs, 0) / done.length).toFixed(1) : '\u2014';
+  $('p-log').textContent = done.length
+    ? done.map(d => 'M' + d.month + ': ' + d.taps + ' taps, ' + d.secs.toFixed(1) + 's').join('  \u00b7  ')
+    : 'No month completed yet.';
+}
+
+const FREE = [
+  ['Jump to stage 1', { type:'JUMP_STAGE', stage:1 }],
+  ['Jump to stage 2', { type:'JUMP_STAGE', stage:2 }],
+  ['Jump to stage 3', { type:'JUMP_STAGE', stage:3 }],
+  ['Jump to stage 4', { type:'JUMP_STAGE', stage:4 }],
+  ['Jump to stage 5', { type:'JUMP_STAGE', stage:5 }],
+  ['Force: extra shift', { type:'FORCE_CARD', id:'extra_shift' }],
+  ['Force: birthday gift', { type:'FORCE_CARD', id:'birthday_gift' }],
+  ['Force: phone shock', { type:'FORCE_CARD', id:'phone_cracked' }],
+  ['Force: insurance', { type:'FORCE_CARD', id:'insurance_offer' }],
+  ['Force: BNPL', { type:'FORCE_CARD', id:'bnpl_trainers' }],
+  ['Force: the Fork', { type:'FORCE_CARD', id:'the_fork' }],
+  ['Reset', { type:'RESET' }],
+];
+$('freeplay').innerHTML = FREE.map((x, i) => `<button data-free="${i}">${x[0]}</button>`).join('');
+$('freeplay').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  dispatch(FREE[Number(b.dataset.free)][1]); renderPhone(); renderPanel();
+});
+
+const WALKS = [
+  { name:'A normal month',
+    about:'The happy path. Watch the tap count and the clock: if a month of this takes much more than half a minute, 60 months is a chore.',
+    steps:[
+      ['Force the birthday card, plan \u25c840 to Want', [{ type:'FORCE_CARD', id:'birthday_gift' }, { type:'SET_HOURS', hours:0 }, { type:'SET_WANT', amount:40 }]],
+      ['Start the month', [{ type:'CONFIRM_PLAN' }]],
+      ['Buy the gift', [{ type:'CHOOSE', choiceId:'buy' }]],
+      ['Continue \u2014 the month closes', [{ type:'CONTINUE' }]],
+      ['Next month', [{ type:'NEXT_MONTH' }]],
+    ] },
+  { name:'Overspending cascades',
+    about:'Plan with nothing in Want, then take a Want choice anyway. The money comes out of the Save envelope first, then Debt \u2014 and the close sheet should say so.',
+    steps:[
+      ['Jump to stage 2, plan Want = 0 and Need = 20', [{ type:'JUMP_STAGE', stage:2 }, { type:'SET_WANT', amount:0 }, { type:'SET_NEED', amount:20 }]],
+      ['Force the birthday card', [{ type:'FORCE_CARD', id:'birthday_gift' }]],
+      ['Start the month', [{ type:'CONFIRM_PLAN' }]],
+      ['Buy the gift anyway \u2014 watch the cascade', [{ type:'CHOOSE', choiceId:'buy' }]],
+      ['Continue \u2014 the month closes', [{ type:'CONTINUE' }]],
+    ] },
+  { name:'Time is hard',
+    about:'Work all your free time away, then try to take a choice that needs hours you no longer have. It should be unavailable \u2014 money can be borrowed, time cannot.',
+    steps:[
+      ['Jump to stage 3', [{ type:'JUMP_STAGE', stage:3 }]],
+      ['Force the extra shift card', [{ type:'FORCE_CARD', id:'extra_shift' }]],
+      ['Work 80 hours \u2014 all of it', [{ type:'SET_HOURS', hours:80 }]],
+      ['Start the month', [{ type:'CONFIRM_PLAN' }]],
+      ['Look at the shift choice \u2014 it needs 12h you do not have', []],
+    ] },
+  { name:'A shock month',
+    about:'A shock is not a decision \u2014 it IS the month. Nothing to choose, only a bill and a Feedback, and the cascade picks up whatever you did not plan for.',
+    steps:[
+      ['Force the phone shock', [{ type:'FORCE_CARD', id:'phone_cracked' }]],
+      ['Plan: save everything', [{ type:'SET_NEED', amount:0 }, { type:'SET_WANT', amount:0 }]],
+      ['Start the month', [{ type:'CONFIRM_PLAN' }]],
+      ['Deal with it', [{ type:'CHOOSE', choiceId:'ack' }]],
+      ['Continue \u2014 the month closes', [{ type:'CONTINUE' }]],
+    ] },
+  { name:'BNPL and the Fork',
+    about:'Two things the schema must carry: a recurring obligation that builds no credit score, and the age-18 branch that changes the whole economy.',
+    steps:[
+      ['Jump to stage 4, force the BNPL card, work 35h', [{ type:'JUMP_STAGE', stage:4 }, { type:'FORCE_CARD', id:'bnpl_trainers' }, { type:'SET_HOURS', hours:35 }]],
+      ['Start the month', [{ type:'CONFIRM_PLAN' }]],
+      ['Take the four payments', [{ type:'CHOOSE', choiceId:'bnpl' }]],
+      ['Continue \u2014 an instalment is now due', [{ type:'CONTINUE' }]],
+      ['Next month, then jump to stage 5', [{ type:'NEXT_MONTH' }, { type:'JUMP_STAGE', stage:5 }]],
+      ['Force the Fork and start the month', [{ type:'FORCE_CARD', id:'the_fork' }, { type:'CONFIRM_PLAN' }]],
+      ['Choose Study \u2014 watch the 3,000 loan land', [{ type:'CHOOSE', choiceId:'study' }]],
+    ] },
+];
+
+let walkIdx = 0, stepIdx = 0;
+function renderWalks() {
+  $('tabs').innerHTML = WALKS.map((w, i) =>
+    `<button data-tab="${i}" class="${i === walkIdx ? 'on' : ''}">${w.name}</button>`).join('');
+  const w = WALKS[walkIdx];
+  let html = `<p>${w.about}</p>`;
+  w.steps.forEach((s, i) => {
+    html += `<button class="step ${i < stepIdx ? 'done' : ''}" data-step="${i}">${i + 1}. ${s[0]}</button>`;
+  });
+  html += `<button class="step" data-step="reset">Restart this walkthrough</button>`;
+  $('walk-body').innerHTML = html;
+}
+$('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  walkIdx = Number(b.dataset.tab); stepIdx = 0;
+  dispatch({ type:'RESET' }); renderWalks(); renderPhone(); renderPanel();
+});
+$('walk-body').addEventListener('click', e => {
+  const b = e.target.closest('button[data-step]'); if (!b) return;
+  if (b.dataset.step === 'reset') {
+    stepIdx = 0; dispatch({ type:'RESET' }); renderWalks(); renderPhone(); renderPanel(); return;
+  }
+  const i = Number(b.dataset.step);
+  if (i !== stepIdx) return;                       // only the next step is live
+  WALKS[walkIdx].steps[i][1].forEach(a => dispatch(a));
+  stepIdx += 1;
+  renderWalks(); renderPhone(); renderPanel();
+});
+
+state = startMonth(createRun());
+renderPhone(); renderPanel(); renderWalks();
+setInterval(renderPanel, 250);
+</script>
+</body>
+</html>
