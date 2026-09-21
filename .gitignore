@@ -4,4 +4,7 @@ build
 .vercel
 .DS_Store
 *.local
+.env
+.env.*
+!.env.example
 vite.config.ts.timestamp-*
