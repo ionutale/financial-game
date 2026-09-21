@@ -98,6 +98,22 @@ export interface Close {
 	nextObligations: number;
 }
 
+/** One month's record, kept for the Money Story (ticket 05). */
+export interface MonthSnapshot {
+	month: number;
+	netWorth: number;
+	savings: number;
+	debt: number;
+	income: number;
+	/** What actually moved into savings this month. */
+	saved: number;
+	spentNeed: number;
+	spentWant: number;
+	interest: number;
+	/** True when both Need and Want stayed inside their envelopes. */
+	insideBudget: boolean;
+}
+
 export interface RunState {
 	month: number; // 1..60
 	stage: number; // 1..5
@@ -151,6 +167,9 @@ export interface RunState {
 
 	/** Turning points, for the Money Story (ticket 05). */
 	flags: Array<{ month: number; kind: string }>;
+
+	/** One record per closed month, for the Money Story (ticket 05). */
+	history: MonthSnapshot[];
 }
 
 export type Action =
@@ -165,4 +184,5 @@ export type Action =
 	| { type: 'JUMP_STAGE'; stage: number }
 	| { type: 'FORCE_CARD'; id: string }
 	| { type: 'DISMISS_INTRO' }
+	| { type: 'NEW_RUN'; seed: number }
 	| { type: 'RESET' };

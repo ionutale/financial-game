@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { applyAction, createRun } from '$lib/game/loop';
+	import { freshSeed } from '$lib/game/rng';
 	import type { Action, RunState } from '$lib/game/types';
 	import EventStep from './EventStep.svelte';
 	import Hud from './Hud.svelte';
 	import Intro from './Intro.svelte';
+	import MoneyStory from './MoneyStory.svelte';
 	import PlanStep from './PlanStep.svelte';
 	import ResolveStep from './ResolveStep.svelte';
 
@@ -37,6 +39,8 @@
 
 {#if run.showIntro}
 	<Intro onDone={() => dispatch({ type: 'DISMISS_INTRO' })} />
+{:else if run.phase === 'done'}
+	<MoneyStory {run} onNewRun={() => dispatch({ type: 'NEW_RUN', seed: freshSeed() })} />
 {:else}
 	<main class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col gap-7 px-5 py-7">
 		<Hud {run} />
@@ -49,12 +53,6 @@
 					<EventStep {run} {dispatch} />
 				{:else if run.phase === 'resolve'}
 					<ResolveStep {run} {dispatch} />
-				{:else}
-					<section class="surface p-5">
-						<p class="kicker">The run is over</p>
-						<h2 class="mt-2 text-xl font-semibold tracking-tight">Sixty months, done.</h2>
-						<p class="mt-2 text-sm text-[var(--muted)]">Your Money Story would follow here.</p>
-					</section>
 				{/if}
 			</div>
 		{/key}

@@ -161,7 +161,8 @@ export function createRun(seed = 1): RunState {
 		lastPlan: null,
 		showIntro: true,
 		seed,
-		flags: []
+		flags: [],
+		history: []
 	};
 }
 
@@ -169,6 +170,14 @@ export function createRun(seed = 1): RunState {
 export function startMonth(s: RunState): RunState {
 	const st = stageOf(s);
 	s.netWorthAtStart = netWorth(s);
+
+	// The card is issued when the Run reaches Stage 5 (ticket 02: BNPL builds no
+	// score, the card does). Nothing moves until then.
+	if (s.stage === 5 && s.score === null) {
+		s.score = 600;
+		s.flags.push({ month: s.month, kind: 'card_issued' });
+	}
+
 	s.obligations = obligationsFor(s);
 	s.freeTimeMax = st.freeTime;
 	s.freeTime = st.freeTime - s.hours;
@@ -192,10 +201,11 @@ export function closeMonth(s: RunState): RunState {
 	const netWorthBefore = s.netWorthAtStart;
 
 	// Unspent envelopes come back to cash; the Save envelope lands in savings.
+	const savedThisMonth = s.pots.save;
 	s.cash += s.pots.need + s.pots.want;
 	s.pots.need = 0;
 	s.pots.want = 0;
-	s.savings += s.pots.save;
+	s.savings += savedThisMonth;
 	s.pots.save = 0;
 
 	const obligations = s.obligations;
@@ -214,6 +224,32 @@ export function closeMonth(s: RunState): RunState {
 	// Prices drift up for next month.
 	s.inflationIndex *= 1 + INFLATION_MONTHLY;
 
+	const adherence = { need: s.spent.need <= s.need, want: s.spent.want <= s.want };
+
+	// The Credit Score moves on this month's behaviour (ticket 01, simplified:
+	// utilisation needs a card balance the model does not carry yet).
+	if (s.score !== null) {
+		const kinds = s.flags.filter((f) => f.month === s.month).map((f) => f.kind);
+		if (kinds.includes('overdraft')) s.score -= 40;
+		else if (kinds.includes('minimum_payment')) s.score -= 5;
+		else s.score += 8;
+		s.score = Math.max(300, Math.min(850, s.score));
+	}
+
+	// The Money Story's raw material (ticket 05).
+	s.history.push({
+		month: s.month,
+		netWorth: netWorth(s),
+		savings: s.savings + s.fund,
+		debt: s.debt,
+		income: s.income,
+		saved: savedThisMonth,
+		spentNeed: s.spent.need,
+		spentWant: s.spent.want,
+		interest,
+		insideBudget: adherence.need && adherence.want
+	});
+
 	s.close = {
 		income: s.income,
 		spentNeed: s.spent.need,
@@ -225,7 +261,7 @@ export function closeMonth(s: RunState): RunState {
 		netWorthBefore,
 		netWorthAfter: netWorth(s),
 		monthChange: netWorth(s) - netWorthBefore,
-		adherence: { need: s.spent.need <= s.need, want: s.spent.want <= s.want },
+		adherence,
 		nextObligations: obligationsFor(s)
 	};
 	return s;
@@ -370,6 +406,9 @@ export function applyAction(state: RunState, action: Action): RunState {
 			s.showIntro = false;
 			return s;
 		}
+
+		case 'NEW_RUN':
+			return startMonth(createRun(action.seed));
 
 		case 'RESET':
 			return startMonth(createRun());

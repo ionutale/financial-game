@@ -136,7 +136,8 @@ export function netWorth(
 
 /** The neutral currency glyph (ticket 01). Whole numbers, except where noted. */
 export function formatMoney(n: number): string {
-	return '\u25c8' + Math.round(n).toLocaleString('en-US');
+	const value = Math.round(n);
+	return (value < 0 ? '\u2212' : '') + '\u25c8' + Math.abs(value).toLocaleString('en-US');
 }
 
 /**
@@ -146,5 +147,9 @@ export function formatMoney(n: number): string {
  */
 export function formatMoneyExact(n: number): string {
 	const value = Math.round(n * 100) / 100;
-	return '\u25c8' + value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+	return (
+		(value < 0 ? '\u2212' : '') +
+		'\u25c8' +
+		Math.abs(value).toLocaleString('en-US', { maximumFractionDigits: 2 })
+	);
 }

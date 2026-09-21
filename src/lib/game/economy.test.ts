@@ -18,4 +18,9 @@ describe('money formatting', () => {
 		expect(formatMoneyExact(40)).toBe('\u25c840');
 		expect(formatMoneyExact(0)).toBe('\u25c80');
 	});
+
+	it('puts the minus before the glyph, not inside the number', () => {
+		expect(formatMoney(-8597)).toBe('\u2212\u25c88,597');
+		expect(formatMoneyExact(-40.5)).toBe('\u2212\u25c840.5');
+	});
 });
