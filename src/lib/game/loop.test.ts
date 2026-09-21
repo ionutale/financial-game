@@ -225,6 +225,20 @@ describe('the HUD figures', () => {
 	});
 });
 
+describe('the intro', () => {
+	it('shows on a new Run and stays dismissed once the player has read it', () => {
+		const fresh = createRun();
+		expect(fresh.showIntro).toBe(true);
+
+		const dismissed = applyAction(fresh, { type: 'DISMISS_INTRO' });
+		expect(dismissed.showIntro).toBe(false);
+
+		// Reading it must not be undone by starting the month.
+		const started = applyAction(dismissed, { type: 'CONFIRM_PLAN' });
+		expect(started.showIntro).toBe(false);
+	});
+});
+
 describe('the Run', () => {
 	it('advances a month at a time and changes Stage at the year boundary', () => {
 		let s = createRun();

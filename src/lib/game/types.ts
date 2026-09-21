@@ -136,6 +136,9 @@ export interface RunState {
 
 	/** The previous month's plan, so it can be repeated (ticket 04). */
 	lastPlan: { hours: number; need: number; want: number } | null;
+
+	/** The three-screen intro (ticket 04) shows before the first month. */
+	showIntro: boolean;
 }
 
 export type Action =
@@ -149,4 +152,5 @@ export type Action =
 	| { type: 'NEXT_MONTH' }
 	| { type: 'JUMP_STAGE'; stage: number }
 	| { type: 'FORCE_CARD'; id: string }
+	| { type: 'DISMISS_INTRO' }
 	| { type: 'RESET' };

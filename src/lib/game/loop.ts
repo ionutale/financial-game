@@ -105,7 +105,8 @@ export function createRun(): RunState {
 		close: null,
 		log: [],
 		forcedCard: null,
-		lastPlan: null
+		lastPlan: null,
+		showIntro: true
 	};
 }
 
@@ -298,6 +299,11 @@ export function applyAction(state: RunState, action: Action): RunState {
 
 		case 'FORCE_CARD': {
 			s.forcedCard = action.id;
+			return s;
+		}
+
+		case 'DISMISS_INTRO': {
+			s.showIntro = false;
 			return s;
 		}
 
