@@ -1,2 +1,7 @@
 @import 'tailwindcss';
-@plugin 'daisyui';
+
+/* Ticket 13: light theme only in the MVP. DaisyUI otherwise follows
+   prefers-color-scheme, which would ship a dark theme nobody has checked. */
+@plugin 'daisyui' {
+	themes: light --default;
+}

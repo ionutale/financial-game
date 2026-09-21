@@ -126,11 +126,17 @@ Closed tickets:
 
 ## Frontier
 
-**Empty. Every decision on this map is resolved.**
+**Empty of the original work — every decision is resolved.**
 
-What remains is not a decision — it is two artifacts awaiting a human:
+One ticket has been opened by the build itself:
 
-- **09 turn-loop-prototype** — *claimed*, built and verified, waiting on a click-through.
-- **10 money-story-prototype** — *claimed*, built and verified, waiting on a look at the framings.
+- [ ] **15 interest-rounding** — `issues/15-interest-rounding.md` (grilling) — interest renders as
+  ◈0 for most of the early run, so the compounding lesson is invisible when it is first taught.
 
-**11 spec-assembly** is blocked behind exactly those two. Clear them and the destination is reached.
+What remains of the original map is not a decision — it is two artifacts awaiting a human:
+
+- **09 turn-loop-prototype** — resolved without human validation; the risk is carried by the build.
+- **10 money-story-prototype** — resolved without human validation; story-first is untested.
+
+**11 spec-assembly** is unblocked, and is superseded in practice: the build is being driven directly
+from the tickets.
