@@ -10,6 +10,7 @@
 	import PlanStep from './PlanStep.svelte';
 	import ResolveStep from './ResolveStep.svelte';
 	import StageUp from './StageUp.svelte';
+	import StatsSheet from './StatsSheet.svelte';
 
 	let { initial = null, seed = 1 }: { initial?: RunState | null; seed?: number } = $props();
 
@@ -17,6 +18,20 @@
 	// and a deep proxy cannot be structuredClone'd (which is how the reducer copies).
 	// `untrack` because the saved run is a starting point, not something to follow.
 	let run = $state.raw<RunState>(untrack(() => initial ?? createRun(seed)));
+
+	// The Stats Sheet is UI state only (ticket 20) — it must never reach RunState.
+	let statsOpen = $state(false);
+	let statsTrigger: HTMLButtonElement | null = null;
+
+	function openStats(trigger: HTMLButtonElement) {
+		statsTrigger = trigger;
+		statsOpen = true;
+	}
+
+	function closeStats() {
+		statsOpen = false;
+		statsTrigger?.focus();
+	}
 
 	function dispatch(action: Action) {
 		run = applyAction(run, action);
@@ -45,7 +60,7 @@
 	<MoneyStory {run} onNewRun={() => dispatch({ type: 'NEW_RUN', seed: freshSeed() })} />
 {:else}
 	<main class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col gap-7 px-5 py-7">
-		<Hud {run} />
+		<Hud {run} onStats={openStats} />
 
 		{#key run.phase}
 			<div class="rise">
@@ -60,5 +75,9 @@
 				{/if}
 			</div>
 		{/key}
+
+		{#if statsOpen}
+			<StatsSheet {run} onClose={closeStats} />
+		{/if}
 	</main>
 {/if}

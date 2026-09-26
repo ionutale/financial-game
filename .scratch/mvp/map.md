@@ -136,8 +136,8 @@ Closed tickets:
 - [ ] **19 exhausted-pool-fallback** — `issues/19-exhausted-pool-fallback.md` — the fallback that
   stops a Stage stalling deals cards with their `requires` and Thread rules bypassed; found by
   playing a full Run.
-- [ ] **20 stats-sheet** — `issues/20-stats-sheet.md` — Debt, Savings, Fund and the score are
-  invisible during play.
+- [x] **20 stats-sheet** — resolved: the Stats pill opens a full-screen sheet with Savings, Fund,
+  Debt, Credit score, the net-worth curve, Obligations and Thread history (live + past arcs).
 - [x] **19 exhausted-pool-fallback** — resolved: the fallback now repeats legally and only as a
   last resort; the deck grew to 84 cards so every Stage can fill its draws unseen (0 repeats
   across four seeds).

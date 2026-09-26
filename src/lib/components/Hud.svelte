@@ -14,7 +14,9 @@
 	import Avatar from './Avatar.svelte';
 	import Money from './Money.svelte';
 
-	let { run }: { run: RunState } = $props();
+	// The Stats pill hands its element back so focus can return on close (ticket 14).
+	let { run, onStats }: { run: RunState; onStats: (trigger: HTMLButtonElement) => void } =
+		$props();
 
 	const stage = $derived(STAGES[run.stage]);
 	const goal = $derived(goalTarget(run));
@@ -28,12 +30,18 @@
 		<div class="h-11 w-11 shrink-0 rounded-full bg-[var(--wash)] p-1.5 text-[var(--ink-40)]">
 			<Avatar stage={run.stage} />
 		</div>
-		<div class="min-w-0">
+		<div class="min-w-0 flex-1">
 			<p class="kicker">Month {run.month} of 60</p>
 			<p class="truncate text-sm">
 				{run.age} · {stage.name}{run.path ? ` · ${run.path}` : ''}
 			</p>
 		</div>
+		<button
+			class="min-h-11 shrink-0 rounded-full border border-[var(--line)] bg-[var(--surface)] px-4 text-xs font-semibold transition active:scale-[0.99]"
+			onclick={(e) => onStats(e.currentTarget)}
+		>
+			Stats
+		</button>
 	</div>
 
 	<div>
