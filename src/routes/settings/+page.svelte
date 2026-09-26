@@ -5,6 +5,7 @@
 	 * cookie behind a typed confirmation, then returns the player to a fresh Run.
 	 */
 	import { goto } from '$app/navigation';
+	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 	import { m } from '$lib/i18n/messages';
 	import { tick } from 'svelte';
 
@@ -67,6 +68,16 @@
 			{m.settings_lead()}
 		</p>
 	</header>
+
+	<section class="surface p-5" aria-labelledby="settings-language">
+		<p class="kicker" id="settings-language">{m.settings_language_kicker()}</p>
+		<p class="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+			{m.settings_language_body()}
+		</p>
+		<div class="mt-4">
+			<LanguageSwitcher labelledBy="settings-language" />
+		</div>
+	</section>
 
 	<section class="surface p-5" aria-labelledby="settings-download">
 		<p class="kicker" id="settings-download">{m.settings_download_kicker()}</p>

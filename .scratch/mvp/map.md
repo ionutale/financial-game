@@ -133,6 +133,10 @@ Closed tickets:
 
 **Empty of the original work — every decision is resolved.** The build's tickets:
 
+- [ ] **29 localized-internal-links** — `issues/29-localized-internal-links.md` — bare-path links
+  rely on the locale redirect; a hop, not a break.
+- [x] **28 language-switcher-ci** — resolved: the EN/IT/RO switcher, hreflang on every page, the
+  i18n gate in CI, and the hydration race the first independent run exposed (fixed).
 - [x] **27 translate-it-ro** — resolved: both catalogues translated in full (695 keys each);
   a Fink human pass is recorded as owed.
 - [x] **26 i18n-build** — resolved: Paraglide wired on the ticket-07 strategy, the deck is

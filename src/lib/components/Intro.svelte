@@ -4,6 +4,7 @@
 	 * aiming at, and how a month works. No tutorial — the first card teaches.
 	 */
 	import { m } from '$lib/i18n/messages';
+	import LanguageSwitcher from './LanguageSwitcher.svelte';
 
 	let { onDone }: { onDone: () => void } = $props();
 
@@ -58,6 +59,13 @@
 		<span aria-hidden="true">·</span>
 		<a class="underline underline-offset-2" href="/settings">{m.link_settings()}</a>
 	</p>
+
+	<!-- Ticket 28: the first-run notice is where language matters most, so the
+	     choice sits with the fine print, out of the way of the one action. -->
+	<div class="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
+		<p class="kicker" id="intro-language">{m.language_label()}</p>
+		<LanguageSwitcher compact labelledBy="intro-language" />
+	</div>
 
 	<div class="mt-6 flex items-center justify-between">
 		<div class="flex gap-1.5" aria-hidden="true">

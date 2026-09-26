@@ -1,0 +1,44 @@
+name: i18n
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: i18n-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The translation gate (ticket 28) is a compiler + a CLI + one Vitest file — no
+# browser, no build server. It lives beside the accessibility workflow rather
+# than inside it: the a11y gate keeps its browser install and Lighthouse, and
+# this gate runs in parallel without them.
+jobs:
+  i18n:
+    name: Paraglide compile + translation gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          # The Vercel function runtime pinned in svelte.config.js.
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile Paraglide
+        run: pnpm i18n:compile
+
+      # inlang validate + inlang lint + the deck-integrity Vitest gate: fails on
+      # a missing translation, an orphan card_* key, or parameter drift.
+      - name: Run the translation gate
+        run: pnpm i18n:check
