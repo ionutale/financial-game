@@ -131,11 +131,10 @@ Closed tickets:
 
 ## Frontier
 
-**Empty of the original work — every decision is resolved.** The build has since opened its own
-tickets:
+**Empty of the original work — every decision is resolved.** The build's tickets, all resolved:
 
-- [ ] **18 fork-before-plan** — `issues/18-fork-before-plan.md` — the Plan step at month 49 runs
-  before the Fork is chosen and quotes an obligation the player may never owe.
+- [x] **18 fork-before-plan** — resolved: the Fork is a Stage-up interstitial that resolves before
+  month 49's Plan, with the compact stage announcement.
 - [x] **16 deck-content-pass** — resolved: 69 cards, pools of 15/15/16/15 and 25 drawable in
   Stage 5; `requires` and `thread` implemented, with the countdown chip on the month screen.
 - [x] **15 interest-rounding** — resolved and shipped.

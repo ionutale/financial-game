@@ -167,6 +167,11 @@ export function pickCard(s: RunState): Card | null {
 	return pool[pool.length - 1];
 }
 
+/** A Stage-up card opens a Stage before its first Plan (ticket 02). */
+function stageUpFor(stage: number): Card | undefined {
+	return CARDS.find((c) => c.kind === 'stage_up' && c.stages.includes(stage));
+}
+
 export function createRun(seed = 1): RunState {
 	return {
 		month: 1,
@@ -242,6 +247,13 @@ export function startMonth(s: RunState): RunState {
 	s.feedback = null;
 	s.cascade = null;
 	s.close = null;
+
+	// A Stage opens with its Stage-up card, before the month can be planned (ticket 02).
+	const up = stageUpFor(s.stage);
+	if (up && !played(s).has(up.id)) {
+		s.card = up;
+		s.phase = 'stage_up';
+	}
 	return s;
 }
 
@@ -375,7 +387,7 @@ export function applyAction(state: RunState, action: Action): RunState {
 		}
 
 		case 'CHOOSE': {
-			if (s.phase !== 'event' || !s.card || s.chosen) return s;
+			if ((s.phase !== 'event' && s.phase !== 'stage_up') || !s.card || s.chosen) return s;
 			const choice = s.card.choices.find((c) => c.id === action.choiceId);
 			if (!choice) return s;
 
@@ -388,10 +400,17 @@ export function applyAction(state: RunState, action: Action): RunState {
 
 			if (choice.gain) s.cash += choice.gain;
 
-			s.cascade = cost > 0 ? drawFromPot(s, choice.category ?? 'want', cost) : null;
-			// Only Need and Want are "spending" for adherence; drawing on Save is the cascade.
-			if (cost > 0 && (choice.category === 'need' || choice.category === 'want')) {
-				s.spent[choice.category] += cost;
+			if (s.phase === 'stage_up') {
+				// No envelopes exist before the month's Plan, so a Stage-up cost pays
+				// from real money: cash, then savings, then Debt (ticket 18).
+				if (cost > 0) payFromCash(s, cost);
+				s.cascade = null;
+			} else {
+				s.cascade = cost > 0 ? drawFromPot(s, choice.category ?? 'want', cost) : null;
+				// Only Need and Want are "spending" for adherence; drawing on Save is the cascade.
+				if (cost > 0 && (choice.category === 'need' || choice.category === 'want')) {
+					s.spent[choice.category] += cost;
+				}
 			}
 			if (choice.freeTime) s.freeTime += choice.freeTime;
 
@@ -408,6 +427,7 @@ export function applyAction(state: RunState, action: Action): RunState {
 			if (choice.sets?.path) {
 				s.path = choice.sets.path;
 				s.freeTimeMax = stageOf(s).freeTime;
+				s.freeTime = s.freeTimeMax - s.hours;
 				s.obligations = obligationsFor(s);
 				if (s.path === 'study') s.debt += STUDENT_LOAN;
 				s.flags.push({ month: s.month, kind: `fork:${s.path}` });
@@ -426,6 +446,14 @@ export function applyAction(state: RunState, action: Action): RunState {
 		}
 
 		case 'CONTINUE': {
+			if (s.phase === 'stage_up' && s.chosen) {
+				// The Stage's card is done; the month's own Plan begins (ticket 18).
+				s.phase = 'plan';
+				s.card = null;
+				s.chosen = null;
+				s.feedback = null;
+				return s;
+			}
 			if (s.phase !== 'event' || !s.chosen) return s;
 			closeMonth(s);
 			s.phase = 'resolve';

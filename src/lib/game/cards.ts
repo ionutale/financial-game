@@ -1349,7 +1349,7 @@ export const CARDS: Card[] = [
 	// ---------------------------------------------------------------- Stage 5
 	{
 		id: 'the_fork',
-		kind: 'decision',
+		kind: 'stage_up',
 		stages: [5],
 		branch: 'shared',
 		weight: 0,
@@ -1374,7 +1374,7 @@ export const CARDS: Card[] = [
 				category: 'save',
 				sets: { path: 'work' },
 				feedback:
-					'Full-time wage, and rent the moment you move \u2014 starting with the deposit. This is why the Save envelope mattered in year one.'
+					'Full-time wage, and rent the moment you move \u2014 starting with the deposit. This is why saving in year one mattered.'
 			}
 		]
 	},

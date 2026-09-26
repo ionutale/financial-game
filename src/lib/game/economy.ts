@@ -3,7 +3,7 @@
  * One tunable config, so balancing never touches the cards.
  */
 
-import type { PathId, RunState } from './types';
+import type { ConceptId, PathId, RunState } from './types';
 
 /** 3%/yr credited monthly. */
 export const SAVINGS_MONTHLY = 0.0025;
@@ -13,6 +13,18 @@ export const INFLATION_MONTHLY = 0.0021;
 export const GOAL_TARGET = 4000; // Work path Named Goal
 export const STUDY_BUFFER = 1000; // Study path Named Goal
 export const STUDENT_LOAN = 3000;
+
+/** Human names for the eight Concepts, from the glossary. */
+export const CONCEPT_LABEL: Record<ConceptId, string> = {
+	needs_wants: 'needs vs wants',
+	earning_work: 'earning & work',
+	budgeting: 'budgeting & tracking',
+	saving_goals: 'saving & goals',
+	interest: 'interest & compounding',
+	credit: 'credit & debt',
+	investing: 'investing & risk',
+	tax_insurance_scams: 'taxes, insurance & scams'
+};
 
 export interface StageSpec {
 	age: number;
@@ -26,7 +38,7 @@ export interface StageSpec {
 	/** Recurring Obligations at this Stage, before inflation. */
 	obligations: number;
 	/** The concepts that unlock at this Stage (tickets 02). */
-	concepts: string[];
+	concepts: ConceptId[];
 }
 
 export const STAGES: Record<number, StageSpec> = {

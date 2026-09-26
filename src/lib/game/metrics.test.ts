@@ -8,6 +8,13 @@ function withState(patch: Partial<RunState>): RunState {
 	return { ...createRun(), ...patch };
 }
 
+/** A Run at Stage 5, past the Fork's stage-up and ready to plan (ticket 18). */
+function atStage5(): RunState {
+	let s = applyAction(createRun(), { type: 'JUMP_STAGE', stage: 5 });
+	s = applyAction(s, { type: 'CHOOSE', choiceId: 'study' });
+	return applyAction(s, { type: 'CONTINUE' });
+}
+
 describe('the outcome band', () => {
 	it('is Behind when the floor is missed', () => {
 		expect(outcomeBand(withState({ savings: 500 }))).toBe('behind');
@@ -69,13 +76,13 @@ describe('the history', () => {
 describe('the credit score', () => {
 	it('is issued when the Run reaches Stage 5, and not before', () => {
 		expect(createRun().score).toBeNull();
-		const s5 = applyAction(createRun(), { type: 'JUMP_STAGE', stage: 5 });
+		const s5 = atStage5();
 		expect(s5.score).toBe(600);
 		expect(s5.flags.some((f) => f.kind === 'card_issued')).toBe(true);
 	});
 
 	it('rises on a clean month and falls hard on an overdraft', () => {
-		const s5 = applyAction(createRun(), { type: 'JUMP_STAGE', stage: 5 });
+		const s5 = atStage5();
 
 		const clean = runActions(
 			s5,

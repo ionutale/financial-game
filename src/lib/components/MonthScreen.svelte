@@ -9,6 +9,7 @@
 	import MoneyStory from './MoneyStory.svelte';
 	import PlanStep from './PlanStep.svelte';
 	import ResolveStep from './ResolveStep.svelte';
+	import StageUp from './StageUp.svelte';
 
 	let { initial = null, seed = 1 }: { initial?: RunState | null; seed?: number } = $props();
 
@@ -19,8 +20,9 @@
 
 	function dispatch(action: Action) {
 		run = applyAction(run, action);
-		// Committing at the month close is the one write per Turn (ticket 04).
-		if (action.type === 'CONTINUE') void persist(run);
+		// Committing at the month close is the one write per Turn (ticket 04); a
+		// Stage-up happens mid-month and stays client-side.
+		if (action.type === 'CONTINUE' && run.phase === 'resolve') void persist(run);
 	}
 
 	async function persist(state: RunState) {
@@ -47,7 +49,9 @@
 
 		{#key run.phase}
 			<div class="rise">
-				{#if run.phase === 'plan'}
+				{#if run.phase === 'stage_up'}
+					<StageUp {run} {dispatch} />
+				{:else if run.phase === 'plan'}
 					<PlanStep {run} {dispatch} />
 				{:else if run.phase === 'event'}
 					<EventStep {run} {dispatch} />

@@ -47,10 +47,6 @@ export interface PlanWarning {
  * model). Returns null when there is nothing to warn about.
  */
 export function planWarning(run: RunState): PlanWarning | null {
-	// Before the Fork is chosen the obligation depends on that choice, so the
-	// pre-fork month is suppressed rather than lied about (tickets 17 and 18).
-	if (run.stage === 5 && run.path === null) return null;
-
 	const due = obligationsFor(run);
 	const income = expectedIncome(run);
 	if (due <= income) return null;

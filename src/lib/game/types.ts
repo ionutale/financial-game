@@ -3,7 +3,7 @@
  * Vocabulary follows CONTEXT.md.
  */
 
-export type Phase = 'plan' | 'event' | 'resolve' | 'done';
+export type Phase = 'plan' | 'stage_up' | 'event' | 'resolve' | 'done';
 
 export type ConceptId =
 	| 'needs_wants'

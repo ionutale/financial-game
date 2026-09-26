@@ -10,6 +10,11 @@ import type { RunState } from './types';
 function play(state: RunState, months: number): RunState {
 	let s = state;
 	for (let i = 0; i < months; i++) {
+		// A Stage-up opens the month first (the Fork, on entering Stage 5).
+		if (s.phase === 'stage_up' && s.card) {
+			s = applyAction(s, { type: 'CHOOSE', choiceId: s.card.choices[0].id });
+			s = applyAction(s, { type: 'CONTINUE' });
+		}
 		s = applyAction(s, { type: 'SET_HOURS', hours: 0 });
 		s = applyAction(s, { type: 'CONFIRM_PLAN' });
 		if (!s.card) break;
@@ -118,6 +123,6 @@ describe('a whole Run', () => {
 		const s = play(createRun(8), 60);
 		expect(s.month).toBe(61);
 		expect(s.phase).toBe('done');
-		expect(s.log).toHaveLength(60);
+		expect(s.log).toHaveLength(61); // sixty months plus the Fork's stage-up
 	});
 });

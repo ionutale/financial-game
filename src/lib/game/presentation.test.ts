@@ -74,10 +74,6 @@ describe('the shortfall warning (ticket 17)', () => {
 		const planned = applyAction(atStage(3), { type: 'SET_HOURS', hours: 12 });
 		expect(planWarning(planned)).toBeNull();
 	});
-
-	it('stays quiet before the Fork is chosen, when the obligation is not yet real', () => {
-		expect(planWarning(atStage(5))).toBeNull();
-	});
 });
 
 describe('the Stage-3 work hint (ticket 17)', () => {
