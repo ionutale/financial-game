@@ -10,6 +10,8 @@ export const SPINE: Record<number, string> = {
 	37: 'bnpl_offer', // Stage 4: credit arrives, and it is not a card
 	49: 'the_fork', // Stage 5: study or work
 	50: 'first_taxed_payslip', // Stage 5: the deduction reveal
+	51: 'first_statement', // Stage 5: the card's first statement (ticket 03's teachable moment)
+	53: 'scam_opportunity', // Stage 5: the scam, guaranteed (ticket 03)
 	55: 'the_crash' // Stage 5: the risk half of investing
 };
 

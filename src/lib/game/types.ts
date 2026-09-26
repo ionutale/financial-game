@@ -43,6 +43,8 @@ export interface Choice {
 		path?: PathId;
 		overdraft?: number;
 		minimumStreak?: number;
+		/** Plant this Thread when the Choice is taken (ticket 03). */
+		thread?: string;
 	};
 }
 
@@ -58,6 +60,10 @@ export interface Card {
 	weight?: number;
 	/** Authoring metadata, never shown (ticket 03). */
 	teaches?: string;
+	/** Conditions a Run must satisfy before this card can be dealt (ticket 03). */
+	requires?: string[];
+	/** The live Thread this card resolves when played (ticket 03). */
+	resolves?: string;
 	choices: Choice[];
 }
 
@@ -112,6 +118,13 @@ export interface MonthSnapshot {
 	interest: number;
 	/** True when both Need and Want stayed inside their envelopes. */
 	insideBudget: boolean;
+}
+
+/** One live Thread (ticket 03): a consequence planted by a Choice, due to resolve. */
+export interface ThreadState {
+	id: string;
+	/** The month it was planted, which fixes the deadline. */
+	since: number;
 }
 
 export interface RunState {
@@ -170,6 +183,9 @@ export interface RunState {
 
 	/** Turning points, for the Money Story (ticket 05). */
 	flags: Array<{ month: number; kind: string }>;
+
+	/** The single live Thread, or null (ticket 03). At most one at a time. */
+	thread: ThreadState | null;
 
 	/** One record per closed month, for the Money Story (ticket 05). */
 	history: MonthSnapshot[];

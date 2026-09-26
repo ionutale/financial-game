@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cardById } from './cards';
+import { CARDS, cardById } from './cards';
 import { applyAction, createRun } from './loop';
 import { turnRng } from './rng';
 import { SPINE } from './spine';
@@ -75,20 +75,45 @@ describe('the draw', () => {
 		expect(new Set(stage1).size).toBe(stage1.length);
 	});
 
-	it('serves every Concept of a Stage at least twice', () => {
-		const s = play(createRun(31337), 12);
-		const counts = new Map<string, number>();
-		for (const id of cardsPlayed(s)) {
-			const concept = cardById(id)?.concept;
-			if (concept) counts.set(concept, (counts.get(concept) ?? 0) + 1);
-		}
-		for (const concept of STAGES[1].concepts) {
-			expect(counts.get(concept) ?? 0, `concept ${concept}`).toBeGreaterThanOrEqual(2);
+	it('serves every Concept of every Stage at least twice, across seeds', () => {
+		for (const seed of [8, 555, 2024, 31337]) {
+			const s = play(createRun(seed), 60);
+			for (let stage = 1; stage <= 5; stage++) {
+				const from = (stage - 1) * 12 + 1;
+				const counts = new Map<string, number>();
+				for (const entry of s.log.filter((l) => l.month >= from && l.month <= from + 11)) {
+					const concept = cardById(entry.card)?.concept;
+					if (concept) counts.set(concept, (counts.get(concept) ?? 0) + 1);
+				}
+				for (const concept of STAGES[stage].concepts) {
+					expect(counts.get(concept) ?? 0, `seed ${seed} S${stage} ${concept}`).toBeGreaterThanOrEqual(2);
+				}
+			}
 		}
 	});
 });
 
 describe('a whole Run', () => {
+	it('keeps enough of every pool that a Stage never runs out of unseen cards', () => {
+		for (let stage = 1; stage <= 5; stage++) {
+			const spineBeats = Object.keys(SPINE).filter(
+				(month) => Math.floor((Number(month) - 1) / 12) + 1 === stage
+			).length;
+			const draws = 12 - spineBeats;
+			for (const path of [null, 'study', 'work'] as const) {
+				const pool = CARDS.filter(
+					(c) =>
+						c.stages.includes(stage) &&
+						(c.weight ?? 1) > 0 &&
+						(c.branch === undefined || c.branch === 'shared' || c.branch === path)
+				);
+				// Every gated card could be ineligible at once; the rest must still fill the Stage.
+				const always = pool.filter((c) => !c.requires?.length).length;
+				expect(always, `Stage ${stage}, path ${path ?? 'shared'}`).toBeGreaterThanOrEqual(draws);
+			}
+		}
+	});
+
 	it('plays sixty months to the end without stalling', () => {
 		const s = play(createRun(8), 60);
 		expect(s.month).toBe(61);

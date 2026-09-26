@@ -9,6 +9,7 @@
 		STAGES
 	} from '$lib/game/economy';
 	import type { RunState } from '$lib/game/types';
+	import { threadChip } from '$lib/game/threads';
 	import Avatar from './Avatar.svelte';
 	import Money from './Money.svelte';
 
@@ -18,6 +19,7 @@
 	const goal = $derived(goalTarget(run));
 	const saved = $derived(savedTowardGoal(run));
 	const pct = $derived(Math.max(0, Math.min(100, (saved / goal) * 100)));
+	const thread = $derived(threadChip(run));
 </script>
 
 <header class="flex flex-col gap-6">
@@ -66,11 +68,17 @@
 		</div>
 	</div>
 
+	{#if thread}
+		<p class="w-fit rounded-full bg-[var(--money-wash)] px-3 py-1 text-xs text-[var(--money)]">
+			{thread}
+		</p>
+	{/if}
+
 	{#if run.bnpl}
 		<p
 			class="w-fit rounded-full bg-[var(--money-wash)] px-3 py-1 text-xs text-[var(--money)]"
 		>
-			Open thread — {run.bnpl.monthsLeft} payments of {formatMoney(run.bnpl.amount)} left
+			BNPL — {run.bnpl.monthsLeft} payments of {formatMoney(run.bnpl.amount)} left
 		</p>
 	{/if}
 </header>

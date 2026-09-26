@@ -15,6 +15,7 @@ import {
 } from './economy';
 import { turnRng } from './rng';
 import { spineCardId } from './spine';
+import { THREADS, threadDue } from './threads';
 import type { Action, Card, Category, DrawResult, PayResult, RunState } from './types';
 
 export const RUN_MONTHS = 60;
@@ -61,6 +62,37 @@ function played(s: RunState): Set<string> {
 }
 
 /**
+ * The `requires` vocabulary (ticket 03): named conditions a card can demand of
+ * the Run before it is drawable. Unknown conditions are never satisfied.
+ */
+export function requiresSatisfied(s: RunState, requires?: string[]): boolean {
+	for (const condition of requires ?? []) {
+		if (condition === 'credit_card_open') {
+			if (s.score === null) return false;
+		} else if (condition === 'bnpl_active') {
+			if (!s.bnpl) return false;
+		} else if (condition === 'has_debt') {
+			if (s.debt <= 0) return false;
+		} else if (condition === 'insured') {
+			if (!s.insurance) return false;
+		} else if (condition.startsWith('thread:')) {
+			if (s.thread?.id !== condition.slice(7)) return false;
+		} else {
+			return false;
+		}
+	}
+	return true;
+}
+
+/** A Thread that could not fall due before month 60 is never planted. */
+function plantsBeyondRun(s: RunState, card: Card): boolean {
+	return card.choices.some((choice) => {
+		const id = choice.sets?.thread;
+		return id !== undefined && s.month + THREADS[id].months > RUN_MONTHS;
+	});
+}
+
+/**
  * Which card this Turn deals.
  *
  * 1. The **spine** wins: fixed beats guarantee every Teachable Moment lands.
@@ -84,12 +116,18 @@ export function pickCard(s: RunState): Card | null {
 	}
 
 	const stageConcepts = new Set(stageOf(s).concepts);
+	const liveThread = s.thread?.id ?? null;
 	let pool = CARDS.filter(
 		(c) =>
 			c.stages.includes(s.stage) &&
 			(c.weight ?? 1) > 0 &&
 			!seen.has(c.id) &&
-			(c.branch === undefined || c.branch === 'shared' || c.branch === s.path)
+			(c.branch === undefined || c.branch === 'shared' || c.branch === s.path) &&
+			requiresSatisfied(s, c.requires) &&
+			// A resolve card waits for its own Thread; a plant waits for a free slot.
+			(!c.resolves || c.resolves === liveThread) &&
+			(!liveThread || !c.choices.some((ch) => ch.sets?.thread)) &&
+			!plantsBeyondRun(s, c)
 	);
 
 	// A long Stage can exhaust its pool; repeating beats stalling.
@@ -97,6 +135,15 @@ export function pickCard(s: RunState): Card | null {
 		pool = CARDS.filter((c) => c.stages.includes(s.stage) && (c.weight ?? 1) > 0);
 	}
 	if (pool.length === 0) return null;
+
+	// A planted Thread cannot dangle: once due, its resolve card is dealt.
+	const due = s.thread;
+	if (due && s.month >= threadDue(due)) {
+		const resolve = pool.find((c) => c.resolves === due.id);
+		if (resolve) return resolve;
+		// Impossible with a healthy deck (see threads.test.ts); drop rather than stall.
+		s.thread = null;
+	}
 
 	const counts = new Map<string, number>();
 	for (const id of seen) {
@@ -163,6 +210,7 @@ export function createRun(seed = 1): RunState {
 		workHintDone: false,
 		seed,
 		flags: [],
+		thread: null,
 		history: []
 	};
 }
@@ -364,6 +412,12 @@ export function applyAction(state: RunState, action: Action): RunState {
 				if (s.path === 'study') s.debt += STUDENT_LOAN;
 				s.flags.push({ month: s.month, kind: `fork:${s.path}` });
 			}
+
+			// Threads (tickets 03): a Choice can plant one; a resolve card ends it.
+			if (choice.sets?.thread && !s.thread) {
+				s.thread = { id: choice.sets.thread, since: s.month };
+			}
+			if (s.card.resolves && s.thread?.id === s.card.resolves) s.thread = null;
 
 			s.chosen = choice.id;
 			s.feedback = choice.feedback;

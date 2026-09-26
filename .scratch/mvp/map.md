@@ -134,10 +134,10 @@ Closed tickets:
 **Empty of the original work — every decision is resolved.** The build has since opened its own
 tickets:
 
-- [ ] **16 deck-content-pass** — `issues/16-deck-content-pass.md` — the pool is 30 cards against a
-  target of ~81, and `requires` / `thread` from ticket 03 are still unimplemented.
 - [ ] **18 fork-before-plan** — `issues/18-fork-before-plan.md` — the Plan step at month 49 runs
   before the Fork is chosen and quotes an obligation the player may never owe.
+- [x] **16 deck-content-pass** — resolved: 69 cards, pools of 15/15/16/15 and 25 drawable in
+  Stage 5; `requires` and `thread` implemented, with the countdown chip on the month screen.
 - [x] **15 interest-rounding** — resolved and shipped.
 - [x] **17 default-plan-trap** — resolved: the Shortfall Warning and the Wage Hint; no economy change.
 
