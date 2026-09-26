@@ -52,9 +52,11 @@ export default defineConfig({
 		env: {
 			...process.env,
 			/* Preview is a production build and refuses to boot without the
-			   pepper. A throwaway value is safe: the in-process store is used
-			   because no MONGODB_URI is set. */
-			PROFILE_PEPPER: process.env.PROFILE_PEPPER ?? 'a11y-local-pepper'
+			   pepper. Both values are throwaway: the in-process store is
+			   opted into explicitly because no MONGODB_URI exists here, and a
+			   production build refuses to fall back silently (ticket 32). */
+			PROFILE_PEPPER: process.env.PROFILE_PEPPER ?? 'a11y-local-pepper',
+			A11Y_MEMORY_STORE: '1'
 		}
 	}
 });

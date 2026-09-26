@@ -57,7 +57,10 @@ try {
 			['node_modules/vite/bin/vite.js', 'preview', '--port', PORT, '--strictPort'],
 			{
 				stdio: 'inherit',
-				env: { ...process.env, PROFILE_PEPPER },
+				// Preview is a production build: the throwaway pepper satisfies
+				// the same check, and A11Y_MEMORY_STORE is the explicit opt-in
+				// that lets it use the in-process store without Atlas (ticket 32).
+				env: { ...process.env, PROFILE_PEPPER, A11Y_MEMORY_STORE: '1' },
 				detached: true
 			}
 		);

@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { RUN_MONTHS, createRun } from '../game/loop';
 import type { RunState } from '../game/types';
-import { createMemoryStore, readProfile, type SavedRun } from './store';
+import {
+	createMemoryStore,
+	readProfile,
+	resolveStore,
+	type RunStore,
+	type SavedRun
+} from './store';
 
 /** A Run state parked at a month and phase — the store never validates them. */
 function stateAt(month: number, phase: RunState['phase'], seed = 1): RunState {
@@ -242,5 +248,46 @@ describe('the retention sweep', () => {
 
 		expect(await store.sweep(cutoff)).toBe(1);
 		expect(await store.loadProfile('k')).toEqual({ active: null, archive: [] });
+	});
+});
+
+describe('choosing the run store (ticket 32)', () => {
+	const memoryStore = { kind: 'memory' } as unknown as RunStore;
+	const mongoStore = { kind: 'mongo' } as unknown as RunStore;
+	const calls: string[] = [];
+	const stores = {
+		mongo: (uri: string) => {
+			calls.push(uri);
+			return mongoStore;
+		},
+		memory: () => memoryStore
+	};
+
+	it('uses Atlas whenever a URI is configured, in dev and in production', () => {
+		expect(resolveStore({ uri: 'mongodb://atlas', dev: true, allowMemory: false }, stores)).toBe(
+			mongoStore
+		);
+		expect(resolveStore({ uri: 'mongodb://atlas', dev: false, allowMemory: false }, stores)).toBe(
+			mongoStore
+		);
+		expect(calls).toEqual(['mongodb://atlas', 'mongodb://atlas']);
+	});
+
+	it('keeps the in-process fallback in development', () => {
+		expect(resolveStore({ uri: undefined, dev: true, allowMemory: false }, stores)).toBe(
+			memoryStore
+		);
+	});
+
+	it('refuses to serve a production build without a URI', () => {
+		expect(() => resolveStore({ uri: undefined, dev: false, allowMemory: false }, stores)).toThrow(
+			/MONGODB_URI must be set in production/
+		);
+	});
+
+	it('allows the in-process store only when the a11y gate opts in explicitly', () => {
+		expect(resolveStore({ uri: undefined, dev: false, allowMemory: true }, stores)).toBe(
+			memoryStore
+		);
 	});
 });

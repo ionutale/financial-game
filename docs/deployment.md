@@ -30,9 +30,9 @@ full below.
    Atlas IP access list has to allow `0.0.0.0/0`. Without an entry, every database call fails after
    the driver's 5-second server-selection timeout. Static egress is an Enterprise/Secure Compute
    feature.
-6. **A missing `MONGODB_URI` in production is silent.** The app falls back to an in-process store,
-   exactly as in development — but production has no log line for it. It deploys, it plays, and
-   every cold start loses all progress. §6.6 exists to catch this.
+6. **A missing `MONGODB_URI` makes production refuse to serve.** Outside development the app will
+   not fall back to the in-process store: every request fails fast instead of playing with progress
+   that dies at cold start. §6.6 confirms the URI is really being used.
 7. **`PROFILE_PEPPER` is required in Preview too.** Preview deployments are production builds; if
    the pepper is scoped to Production only, every preview URL 500s on its first request.
 8. **A missing `CRON_SECRET` fails closed.** `/api/cron/retention` refuses every request without
@@ -143,7 +143,7 @@ cron; the route compares it in constant time and fails closed if the secret is u
 
    | Name | Value | What it does | If it is missing |
    |---|---|---|---|
-   | `MONGODB_URI` | the Atlas SRV string from §2 | the only persistent store; a module-scope `MongoClient` with a small pool, reused across invocations | the in-process store is used, silently in production; progress dies with the next cold start |
+   | `MONGODB_URI` | the Atlas SRV string from §2 | the only persistent store; a module-scope `MongoClient` with a small pool, reused across invocations | every request fails fast: a production build refuses the in-process store (ticket 32) |
    | `PROFILE_PEPPER` | §3, from the password manager | peppers the profile digest; never changes | every request to every route throws 500 |
    | `CRON_SECRET` | §3 | authorises the daily retention sweep | `/api/cron/retention` 401s forever; the 12-month deletion stops |
 
@@ -224,8 +224,9 @@ The response carries `fg_profile=; … Max-Age=0`. Export again: empty. In the U
 
 Play a month on the deployed site, then Atlas → Deployment → Browse Collections → `financial-game`
 → `runs`. There must be one document whose `_id` is a 64-character hex digest (the peppered key,
-never the cookie) and whose `updatedAt` is fresh. **An empty collection means `MONGODB_URI` is
-missing or the network access list is wrong — stop and fix it before announcing anything.**
+never the cookie) and whose `updatedAt` is fresh. **An empty collection means the app is not really
+using Atlas — a wrong URI, a closed network access list, or a deploy from before ticket 32 — stop
+and fix it before announcing anything.**
 
 **6.7 The cron fails closed, then runs**
 
@@ -257,9 +258,10 @@ own preview build on port 4173 with `--strictPort` (it fails rather than killing
 port); `A11Y_BASE_URL` points it at an already-running server instead
 ([docs/accessibility.md](accessibility.md)).
 
-CI parity: `.github/workflows/i18n.yml` runs the translation gate and `.github/workflows/a11y.yml`
-runs the accessibility gate on every push and pull request. `pnpm verify` is those two plus the type
-check and unit tests, in one place, designed to run before a deploy.
+CI parity: `.github/workflows/ci.yml` runs the type check and unit tests,
+`.github/workflows/i18n.yml` runs the translation gate, and `.github/workflows/a11y.yml` runs the
+accessibility gate — each on every push and pull request. `pnpm verify` is all four in one place,
+designed to run before a deploy.
 
 ## 8. Rollback
 

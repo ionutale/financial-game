@@ -19,6 +19,15 @@ export function mongoUri(): string | undefined {
 }
 
 /**
+ * The accessibility gate serves a production build (`vite preview`) with no
+ * Atlas, so its scripts opt in to the in-process store explicitly. Never set
+ * on Vercel: a production build without `MONGODB_URI` must refuse (ticket 32).
+ */
+export function allowMemoryStore(): boolean {
+	return env.A11Y_MEMORY_STORE === '1';
+}
+
+/**
  * The shared secret Vercel sends as `Authorization: Bearer $CRON_SECRET` on
  * scheduled requests. Server-only; the retention sweep refuses to run without it.
  */

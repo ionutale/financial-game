@@ -1,8 +1,10 @@
 packages:
   - '.'
 
-# pnpm 11 blocks dependency build scripts by default; esbuild's postinstall
-# links its platform binary and Vite needs it.
+# pnpm 11+ blocks dependency build scripts by default; esbuild's postinstall
+# links its platform binary and Vite needs it. pnpm 12 reads `allowBuilds` here
+# — the old `pnpm.onlyBuiltDependencies` in package.json was silently ignored
+# (ticket 32).
 allowBuilds:
   esbuild: true
 

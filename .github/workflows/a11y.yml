@@ -38,7 +38,9 @@ jobs:
         run: pnpm a11y
         env:
           # Preview is a production build and refuses to boot without the
-          # pepper. Throwaway: CI uses the in-process store (no MONGODB_URI).
+          # pepper. Both values are throwaway here: the scripts opt into the
+          # in-process store explicitly (A11Y_MEMORY_STORE=1), since CI has no
+          # MONGODB_URI and production refuses to fall back (ticket 32).
           PROFILE_PEPPER: ci-accessibility-pepper
 
       - name: Upload reports

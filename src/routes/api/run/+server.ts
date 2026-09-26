@@ -1,7 +1,11 @@
+import type { Config } from '@sveltejs/adapter-vercel';
 import { json } from '@sveltejs/kit';
 import type { RunState } from '$lib/game/types';
 import { getStore } from '$lib/server/db';
 import type { RequestHandler } from './$types';
+
+/** 15 s, ticket 06's interactive-route cap: one Atlas read plus one write (ticket 32). */
+export const config: Config = { maxDuration: 15 };
 
 /** Enough of a shape check to reject a malformed body without a full validator. */
 function isRunState(value: unknown): value is RunState {

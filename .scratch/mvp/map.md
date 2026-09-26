@@ -133,6 +133,10 @@ Closed tickets:
 
 **Empty of the original work — every decision is resolved.** The build's tickets:
 
+- [x] **32 production-hardening** — resolved: production fails fast without `MONGODB_URI`, CI runs
+  check + tests, the interactive routes cap at 15s, and the build-script config is honest.
+- [x] **31 deploy-readiness** — resolved: the operator runbook, `"regions": ["fra1"]`, the env
+  audit, `pnpm verify`, and the 200%-text switcher regression it caught.
 - [x] **30 art-audio** — resolved: ten inline beat illustrations on the tokens, and four
   synthesised cues off by default behind a Settings switch; CC0 attribution and docs in place.
 - [x] **29 localized-internal-links** — resolved: one `localizedHref()` helper and every internal
@@ -169,5 +173,14 @@ What remains of the original map is not a decision — it is two artifacts await
 - **09 turn-loop-prototype** — resolved without human validation; the risk is carried by the build.
 - **10 money-story-prototype** — resolved without human validation; story-first is untested.
 
-**11 spec-assembly** is unblocked, and is superseded in practice: the build is being driven directly
+What remains of the build is human, by nature:
+
+- **A playtest** — the built game is the thing to validate against tickets 09 and 10.
+- **The Fink pass** on the it/ro catalogues, machine-translated and flagged in the brief.
+- **The manual accessibility passes** — muted, greyscale, a real screen reader; the automated
+  proxies are in place and `docs/accessibility.md` lists what they cannot see.
+- **The deploy** — `docs/deployment.md` is the runbook; the Atlas cluster, the Vercel project and
+  the plan-eligibility decision are the owner's.
+
+**11 spec-assembly** is unblocked, and is superseded in practice: the build was driven directly
 from the tickets.

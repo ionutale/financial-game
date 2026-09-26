@@ -48,9 +48,10 @@ pnpm a11y:lighthouse                    # Lighthouse only (needs a server on :41
 
 `pnpm a11y` builds with the real adapter and serves the result with `vite preview`. That works
 because adapter-vercel leaves the SvelteKit server output in `.svelte-kit/output`, which is exactly
-what Vite preview serves — no Vercel runtime needed locally. Preview is a production build, so it
-needs `PROFILE_PEPPER`; the scripts pass a throwaway value and the in-process store is used because
-no `MONGODB_URI` is set. Set `A11Y_BASE_URL` to audit an already-running server instead.
+what Vite preview serves — no Vercel runtime needed locally. Preview is a production build: the
+scripts pass a throwaway `PROFILE_PEPPER` and set `A11Y_MEMORY_STORE=1`, the explicit opt-in that
+lets a production build without Atlas use the in-process store (a production build otherwise
+refuses to serve — ticket 32). Set `A11Y_BASE_URL` to audit an already-running server instead.
 
 The whole gate set — type check, unit tests, this accessibility gate and the translation gate — also
 runs as one command, `pnpm verify`; see the pre-deploy use in

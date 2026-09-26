@@ -1,8 +1,12 @@
 import { dev } from '$app/environment';
+import type { Config } from '@sveltejs/adapter-vercel';
 import { json } from '@sveltejs/kit';
 import { getStore } from '$lib/server/db';
 import { COOKIE_OPTIONS, PROFILE_COOKIE } from '$lib/server/identity';
 import type { RequestHandler } from './$types';
+
+/** 15 s, ticket 06's interactive-route cap: one Atlas delete (ticket 32). */
+export const config: Config = { maxDuration: 15 };
 
 /**
  * The player's right to erasure (ticket 12): removes the stored Run and expires

@@ -116,6 +116,39 @@ export function applyRunWrite(
 	return { saved: false, profile };
 }
 
+/** What the process knows about its environment, for `resolveStore` (ticket 32). */
+export interface StoreEnvironment {
+	/** The Atlas connection string, when one is configured. */
+	uri: string | undefined;
+	/** True under `vite dev`; false in any production build (preview included). */
+	dev: boolean;
+	/** The accessibility gate's explicit opt-in; see `resolveStore`. */
+	allowMemory: boolean;
+}
+
+/** The two stores `resolveStore` chooses between, injectable for the unit test. */
+export interface StoreFactories {
+	mongo: (uri: string) => RunStore;
+	memory: () => RunStore;
+}
+
+/**
+ * Picks the Run store from the environment (ticket 32):
+ *
+ * - A configured URI always wins: that is the deployed game.
+ * - Only development, or the accessibility gate serving a production build
+ *   with no Atlas (`A11Y_MEMORY_STORE=1`), may use the in-process store.
+ * - A production build with no URI refuses to serve: falling back would look
+ *   healthy while every profile dies at the next cold start.
+ */
+export function resolveStore(environment: StoreEnvironment, stores: StoreFactories): RunStore {
+	if (environment.uri) return stores.mongo(environment.uri);
+	if (environment.dev || environment.allowMemory) return stores.memory();
+	throw new Error(
+		'MONGODB_URI must be set in production — refusing to fall back to the in-process store (see docs/deployment.md)'
+	);
+}
+
 /**
  * In-process store. It survives page refreshes but dies with the server, so it
  * exists to make local development work without Atlas credentials — not to ship.

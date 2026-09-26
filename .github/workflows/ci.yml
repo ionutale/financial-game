@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The compiler and Vitest only — no browser, no build server, so it stays fast
+# (ticket 32). The translation gate and the accessibility gate run in their own
+# workflows beside this one.
+jobs:
+  check-and-test:
+    name: Type check + unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        # The version comes from packageManager in package.json (pnpm 12.6.0),
+        # so the action never disagrees with the repo's pin.
+        uses: pnpm/action-setup@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          # The Vercel function runtime pinned in svelte.config.js.
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # i18n:compile + svelte-kit sync + svelte-check: broken routes, props or
+      # types fail here.
+      - name: Type check
+        run: pnpm check
+
+      # Game rules, store ordering and the fail-fast rule, cron auth, export
+      # payload, retention, i18n.
+      - name: Unit tests
+        run: pnpm test
