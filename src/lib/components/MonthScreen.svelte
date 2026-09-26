@@ -23,6 +23,9 @@
 	let statsOpen = $state(false);
 	let statsTrigger: HTMLButtonElement | null = null;
 
+	// Whether the end-of-run write landed, for the Money Story's quiet line.
+	let saved = $state<'saving' | 'saved' | 'offline'>('saving');
+
 	function openStats(trigger: HTMLButtonElement) {
 		statsTrigger = trigger;
 		statsOpen = true;
@@ -36,20 +39,29 @@
 	function dispatch(action: Action) {
 		run = applyAction(run, action);
 		// Committing at the month close is the one write per Turn (ticket 04); a
-		// Stage-up happens mid-month and stays client-side.
+		// Stage-up happens mid-month and stays client-side. Finishing the Run is
+		// one extra terminal write (ticket 23): it archives the Run server-side
+		// and frees the profile, so the replay persists from month 1.
 		if (action.type === 'CONTINUE' && run.phase === 'resolve') void persist(run);
+		if (action.type === 'NEXT_MONTH' && run.phase === 'done') {
+			const finished = run;
+			void persist(finished).then((ok) => (saved = ok ? 'saved' : 'offline'));
+		}
 	}
 
-	async function persist(state: RunState) {
+	async function persist(state: RunState): Promise<boolean> {
 		try {
-			await fetch('/api/run', {
+			const response = await fetch('/api/run', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ state })
 			});
+			return response.ok;
 		} catch {
 			// Offline is not fatal: the next close writes again, and the month is
-			// still in memory.
+			// still in memory. A failed finish says so on the Money Story; a reload
+			// resumes the last closed month and lets it land again.
+			return false;
 		}
 	}
 </script>
@@ -57,7 +69,7 @@
 {#if run.showIntro}
 	<Intro onDone={() => dispatch({ type: 'DISMISS_INTRO' })} />
 {:else if run.phase === 'done'}
-	<MoneyStory {run} onNewRun={() => dispatch({ type: 'NEW_RUN', seed: freshSeed() })} />
+	<MoneyStory {run} {saved} onNewRun={() => dispatch({ type: 'NEW_RUN', seed: freshSeed() })} />
 {:else}
 	<main class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col gap-7 px-5 py-7">
 		<Hud {run} onStats={openStats} />

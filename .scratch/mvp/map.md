@@ -133,6 +133,8 @@ Closed tickets:
 
 **Empty of the original work — every decision is resolved.** The build's tickets:
 
+- [x] **23 run-archive** — resolved: finished Runs are archived on the profile; the done write
+  frees the active slot, so replay persists from month 1 (a latent replay bug, fixed).
 - [x] **22 privacy-build** — resolved: export/delete routes, Settings and policy pages, the LIA,
   the first-run notice, and the daily retention sweep.
 - [x] **20 stats-sheet** — resolved: the Stats pill opens a full-screen sheet with Savings, Fund,

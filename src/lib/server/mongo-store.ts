@@ -1,14 +1,17 @@
 import { MongoClient, type Collection } from 'mongodb';
-import type { RunState } from '$lib/game/types';
-import type { RunStore, SavedRun } from './store';
+import {
+	applyRunWrite,
+	emptyProfile,
+	readProfile,
+	type RunStore,
+	type StoredProfileDoc
+} from './store';
 
 const COLLECTION = 'runs';
 
-interface RunDoc {
+/** One document per profile: the new shape plus the old single-Run fields. */
+interface RunDoc extends StoredProfileDoc {
 	_id: string;
-	turnIndex: number;
-	state: RunState;
-	updatedAt: string;
 }
 
 /**
@@ -34,19 +37,30 @@ export function createMongoStore(uri: string): RunStore {
 	return {
 		async load(key) {
 			const doc = await runs(uri).findOne({ _id: key });
-			if (!doc) return null;
-			return { turnIndex: doc.turnIndex, state: doc.state, updatedAt: doc.updatedAt };
+			return doc ? readProfile(doc).active : null;
 		},
 
-		async save(key, run: SavedRun) {
-			// Ordering guard: a write that is behind what is stored is refused, which
-			// makes a repeated close idempotent rather than a regression.
-			const existing = await runs(uri).findOne({ _id: key }, { projection: { turnIndex: 1 } });
-			if (existing && existing.turnIndex > run.turnIndex) return false;
+		async loadProfile(key) {
+			const doc = await runs(uri).findOne({ _id: key });
+			return doc ? readProfile(doc) : emptyProfile();
+		},
+
+		async save(key, run) {
+			// Ordering guard (ticket 06): a write behind the active Run is refused;
+			// a done state archives the Run and frees the slot (ticket 23). Read
+			// then write, as this store always has — the guard is optimistic, and
+			// one player's own retries are the only writers for a key.
+			const doc = await runs(uri).findOne({ _id: key });
+			const { saved, profile } = applyRunWrite(doc ? readProfile(doc) : emptyProfile(), run);
+			if (!saved) return false;
 
 			await runs(uri).updateOne(
 				{ _id: key },
-				{ $set: { turnIndex: run.turnIndex, state: run.state, updatedAt: run.updatedAt } },
+				{
+					$set: { active: profile.active, archive: profile.archive, updatedAt: run.updatedAt },
+					// A document written by the old shape becomes the new one here.
+					$unset: { turnIndex: '', state: '' }
+				},
 				{ upsert: true }
 			);
 			return true;

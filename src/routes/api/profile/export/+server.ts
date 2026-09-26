@@ -5,12 +5,13 @@ import type { RequestHandler } from './$types';
 
 /**
  * The player's right of access (ticket 12): everything stored for this profile
- * as a downloadable JSON file. No raw cookie, no digest — just the Run.
+ * as a downloadable JSON file — the active Run and every finished Run archived
+ * for replay (ticket 23). No raw cookie, no digest.
  */
 export const GET: RequestHandler = async ({ locals }) => {
-	const saved = await getStore().load(locals.profileKey);
+	const { active, archive } = await getStore().loadProfile(locals.profileKey);
 
-	return json(buildProfileExport(saved, new Date().toISOString()), {
+	return json(buildProfileExport(active, archive, new Date().toISOString()), {
 		headers: {
 			'content-disposition': 'attachment; filename="financial-game-export.json"',
 			'cache-control': 'no-store'

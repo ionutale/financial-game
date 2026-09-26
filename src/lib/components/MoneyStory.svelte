@@ -5,7 +5,15 @@
 	import Money from './Money.svelte';
 	import Sparkline from './Sparkline.svelte';
 
-	let { run, onNewRun }: { run: RunState; onNewRun: () => void } = $props();
+	let {
+		run,
+		onNewRun,
+		saved
+	}: {
+		run: RunState;
+		onNewRun: () => void;
+		saved: 'saving' | 'saved' | 'offline';
+	} = $props();
 
 	const band = $derived(outcomeBand(run));
 	const m = $derived(computeMetrics(run));
@@ -135,6 +143,19 @@
 		<p class="kicker">What next</p>
 		<p class="mt-2 text-sm text-[var(--muted)]">
 			The Fork comes round again in month 49. Studying and working end very differently.
+		</p>
+		<p class="mt-2 text-xs leading-relaxed" aria-live="polite">
+			{#if saved === 'saved'}
+				<span class="text-[var(--muted)]">
+					This Run is saved to your profile — playing again starts from month 1.
+				</span>
+			{:else if saved === 'offline'}
+				<span class="text-[var(--down)]">
+					This Run could not be saved. Reload to try the finish again.
+				</span>
+			{:else}
+				<span class="text-[var(--muted)]">Saving this Run…</span>
+			{/if}
 		</p>
 		<button
 			class="mt-4 w-full rounded-xl bg-[var(--money)] py-3.5 font-semibold text-white transition active:scale-[0.99]"

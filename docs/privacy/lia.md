@@ -8,9 +8,10 @@ read by whoever maintains the game next, not to sound like a court.
 
 When a player opens the game, the server mints 32 random bytes and sets them in an
 `httpOnly; Secure; SameSite=Lax` cookie. The database stores only a **peppered SHA-256 digest** of
-that value — never the cookie itself — alongside the state of the Run the player is in: the month,
-the money, the plan and the choices made. Nothing else is derived from the player. There is no
-account, no name, no email, no IP address, no user agent, no fingerprinting and no analytics.
+that value — never the cookie itself — alongside the game state it points at: the Run in progress
+and any finished Runs kept for replay, each holding the month, the money, the plan and the choices
+made. Nothing else is derived from the player. There is no account, no name, no email, no IP
+address, no user agent, no fingerprinting and no analytics.
 
 The cookie exists for exactly one purpose: to find the player's saved Run on the next request.
 Delete the key and the game cannot know there is progress to resume.
@@ -55,11 +56,12 @@ would surprise them.
 
 ## Retention
 
-A profile that has had no activity for **12 months** is deleted by a daily scheduled sweep. The
-cookie carries the same one-year life. No separate archive or replay record is kept beyond the
-stored Run itself. "Delete everything" in Settings removes the Run immediately and expires the
-cookie on the spot; clearing browser storage destroys the key at once, which means the profile can
-no longer be found.
+A profile that has had no activity for **12 months** is deleted by a daily scheduled sweep — the Run
+in progress and every finished Run kept for replay go with it, and an archive append counts as
+activity on the same clock. The cookie carries the same one-year life. There is no second store, no
+log and no analytics copy of any of it. "Delete everything" in Settings removes all of it immediately
+and expires the cookie on the spot; clearing browser storage destroys the key at once, which means
+the profile can no longer be found.
 
 ## Rights
 

@@ -66,8 +66,8 @@
 	<section class="surface p-5" aria-labelledby="settings-download">
 		<p class="kicker" id="settings-download">Download my data</p>
 		<p class="mt-3 text-sm leading-relaxed text-[var(--muted)]">
-			A JSON file holding the saved Run exactly as it is stored: the month, the money, the
-			plan and the choices.
+			A JSON file holding everything the game keeps: the Run in progress, if there is one, and
+			every finished Run kept for replay — the month, the money, the plan and the choices.
 		</p>
 		<a
 			href="/api/profile/export"
@@ -81,8 +81,8 @@
 	<section class="surface p-5" aria-labelledby="settings-delete">
 		<p class="kicker" id="settings-delete">Delete everything</p>
 		<p class="mt-3 text-sm leading-relaxed text-[var(--muted)]">
-			Removes the saved Run and clears the id on this device. It cannot be undone — a fresh
-			Run starts from month 1.
+			Removes every stored Run — the one in progress and any finished ones — and clears the id
+			on this device. It cannot be undone: a fresh Run starts from month 1.
 		</p>
 
 		{#if confirming}

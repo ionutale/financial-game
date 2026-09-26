@@ -10,10 +10,10 @@
 	<section>
 		<h2 class="text-lg font-semibold tracking-tight">What is stored</h2>
 		<p class="mt-2 text-sm leading-relaxed">
-			A random id, kept in a cookie on this device, and the state of your Run — the month you
-			have reached, your money, your plan and the choices you have made. On the server the id
-			is held only as a scrambled digest, so the cookie value itself never sits in the
-			database.
+			A random id, kept in a cookie on this device, and the state of your Runs — the month you
+			have reached, your money, your plan and the choices you have made, plus any finished
+			Runs you have kept for replay. On the server the id is held only as a scrambled digest,
+			so the cookie value itself never sits in the database.
 		</p>
 	</section>
 
@@ -62,7 +62,7 @@
 		<p class="mt-2 text-sm leading-relaxed">
 			Both live in <a class="underline underline-offset-2" href="/settings">Settings</a>:
 			<strong>Download my data</strong> gives you a JSON file of everything stored, and
-			<strong>Delete everything</strong> removes the saved Run and clears the id behind a
+			<strong>Delete everything</strong> removes every stored Run and clears the id behind a
 			typed confirmation. A fresh Run then starts from month 1.
 		</p>
 	</section>
