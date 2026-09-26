@@ -9,25 +9,29 @@ function withState(patch: Partial<RunState>): RunState {
 }
 
 describe('the Stats Sheet rows', () => {
-	it('keeps decimals on Savings and Fund, whole figures elsewhere (tickets 15, 20)', () => {
+	it('keeps raw values and tones for the sheet to format (tickets 15, 20)', () => {
 		const sheet = statsSheet(withState({ savings: 282.5, fund: 40, debt: 120 }));
-		expect(sheet.rows.map((row) => [row.label, row.value])).toEqual([
-			['Savings', '\u25c8282.5'],
-			['Fund', '\u25c840'],
-			['Debt', '\u25c8120'],
-			['Credit score', 'No card yet']
+		expect(sheet.rows).toEqual([
+			{ key: 'savings', value: 282.5, tone: 'ink' },
+			{ key: 'fund', value: 40, tone: 'ink' },
+			{ key: 'debt', value: 120, tone: 'down' },
+			{ key: 'score', value: null, tone: 'muted' }
 		]);
 	});
 
 	it('shows the Credit score once a card exists', () => {
 		const sheet = statsSheet(withState({ score: 640 }));
-		expect(sheet.rows.find((row) => row.label === 'Credit score')?.value).toBe('640');
+		expect(sheet.rows.find((row) => row.key === 'score')).toEqual({
+			key: 'score',
+			value: 640,
+			tone: 'ink'
+		});
 	});
 
-	it('says there is no card yet when the score is null', () => {
-		// A bare null would read as a missing number on the sheet.
+	it('leaves the score null when there is no card yet', () => {
+		// A bare null reads as "no card yet" through the catalogue on the sheet.
 		const sheet = statsSheet(createRun());
-		expect(sheet.rows.find((row) => row.label === 'Credit score')?.value).toBe('No card yet');
+		expect(sheet.rows.find((row) => row.key === 'score')?.value).toBeNull();
 	});
 });
 
@@ -45,7 +49,7 @@ describe('the Thread history', () => {
 		expect(sheet.history).toEqual([]);
 	});
 
-	it('shows the live Thread as its countdown chip alongside resolved arcs', () => {
+	it('carries the live Thread countdown alongside resolved arcs', () => {
 		const s = withState({
 			month: 31,
 			thread: { id: 'friend_loan', since: 30 },
@@ -56,8 +60,8 @@ describe('the Thread history', () => {
 			]
 		});
 		const sheet = statsSheet(s);
-		expect(sheet.liveThread).toBe('The money you lent \u2014 repayment in 2 months');
-		expect(sheet.history).toEqual([{ label: 'The course', month: 28 }]);
+		expect(sheet.liveThread).toEqual({ id: 'friend_loan', months: 2 });
+		expect(sheet.history).toEqual([{ id: 'course_enrolled', month: 28 }]);
 	});
 
 	it('lists multiple resolved Threads newest first', () => {
@@ -68,8 +72,8 @@ describe('the Thread history', () => {
 			]
 		});
 		expect(threadHistory(s)).toEqual([
-			{ label: 'The money you lent', month: 33 },
-			{ label: 'The course', month: 20 }
+			{ id: 'friend_loan', month: 33 },
+			{ id: 'course_enrolled', month: 20 }
 		]);
 	});
 

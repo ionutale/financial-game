@@ -26,7 +26,6 @@ export type Branch = 'shared' | 'study' | 'work';
 /** A Choice Effect, restricted in slice 1 to what the loop itself applies. */
 export interface Choice {
 	id: string;
-	label: string;
 	/** Money spent, drawn from `category`'s envelope pot. */
 	cost?: number;
 	/** Money received. */
@@ -36,7 +35,6 @@ export interface Choice {
 	category?: Category | null;
 	/** Cost when the player holds insurance — a shock the cover absorbs. */
 	insuredCost?: number;
-	feedback: string;
 	sets?: {
 		insurance?: boolean;
 		bnpl?: number;
@@ -52,9 +50,6 @@ export interface Card {
 	id: string;
 	kind: CardKind;
 	stages: number[];
-	title: string;
-	situation: string;
-	odds?: string;
 	concept?: ConceptId | null;
 	branch?: Branch;
 	weight?: number;
@@ -161,7 +156,6 @@ export interface RunState {
 	phase: Phase;
 	card: Card | null;
 	chosen: string | null;
-	feedback: string | null;
 	cascade: DrawResult | null;
 	close: Close | null;
 	log: Array<{ month: number; card: string; choice: string }>;

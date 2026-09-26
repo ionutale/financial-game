@@ -8,12 +8,6 @@ import type { MonthSnapshot, RunState } from './types';
 
 export type OutcomeBand = 'ahead' | 'treading' | 'behind';
 
-export const BAND_LABEL: Record<OutcomeBand, string> = {
-	ahead: 'Ahead',
-	treading: 'Treading water',
-	behind: 'Behind'
-};
-
 /**
  * The band is the result, not the behaviour: money, the path's goal, and the
  * score. Behaviour is what the you-vs-you comparison is for (ticket 05).
@@ -34,8 +28,10 @@ export function outcomeBand(s: RunState): OutcomeBand {
 	return 'treading';
 }
 
+export type ComparisonId = 'adherence' | 'savings_rate' | 'want_share';
+
 export interface Comparison {
-	label: string;
+	id: ComparisonId;
 	y1: number;
 	y5: number;
 	/** `months` is a count out of twelve; `rate` is a 0–1 fraction. */
@@ -111,14 +107,14 @@ export function computeMetrics(s: RunState): RunMetrics {
 		trajectory: h.map((r) => r.netWorth),
 		comparisons: [
 			{
-				label: 'Months inside budget',
+				id: 'adherence',
 				y1: adherenceIn(first),
 				y5: adherenceIn(last),
 				kind: 'months'
 			},
-			{ label: 'Income saved', y1: rate(first, (r) => r.saved), y5: rate(last, (r) => r.saved), kind: 'rate' },
+			{ id: 'savings_rate', y1: rate(first, (r) => r.saved), y5: rate(last, (r) => r.saved), kind: 'rate' },
 			{
-				label: 'Income spent on wants',
+				id: 'want_share',
 				y1: rate(first, (r) => r.spentWant),
 				y5: rate(last, (r) => r.spentWant),
 				kind: 'rate'
@@ -129,23 +125,25 @@ export function computeMetrics(s: RunState): RunMetrics {
 
 export interface TurningPoint {
 	month: number;
-	text: string;
+	/** The flag kind; the Money Story resolves it to prose via the catalogue. */
+	kind: string;
 }
 
-const FLAG_TEXT: Record<string, (month: number) => string> = {
-	overdraft: (m) => `Month ${m}: you let the account go negative rather than wait.`,
-	minimum_payment: (m) => `Month ${m}: you paid only the minimum, and the balance barely moved.`,
-	card_issued: (m) => `Month ${m}: the card arrived, and with it a score to look after.`,
-	'fork:study': (m) => `Month ${m}: you chose to study, and the loan went on the sheet.`,
-	'fork:work': (m) => `Month ${m}: you chose to work, and paid a deposit on somewhere to live.`
-};
+/** Flags the Money Story has words for, in the glossary's vocabulary. */
+const KNOWN_FLAGS = new Set([
+	'overdraft',
+	'minimum_payment',
+	'card_issued',
+	'fork:study',
+	'fork:work'
+]);
 
 /** Three to six moments, in order, named honestly and without judgement. */
 export function turningPoints(s: RunState, limit = 6): TurningPoint[] {
 	const known = s.flags
-		.filter((f) => FLAG_TEXT[f.kind])
+		.filter((f) => KNOWN_FLAGS.has(f.kind))
 		.sort((a, b) => a.month - b.month)
-		.map((f) => ({ month: f.month, text: FLAG_TEXT[f.kind](f.month) }));
+		.map((f) => ({ month: f.month, kind: f.kind }));
 
 	if (known.length <= limit) return known;
 

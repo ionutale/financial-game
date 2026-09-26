@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getLocale } from '$lib/paraglide/runtime';
 	import { formatMoney, formatMoneyExact } from '$lib/game/economy';
 
 	type Size = 'hero' | 'lg' | 'md' | 'sm';
@@ -26,7 +27,8 @@
 		down: 'text-[var(--down)]'
 	};
 
-	const format = $derived(exact ? formatMoneyExact : formatMoney);
+	const locale = getLocale();
+	const format = (n: number) => (exact ? formatMoneyExact : formatMoney)(n, locale);
 	// A negative amount takes a leading minus; a positive one can show a leading plus.
 	const shown = $derived(
 		amount < 0 ? '\u2212' + format(Math.abs(amount)) : (sign ? '+' : '') + format(amount)

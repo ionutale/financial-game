@@ -115,7 +115,7 @@ describe('the turning points', () => {
 		});
 		const moments = turningPoints(s);
 		expect(moments.map((m) => m.month)).toEqual([12, 34, 47]);
-		expect(moments[1].text).toContain('minimum');
+		expect(moments[1].kind).toBe('minimum_payment');
 	});
 
 	it('spreads a long list across the whole Run rather than truncating it', () => {
@@ -168,7 +168,7 @@ describe('the metrics', () => {
 			insideBudget: i < 12 ? false : true
 		}));
 		const m = computeMetrics(withState({ history: rows }));
-		const saved = m.comparisons.find((c) => c.label === 'Income saved');
+		const saved = m.comparisons.find((c) => c.id === 'savings_rate');
 
 		expect(saved?.y1).toBeCloseTo(0.1, 4);
 		expect(saved?.y5).toBeCloseTo(0.3, 4);

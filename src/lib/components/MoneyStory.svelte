@@ -1,7 +1,10 @@
 <script lang="ts">
-	import { formatMoney, formatMoneyExact, goalName } from '$lib/game/economy';
-	import { BAND_LABEL, computeMetrics, outcomeBand, turningPoints } from '$lib/game/metrics';
+	import { formatMoney, formatMoneyExact } from '$lib/game/economy';
+	import { computeMetrics, outcomeBand, turningPoints } from '$lib/game/metrics';
 	import type { RunState } from '$lib/game/types';
+	import { bandLabel, comparisonLabel, flagText, goalName } from '$lib/i18n/game-text';
+	import { m } from '$lib/i18n/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
 	import Money from './Money.svelte';
 	import Sparkline from './Sparkline.svelte';
 
@@ -15,31 +18,43 @@
 		saved: 'saving' | 'saved' | 'offline';
 	} = $props();
 
+	const locale = getLocale();
 	const band = $derived(outcomeBand(run));
-	const m = $derived(computeMetrics(run));
-	const moments = $derived(turningPoints(run));
+	const metrics = $derived(computeMetrics(run));
+	const moments = $derived(
+		turningPoints(run)
+			.map((moment) => ({ ...moment, text: flagText(moment.kind, moment.month) }))
+			.filter((moment): moment is { month: number; kind: string; text: string } => moment.text !== null)
+	);
 
-	const asMonths = (v: number) => `${Math.round(v)} / 12`;
-	const asPct = (v: number) => `${Math.round(v * 100)}%`;
+	const asMonths = (v: number) => m.story_months_of_12({ months: Math.round(v) });
+	const asPct = (v: number) => m.story_percent({ percent: Math.round(v * 100) });
 
 	const story = $derived([
-		`You started at 14 with ${formatMoney(60)} and finished at 19 with ${formatMoney(m.finalNetWorth)}${
-			run.debt > 0 ? `, still owing ${formatMoney(run.debt)}` : ', owing nothing'
-		}.`,
-		`You kept to the plan you set yourself in ${m.adherenceTotal} of the 60 months.`,
+		run.debt > 0
+			? m.story_opening_debt({
+					start: formatMoney(60, locale),
+					final: formatMoney(metrics.finalNetWorth, locale),
+					debt: formatMoney(run.debt, locale)
+				})
+			: m.story_opening_free({
+					start: formatMoney(60, locale),
+					final: formatMoney(metrics.finalNetWorth, locale)
+				}),
+		m.story_adherence({ months: metrics.adherenceTotal }),
 		band === 'ahead'
-			? 'You ended up past the goal you were aiming at, with the score to go with it.'
+			? m.story_band_ahead()
 			: band === 'treading'
-				? 'You ended up still moving — not ahead, and not sunk either.'
-				: 'You ended up behind where you needed to be. Nothing is unrecoverable from here; that is the point of the five years.'
+				? m.story_band_treading()
+				: m.story_band_behind()
 	]);
 </script>
 
 <main class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col gap-7 px-5 py-7">
 	<section>
-		<p class="kicker">The Money Story</p>
+		<p class="kicker">{m.story_kicker()}</p>
 		<h1 class="mt-3 text-[32px] leading-[1.12] font-semibold tracking-tight">
-			Five years, in one page.
+			{m.story_title()}
 		</h1>
 
 		<div class="mt-5 flex flex-col gap-3">
@@ -58,17 +73,17 @@
 						: 'var(--money-wash)'};
 					color: {band === 'behind' ? 'var(--down)' : band === 'ahead' ? 'var(--up)' : 'var(--money)'}"
 			>
-				{BAND_LABEL[band]}
+				{bandLabel(band)}
 			</span>
-			<span class="text-xs text-[var(--muted)]">your ending, from the money and the score</span>
+			<span class="text-xs text-[var(--muted)]">{m.story_band_note()}</span>
 		</div>
 	</section>
 
 	{#if moments.length}
 		<section>
-			<p class="kicker">The moments that decided it</p>
+			<p class="kicker">{m.story_moments()}</p>
 			<div class="mt-4 flex flex-col gap-4">
-				{#each moments as moment (moment.month + ':' + moment.text)}
+				{#each moments as moment (moment.month + ':' + moment.kind)}
 					<div class="border-l-2 border-[var(--line)] pl-4">
 						<p class="text-sm leading-relaxed">{moment.text}</p>
 					</div>
@@ -78,16 +93,16 @@
 	{/if}
 
 	<section>
-		<p class="kicker">You, against you</p>
-		<p class="mt-1 text-sm text-[var(--muted)]">Year one against year five. Nobody else's numbers.</p>
+		<p class="kicker">{m.story_you_vs_you()}</p>
+		<p class="mt-1 text-sm text-[var(--muted)]">{m.story_you_vs_you_note()}</p>
 
 		<div class="mt-4 flex flex-col gap-5">
-			{#each m.comparisons as c (c.label)}
+			{#each metrics.comparisons as c (c.id)}
 				{@const now = c.kind === 'months' ? c.y5 / 12 : c.y5}
 				{@const then = c.kind === 'months' ? c.y1 / 12 : c.y1}
 				<div>
 					<div class="flex items-baseline justify-between">
-						<span class="text-sm">{c.label}</span>
+						<span class="text-sm">{comparisonLabel(c.id)}</span>
 						<span class="figure text-sm">
 							{c.kind === 'months' ? asMonths(c.y5) : asPct(c.y5)}
 						</span>
@@ -104,8 +119,8 @@
 						</div>
 					</div>
 					<div class="mt-1 flex justify-between text-[11px] text-[var(--muted)]">
-						<span>Year 1 · {c.kind === 'months' ? asMonths(c.y1) : asPct(c.y1)}</span>
-						<span>Year 5 · {c.kind === 'months' ? asMonths(c.y5) : asPct(c.y5)}</span>
+						<span>{m.story_year_1({ value: c.kind === 'months' ? asMonths(c.y1) : asPct(c.y1) })}</span>
+						<span>{m.story_year_5({ value: c.kind === 'months' ? asMonths(c.y5) : asPct(c.y5) })}</span>
 					</div>
 				</div>
 			{/each}
@@ -113,23 +128,35 @@
 	</section>
 
 	<section>
-		<p class="kicker">The numbers</p>
+		<p class="kicker">{m.story_numbers()}</p>
 		<div class="mt-4">
-			<Sparkline points={m.trajectory} />
+			<Sparkline points={metrics.trajectory} />
 			<div class="mt-1 flex justify-between text-[11px] text-[var(--muted)]">
-				<span>Age 14</span><span>Net worth over 60 months</span><span>Age 19</span>
+				<span>{m.story_age_14()}</span><span>{m.story_sparkline_caption()}</span><span>{m.story_age_19()}</span>
 			</div>
 		</div>
 
 		<dl class="mt-5 flex flex-col">
 			{#each [
-				{ k: 'Months inside budget', v: `${m.adherenceTotal} / 60` },
-				{ k: 'Income saved', v: asPct(m.savingsRate) },
-				{ k: 'Income spent on wants', v: asPct(m.wantShare) },
-				{ k: 'Debt taken', v: `${formatMoney(m.debtTaken)} · peak ${formatMoney(m.peakDebt)}` },
-				{ k: goalName(run), v: `${formatMoneyExact(m.goalProgress)} / ${formatMoney(m.goalTarget)}` },
-				{ k: 'Net worth', v: formatMoney(m.finalNetWorth) },
-				{ k: 'Credit score', v: m.finalScore === null ? 'never had a card' : String(m.finalScore) }
+				{ k: m.story_row_adherence(), v: `${metrics.adherenceTotal} / 60` },
+				{ k: m.story_row_savings_rate(), v: asPct(metrics.savingsRate) },
+				{ k: m.story_row_want_share(), v: asPct(metrics.wantShare) },
+				{
+					k: m.story_row_debt(),
+					v: m.story_row_debt_value({
+						taken: formatMoney(metrics.debtTaken, locale),
+						peak: formatMoney(metrics.peakDebt, locale)
+					})
+				},
+				{
+					k: goalName(run),
+					v: `${formatMoneyExact(metrics.goalProgress, locale)} / ${formatMoney(metrics.goalTarget, locale)}`
+				},
+				{ k: m.story_row_net_worth(), v: formatMoney(metrics.finalNetWorth, locale) },
+				{
+					k: m.story_row_score(),
+					v: metrics.finalScore === null ? m.story_score_none() : String(metrics.finalScore)
+				}
 			] as row (row.k)}
 				<div class="flex items-baseline justify-between border-b border-dashed border-[var(--line)] py-2">
 					<dt class="text-sm text-[var(--muted)]">{row.k}</dt>
@@ -140,34 +167,28 @@
 	</section>
 
 	<section>
-		<p class="kicker">What next</p>
-		<p class="mt-2 text-sm text-[var(--muted)]">
-			The Fork comes round again in month 49. Studying and working end very differently.
-		</p>
+		<p class="kicker">{m.story_what_next()}</p>
+		<p class="mt-2 text-sm text-[var(--muted)]">{m.story_what_next_body()}</p>
 		<p class="mt-2 text-xs leading-relaxed" aria-live="polite">
 			{#if saved === 'saved'}
-				<span class="text-[var(--muted)]">
-					This Run is saved to your profile — playing again starts from month 1.
-				</span>
+				<span class="text-[var(--muted)]">{m.story_saved()}</span>
 			{:else if saved === 'offline'}
-				<span class="text-[var(--down)]">
-					This Run could not be saved. Reload to try the finish again.
-				</span>
+				<span class="text-[var(--down)]">{m.story_offline()}</span>
 			{:else}
-				<span class="text-[var(--muted)]">Saving this Run…</span>
+				<span class="text-[var(--muted)]">{m.story_saving()}</span>
 			{/if}
 		</p>
 		<button
 			class="mt-4 w-full rounded-xl bg-[var(--money)] py-3.5 font-semibold text-white transition active:scale-[0.99]"
 			onclick={onNewRun}
 		>
-			Play another five years
+			{m.story_play_again()}
 		</button>
 		<a
 			class="mt-3 inline-block text-sm text-[var(--muted)] underline underline-offset-2"
 			href="/settings"
 		>
-			Settings
+			{m.link_settings()}
 		</a>
 	</section>
 </main>

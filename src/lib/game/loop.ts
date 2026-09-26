@@ -214,7 +214,6 @@ export function createRun(seed = 1): RunState {
 		phase: 'plan',
 		card: null,
 		chosen: null,
-		feedback: null,
 		cascade: null,
 		close: null,
 		log: [],
@@ -253,7 +252,6 @@ export function startMonth(s: RunState): RunState {
 	s.phase = 'plan';
 	s.card = null;
 	s.chosen = null;
-	s.feedback = null;
 	s.cascade = null;
 	s.close = null;
 
@@ -449,7 +447,6 @@ export function applyAction(state: RunState, action: Action): RunState {
 			if (s.card.resolves && s.thread?.id === s.card.resolves) s.thread = null;
 
 			s.chosen = choice.id;
-			s.feedback = choice.feedback;
 			s.log.push({ month: s.month, card: s.card.id, choice: choice.id });
 			return s;
 		}
@@ -460,7 +457,6 @@ export function applyAction(state: RunState, action: Action): RunState {
 				s.phase = 'plan';
 				s.card = null;
 				s.chosen = null;
-				s.feedback = null;
 				return s;
 			}
 			if (s.phase !== 'event' || !s.chosen) return s;

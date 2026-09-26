@@ -2,6 +2,8 @@ node_modules
 .svelte-kit
 build
 .vercel
+# Paraglide's generated output (ticket 26) — compiled by the Vite plugin.
+src/lib/paraglide
 .DS_Store
 *.local
 .env

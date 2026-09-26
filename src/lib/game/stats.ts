@@ -1,11 +1,15 @@
 /**
  * The Stats Sheet's numbers (ticket 20). Pure derivations only: the sheet
  * itself is UI state, never part of RunState, and nothing here is persisted.
+ *
+ * Values stay raw — money in game units, the score as a bare figure. Labels and
+ * formatting are the sheet component's job, through the catalogue and the
+ * active locale (ticket 26).
  */
 
 import { cardById } from './cards';
-import { formatMoney, formatMoneyExact, obligationsFor } from './economy';
-import { THREADS, threadChip } from './threads';
+import { obligationsFor } from './economy';
+import { THREADS, threadDue } from './threads';
 import type { RunState } from './types';
 
 /** How a row's figure reads: Debt is down, a missing card is quiet. */
@@ -13,65 +17,60 @@ export type StatsTone = 'ink' | 'muted' | 'down';
 
 export interface StatsRow {
 	key: 'savings' | 'fund' | 'debt' | 'score';
-	label: string;
-	/** Display-ready: money is formatted here, the score is a bare figure. */
-	value: string;
+	/** Savings, Fund and Debt in game units; the Credit score, or null for no card. */
+	value: number | null;
 	tone: StatsTone;
 }
 
 /** One Thread that resolved, and the month it did. */
 export interface ThreadArc {
-	label: string;
+	id: string;
 	month: number;
+}
+
+/** The live Thread's countdown, in the chip's terms. */
+export interface LiveThread {
+	id: string;
+	/** Months until due: ≤ 0 reads as "this month" (ticket 04). */
+	months: number;
 }
 
 export interface StatsSheet {
 	rows: StatsRow[];
 	obligations: number;
-	/** The live Thread's countdown chip (ticket 03), or null. */
-	liveThread: string | null;
+	liveThread: LiveThread | null;
 	/** Resolved Threads, newest first. */
 	history: ThreadArc[];
 }
 
 /**
  * Thread history from the play log: a card that `resolves` a Thread contributes
- * its label and the month it was played. Sorted newest first.
+ * its id and the month it was played. Sorted newest first.
  */
 export function threadHistory(run: Pick<RunState, 'log'>): ThreadArc[] {
 	const arcs: ThreadArc[] = [];
 	for (const entry of run.log ?? []) {
-		const spec = cardById(entry.card)?.resolves;
-		const thread = spec ? THREADS[spec] : undefined;
-		if (thread) arcs.push({ label: thread.label, month: entry.month });
+		const resolves = cardById(entry.card)?.resolves;
+		if (resolves && THREADS[resolves]) arcs.push({ id: resolves, month: entry.month });
 	}
 	return arcs.sort((a, b) => b.month - a.month);
 }
 
 /** Everything the Stats Sheet shows, derived from the Run in one place. */
 export function statsSheet(run: RunState): StatsSheet {
+	// Old saves predate the thread field, and a save can name a Thread the current
+	// deck no longer carries; both stay openable rather than throwing.
+	const thread = run.thread ?? null;
+	const live = thread && THREADS[thread.id] ? thread : null;
 	return {
 		rows: [
-			// Ticket 15: the detail view keeps the decimals on Savings and Fund —
-			// rounding away the monthly interest hides the compounding lesson.
-			{ key: 'savings', label: 'Savings', value: formatMoneyExact(run.savings), tone: 'ink' },
-			{ key: 'fund', label: 'Fund', value: formatMoneyExact(run.fund), tone: 'ink' },
-			{
-				key: 'debt',
-				label: 'Debt',
-				value: formatMoney(run.debt),
-				tone: run.debt > 0 ? 'down' : 'ink'
-			},
-			{
-				key: 'score',
-				label: 'Credit score',
-				value: run.score === null ? 'No card yet' : String(run.score),
-				tone: run.score === null ? 'muted' : 'ink'
-			}
+			{ key: 'savings', value: run.savings, tone: 'ink' },
+			{ key: 'fund', value: run.fund, tone: 'ink' },
+			{ key: 'debt', value: run.debt, tone: run.debt > 0 ? 'down' : 'ink' },
+			{ key: 'score', value: run.score, tone: run.score === null ? 'muted' : 'ink' }
 		],
 		obligations: obligationsFor(run),
-		// Old saves predate the thread field; `?? null` keeps them openable.
-		liveThread: threadChip({ thread: run.thread ?? null, month: run.month }),
+		liveThread: live ? { id: live.id, months: threadDue(live) - run.month } : null,
 		history: threadHistory(run)
 	};
 }

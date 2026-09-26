@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyAction, createRun, runActions } from './loop';
 import { STUDENT_LOAN } from './economy';
+import { chosenFeedback } from '$lib/i18n/card-text';
 import type { RunState } from './types';
 
 /** A Run dropped into Stage 4 (month 37), ready to walk into Stage 5. */
@@ -31,7 +32,9 @@ describe('the Stage-5 stage-up (ticket 18)', () => {
 		let s = take(atFork(), 'work');
 		expect(s.path).toBe('work');
 		expect(s.phase).toBe('stage_up');
-		expect(s.feedback).toBeTruthy();
+		// The Feedback comes from the catalogue through the chosen card + choice
+		// (ticket 26) — no prose is stored on the Run.
+		expect(chosenFeedback(s.card, s.chosen)).toBeTruthy();
 		expect(s.log.at(-1)).toEqual({ month: 49, card: 'the_fork', choice: 'work' });
 
 		s = applyAction(s, { type: 'CONTINUE' });

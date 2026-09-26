@@ -2,10 +2,15 @@
 	import { expectedIncome, formatMoney, obligationsFor, stageOf } from '$lib/game/economy';
 	import { planWarning, workHintVisible } from '$lib/game/presentation';
 	import type { Action, RunState } from '$lib/game/types';
+	import { stageName } from '$lib/i18n/game-text';
+	import { m } from '$lib/i18n/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
 
 	let { run, dispatch }: { run: RunState; dispatch: (a: Action) => void } = $props();
 
+	const locale = getLocale();
 	const stage = $derived(stageOf(run));
+	const name = $derived(stageName(run.stage));
 	const income = $derived(expectedIncome(run));
 	const saving = $derived(Math.max(0, income - run.need - run.want));
 	const due = $derived(obligationsFor(run));
@@ -32,29 +37,29 @@
 
 <section class="surface p-5">
 	<div class="flex items-baseline justify-between">
-		<h2 class="text-xl font-semibold tracking-tight">Plan the month</h2>
+		<h2 class="text-xl font-semibold tracking-tight">{m.plan_title()}</h2>
 		{#if due > 0}
-			<span class="figure text-xs text-[var(--muted)]">{formatMoney(due)} fixed</span>
+			<span class="figure text-xs text-[var(--muted)]">
+				{m.plan_fixed({ amount: formatMoney(due, locale) })}
+			</span>
 		{/if}
 	</div>
-	<p class="mt-1 text-sm text-[var(--muted)]">
-		Put the money where you want it before the month gets a say.
-	</p>
+	<p class="mt-1 text-sm text-[var(--muted)]">{m.plan_subtitle()}</p>
 
 	{#if hint}
 		<div class="mt-6 rounded-xl border border-[var(--money-35)] bg-[var(--money-wash)] p-4">
-			<p class="kicker text-[var(--money)]">{stage.name} · no allowance</p>
-			<p class="mt-1.5 text-sm leading-relaxed">The allowance stopped. This year, hours are the money.</p>
-			<p class="mt-1 text-xs text-[var(--muted)]">Set them before the month starts.</p>
+			<p class="kicker text-[var(--money)]">{m.plan_hint_kicker({ stage: name })}</p>
+			<p class="mt-1.5 text-sm leading-relaxed">{m.plan_hint_body()}</p>
+			<p class="mt-1 text-xs text-[var(--muted)]">{m.plan_hint_note()}</p>
 		</div>
 	{/if}
 
 	<div class="mt-6">
 		<div class="flex items-baseline justify-between">
-			<label class="kicker" for="work-hours">Work hours</label>
+			<label class="kicker" for="work-hours">{m.plan_work_hours()}</label>
 			<span class="figure text-sm">
 				{run.hours}h
-				<span class="text-[var(--muted)]">· {formatMoney(run.hours * stage.rate)}</span>
+				<span class="text-[var(--muted)]">· {formatMoney(run.hours * stage.rate, locale)}</span>
 			</span>
 		</div>
 		<input
@@ -68,12 +73,12 @@
 			oninput={(e) => dispatch({ type: 'SET_HOURS', hours: Number(e.currentTarget.value) })}
 		/>
 		<p id="work-hours-hint" class="mt-1 text-xs text-[var(--muted)]">
-			Every hour worked is an hour you do not get back.
+			{m.plan_work_hours_hint()}
 		</p>
 	</div>
 
 	<div class="mt-6">
-		<span class="kicker">How income splits</span>
+		<span class="kicker">{m.plan_split()}</span>
 		<div class="mt-2 flex h-2.5 overflow-hidden rounded-full bg-[var(--wash)]">
 			<div class="h-full bg-[var(--money-35)] transition-[width] duration-300" style="width: {shares.need}%"></div>
 			<div class="h-full bg-[var(--money-60)] transition-[width] duration-300" style="width: {shares.want}%"></div>
@@ -83,8 +88,8 @@
 		<div class="mt-4 flex flex-col gap-4">
 			<label class="block">
 				<span class="flex items-baseline justify-between">
-					<span class="kicker">Need · bills and basics</span>
-					<span class="figure text-sm">{formatMoney(run.need)}</span>
+					<span class="kicker">{m.plan_need()}</span>
+					<span class="figure text-sm">{formatMoney(run.need, locale)}</span>
 				</span>
 				<input
 					type="range"
@@ -99,8 +104,8 @@
 
 			<label class="block">
 				<span class="flex items-baseline justify-between">
-					<span class="kicker">Want · everything else</span>
-					<span class="figure text-sm">{formatMoney(run.want)}</span>
+					<span class="kicker">{m.plan_want()}</span>
+					<span class="figure text-sm">{formatMoney(run.want, locale)}</span>
 				</span>
 				<input
 					type="range"
@@ -117,10 +122,12 @@
 
 	<div class="mt-5 flex items-end justify-between border-t border-dashed border-[var(--line)] pt-4">
 		<div>
-			<span class="kicker">Into savings</span>
-			<p class="mt-0.5 text-xs text-[var(--muted)]">the part that buys your future</p>
+			<span class="kicker">{m.plan_saving()}</span>
+			<p class="mt-0.5 text-xs text-[var(--muted)]">{m.plan_saving_note()}</p>
 		</div>
-		<span class="figure text-2xl font-medium text-[var(--money)]">{formatMoney(saving)}</span>
+		<span class="figure text-2xl font-medium text-[var(--money)]">
+			{formatMoney(saving, locale)}
+		</span>
 	</div>
 
 	<div class="mt-5 flex flex-wrap gap-2">
@@ -129,27 +136,30 @@
 			disabled={!run.lastPlan}
 			onclick={repeat}
 		>
-			Keep last month
+			{m.plan_repeat()}
 		</button>
 		<button
 			class="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs disabled:opacity-40"
 			disabled={income <= 0}
 			onclick={preset503020}
 		>
-			50 / 30 / 20
+			{m.plan_preset()}
 		</button>
 	</div>
 
 	{#if warning}
 		<div class="mt-5 rounded-xl border border-dashed border-[var(--down)] px-4 py-3">
 			<p class="figure text-sm text-[var(--down)]">
-				{formatMoney(warning.due)} fixed · {formatMoney(warning.income)} coming in
+				{m.plan_warning_line({
+					due: formatMoney(warning.due, locale),
+					income: formatMoney(warning.income, locale)
+				})}
 			</p>
 			<p class="mt-1 text-sm leading-snug">
 				{#if warning.source === 'savings'}
-					Covered from savings.
+					{m.plan_warning_covered()}
 				{:else}
-					The {formatMoney(warning.gap)} gap becomes debt.
+					{m.plan_warning_debt({ gap: formatMoney(warning.gap, locale) })}
 				{/if}
 			</p>
 		</div>
@@ -159,6 +169,6 @@
 		class="mt-5 w-full rounded-xl bg-[var(--money)] py-3.5 font-semibold text-white transition active:scale-[0.99]"
 		onclick={() => dispatch({ type: 'CONFIRM_PLAN' })}
 	>
-		Start the month
+		{m.plan_start()}
 	</button>
 </section>

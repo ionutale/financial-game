@@ -1,16 +1,24 @@
+<script lang="ts">
+	import { m } from '$lib/i18n/messages';
+</script>
+
 <svelte:head>
-	<title>Privacy · Financial Life-Sim</title>
+	<title>{m.privacy_title()}</title>
 </svelte:head>
 
 <main class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col gap-8 px-5 py-10">
 	<header>
-		<p class="kicker">Privacy policy</p>
+		<p class="kicker">{m.privacy_kicker()}</p>
 		<h1 class="mt-3 text-[32px] leading-[1.12] font-semibold tracking-tight">
-			What the game knows about you.
+			{m.privacy_heading()}
 		</h1>
-		<p class="mt-4 text-[15px] leading-relaxed">Short version: your progress, and nothing else.</p>
+		<p class="mt-4 text-[15px] leading-relaxed">{m.privacy_lead()}</p>
 	</header>
 
+	<!--
+		Privacy policy body: legal text awaiting review, deliberately not moved
+		into the message catalogues or machine-translated (ticket 26).
+	-->
 	<section>
 		<h2 class="text-lg font-semibold tracking-tight">What is stored</h2>
 		<p class="mt-2 text-sm leading-relaxed">
@@ -84,7 +92,7 @@
 	</section>
 
 	<footer class="mt-auto flex flex-col gap-2 text-sm">
-		<a class="underline underline-offset-2" href="/settings">Settings</a>
-		<a class="underline underline-offset-2" href="/">Back to the game</a>
+		<a class="underline underline-offset-2" href="/settings">{m.link_settings()}</a>
+		<a class="underline underline-offset-2" href="/">{m.link_back_to_game()}</a>
 	</footer>
 </main>

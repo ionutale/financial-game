@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { applyAction, createRun, pickCard, requiresSatisfied } from './loop';
 import { CARDS } from './cards';
-import { THREADS, threadChip, threadDue } from './threads';
+import { THREADS, threadDue } from './threads';
+import { threadChip } from '$lib/i18n/game-text';
 import type { RunState } from './types';
 
 /** A fresh Run dropped into a Stage, the way the test scaffolding does it. */

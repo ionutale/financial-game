@@ -1,20 +1,23 @@
 <script lang="ts">
 	import { formatMoney } from '$lib/game/economy';
-	import { chipsFor } from '$lib/game/presentation';
 	import type { Action, Choice, RunState } from '$lib/game/types';
+	import {
+		cardOdds,
+		cardSituation,
+		cardTitle,
+		chosenFeedback,
+		choiceLabel
+	} from '$lib/i18n/card-text';
+	import { chipsFor } from '$lib/i18n/chips';
+	import { kindLabel } from '$lib/i18n/game-text';
+	import { m } from '$lib/i18n/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
 
 	let { run, dispatch }: { run: RunState; dispatch: (a: Action) => void } = $props();
 
+	const locale = getLocale();
 	const card = $derived(run.card);
-
-	// A scam card must never announce itself as one.
-	const KIND: Record<string, string> = {
-		decision: 'Your call',
-		risk_moment: 'Your call',
-		scam: 'Your call',
-		shock: 'Out of nowhere',
-		stage_up: 'A new stage'
-	};
+	const feedback = $derived(chosenFeedback(card, run.chosen));
 
 	function blocked(c: Choice): boolean {
 		const hours = c.freeTime ?? 0;
@@ -23,14 +26,15 @@
 </script>
 
 {#if card}
+	{@const odds = cardOdds(card)}
 	<section class="surface p-5">
-		<p class="kicker">{KIND[card.kind] ?? 'Your call'}</p>
-		<h2 class="mt-2 text-xl leading-snug font-semibold tracking-tight">{card.title}</h2>
-		<p class="mt-3 text-[15px] leading-relaxed">{card.situation}</p>
+		<p class="kicker">{kindLabel(card.kind)}</p>
+		<h2 class="mt-2 text-xl leading-snug font-semibold tracking-tight">{cardTitle(card)}</h2>
+		<p class="mt-3 text-[15px] leading-relaxed">{cardSituation(card)}</p>
 
-		{#if card.odds}
+		{#if odds}
 			<p class="mt-3 border-l-2 border-[var(--line)] pl-3 text-xs text-[var(--muted)]">
-				{card.odds}
+				{odds}
 			</p>
 		{/if}
 
@@ -45,7 +49,7 @@
 						disabled={off}
 						onclick={() => dispatch({ type: 'CHOOSE', choiceId: c.id })}
 					>
-						<span class="block text-[15px] font-medium">{c.label}</span>
+						<span class="block text-[15px] font-medium">{choiceLabel(card, c)}</span>
 						<span class="mt-1.5 flex flex-wrap items-center gap-1.5">
 							{#if chips.length}
 								{#each chips as chip (chip)}
@@ -56,12 +60,12 @@
 									</span>
 								{/each}
 							{:else}
-								<span class="text-[11px] text-[var(--muted)]">no cost now</span>
+								<span class="text-[11px] text-[var(--muted)]">{m.event_no_cost()}</span>
 							{/if}
 						</span>
 						{#if off}
 							<span class="mt-1.5 block text-[11px] text-[var(--down)]">
-								Not enough free time — you cannot borrow hours.
+								{m.event_blocked()}
 							</span>
 						{/if}
 					</button>
@@ -69,19 +73,21 @@
 			</div>
 		{/if}
 
-		{#if run.feedback}
+		{#if feedback}
 			<div class="mt-6 border-l-2 border-[var(--money)] pl-4" aria-live="polite">
-				<p class="kicker">What happened</p>
-				<p class="mt-2 text-[15px] leading-relaxed">{run.feedback}</p>
+				<p class="kicker">{m.event_what_happened()}</p>
+				<p class="mt-2 text-[15px] leading-relaxed">{feedback}</p>
 
 				{#if run.cascade && run.cascade.toDebt > 0}
 					<p class="mt-3 text-[13px] text-[var(--down)]">
-						The cascade: {formatMoney(run.cascade.fromSave)} came out of the Save envelope, and
-						{formatMoney(run.cascade.toDebt)} went onto Debt.
+						{m.event_cascade_debt({
+							from: formatMoney(run.cascade.fromSave, locale),
+							to: formatMoney(run.cascade.toDebt, locale)
+						})}
 					</p>
 				{:else if run.cascade && run.cascade.fromSave > 0}
 					<p class="mt-3 text-[13px] text-[var(--down)]">
-						The cascade: {formatMoney(run.cascade.fromSave)} came out of the Save envelope.
+						{m.event_cascade_save({ from: formatMoney(run.cascade.fromSave, locale) })}
 					</p>
 				{/if}
 			</div>
@@ -90,7 +96,7 @@
 				class="mt-6 w-full rounded-xl bg-[var(--money)] py-3.5 font-semibold text-white transition active:scale-[0.99]"
 				onclick={() => dispatch({ type: 'CONTINUE' })}
 			>
-				Continue
+				{m.event_continue()}
 			</button>
 		{/if}
 	</section>

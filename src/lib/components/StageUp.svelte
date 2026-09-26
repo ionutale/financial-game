@@ -4,19 +4,24 @@
 	 * before its first Plan. Only the Fork ships so far; the other four Stages
 	 * still open silently.
 	 */
-	import { CONCEPT_LABEL, STAGES } from '$lib/game/economy';
+	import { STAGES } from '$lib/game/economy';
 	import type { Action, RunState } from '$lib/game/types';
+	import { conceptLabel, stageName } from '$lib/i18n/game-text';
+	import { m } from '$lib/i18n/messages';
 	import EventStep from './EventStep.svelte';
 
 	let { run, dispatch }: { run: RunState; dispatch: (a: Action) => void } = $props();
 
 	const stage = $derived(STAGES[run.stage]);
-	const unlocks = $derived(stage.concepts.map((c) => CONCEPT_LABEL[c]).join(' · '));
+	const name = $derived(stageName(run.stage));
+	const unlocks = $derived(stage.concepts.map((c) => conceptLabel(c)).join(' · '));
 </script>
 
 <div class="rounded-xl bg-[var(--money-wash)] px-4 py-3">
-	<p class="kicker text-[var(--money)]">Stage {run.stage} · {stage.name} · age {run.age}</p>
-	<p class="mt-1.5 text-sm leading-relaxed">Unlocks {unlocks}</p>
+	<p class="kicker text-[var(--money)]">
+		{m.stage_up_title({ stage: run.stage, name, age: run.age })}
+	</p>
+	<p class="mt-1.5 text-sm leading-relaxed">{m.stage_up_unlocks({ concepts: unlocks })}</p>
 </div>
 
 <EventStep {run} {dispatch} />

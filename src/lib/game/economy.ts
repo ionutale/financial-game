@@ -14,21 +14,10 @@ export const GOAL_TARGET = 4000; // Work path Named Goal
 export const STUDY_BUFFER = 1000; // Study path Named Goal
 export const STUDENT_LOAN = 3000;
 
-/** Human names for the eight Concepts, from the glossary. */
-export const CONCEPT_LABEL: Record<ConceptId, string> = {
-	needs_wants: 'needs vs wants',
-	earning_work: 'earning & work',
-	budgeting: 'budgeting & tracking',
-	saving_goals: 'saving & goals',
-	interest: 'interest & compounding',
-	credit: 'credit & debt',
-	investing: 'investing & risk',
-	tax_insurance_scams: 'taxes, insurance & scams'
-};
+/** Human names for the eight Concepts live in the message catalogue (ticket 26). */
 
 export interface StageSpec {
 	age: number;
-	name: string;
 	/** Baseline income before any hours worked. */
 	base: number;
 	/** Pay per hour on the work slider. */
@@ -44,7 +33,6 @@ export interface StageSpec {
 export const STAGES: Record<number, StageSpec> = {
 	1: {
 		age: 14,
-		name: 'Pocket Money',
 		base: 40,
 		rate: 10,
 		freeTime: 100,
@@ -53,7 +41,6 @@ export const STAGES: Record<number, StageSpec> = {
 	},
 	2: {
 		age: 15,
-		name: 'First Budget',
 		base: 40,
 		rate: 10,
 		freeTime: 90,
@@ -62,7 +49,6 @@ export const STAGES: Record<number, StageSpec> = {
 	},
 	3: {
 		age: 16,
-		name: 'First Wage',
 		base: 0,
 		rate: 10,
 		freeTime: 80,
@@ -71,7 +57,6 @@ export const STAGES: Record<number, StageSpec> = {
 	},
 	4: {
 		age: 17,
-		name: 'First Credit',
 		base: 0,
 		rate: 10,
 		freeTime: 70,
@@ -80,7 +65,6 @@ export const STAGES: Record<number, StageSpec> = {
 	},
 	5: {
 		age: 18,
-		name: 'The Fork',
 		base: 1600,
 		rate: 12.5,
 		freeTime: 60,
@@ -125,11 +109,6 @@ export function goalTarget(state: Pick<RunState, 'stage' | 'path'>): number {
 	return state.stage === 5 && state.path === 'study' ? STUDY_BUFFER : GOAL_TARGET;
 }
 
-/** The Named Goal's player-facing name: a Buffer on the Study path (ticket 21). */
-export function goalName(state: Pick<RunState, 'stage' | 'path'>): string {
-	return state.stage === 5 && state.path === 'study' ? 'Buffer' : 'Emergency fund';
-}
-
 /** Money the player can actually reach: cash plus what the envelopes hold. */
 export function available(state: Pick<RunState, 'cash' | 'pots'>): number {
 	return state.cash + state.pots.need + state.pots.want + state.pots.save;
@@ -151,10 +130,37 @@ export function netWorth(
 	return available(state) + state.savings + state.fund - state.debt;
 }
 
-/** The neutral currency glyph (ticket 01). Whole numbers, except where noted. */
-export function formatMoney(n: number): string {
+/**
+ * The neutral currency glyph (ticket 01). Whole numbers, except where noted.
+ *
+ * Formatting takes the active Paraglide locale explicitly (ticket 26): letting
+ * `Intl` fall back to the runtime locale would make SSR and hydration disagree.
+ * Instances are memoised because `Intl.NumberFormat` is not cheap to construct.
+ */
+const groupers = new Map<string, Intl.NumberFormat>();
+const exactFormatters = new Map<string, Intl.NumberFormat>();
+
+function grouper(locale: string): Intl.NumberFormat {
+	let formatter = groupers.get(locale);
+	if (!formatter) {
+		formatter = new Intl.NumberFormat(locale);
+		groupers.set(locale, formatter);
+	}
+	return formatter;
+}
+
+function exactFormatter(locale: string): Intl.NumberFormat {
+	let formatter = exactFormatters.get(locale);
+	if (!formatter) {
+		formatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
+		exactFormatters.set(locale, formatter);
+	}
+	return formatter;
+}
+
+export function formatMoney(n: number, locale: string): string {
 	const value = Math.round(n);
-	return (value < 0 ? '\u2212' : '') + '\u25c8' + Math.abs(value).toLocaleString('en-US');
+	return (value < 0 ? '\u2212' : '') + '\u25c8' + grouper(locale).format(Math.abs(value));
 }
 
 /**
@@ -162,11 +168,7 @@ export function formatMoney(n: number): string {
  * survive. At 3%/yr a small balance earns ◈0.10 a month — rounded away, the
  * compounding lesson becomes invisible exactly when it is first taught.
  */
-export function formatMoneyExact(n: number): string {
+export function formatMoneyExact(n: number, locale: string): string {
 	const value = Math.round(n * 100) / 100;
-	return (
-		(value < 0 ? '\u2212' : '') +
-		'\u25c8' +
-		Math.abs(value).toLocaleString('en-US', { maximumFractionDigits: 2 })
-	);
+	return (value < 0 ? '\u2212' : '') + '\u25c8' + exactFormatter(locale).format(Math.abs(value));
 }

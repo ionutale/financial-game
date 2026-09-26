@@ -1,33 +1,11 @@
 /**
  * Presentation rules that must not be left to an author's prose (ticket 03).
- * Cost chips are derived mechanically from the effect data, so no card can
- * hide a cost in its label or leak an outcome into one.
+ * The shortfall warning is arithmetic only. Cost chips live in `$lib/i18n/chips`
+ * because they are locale-formatted text (ticket 26).
  */
 
-import { expectedIncome, formatMoney, obligationsFor } from './economy';
-import type { Choice, RunState } from './types';
-
-export function chipsFor(choice: Choice, insured: boolean): string[] {
-	const chips: string[] = [];
-
-	const cost = choice.insuredCost !== undefined && insured ? choice.insuredCost : (choice.cost ?? 0);
-	if (choice.insuredCost !== undefined && insured && cost === 0) {
-		chips.push('covered');
-	} else if (cost > 0) {
-		chips.push('\u2212' + formatMoney(cost));
-	}
-
-	if (choice.gain) chips.push('+' + formatMoney(choice.gain));
-
-	if (choice.freeTime) {
-		const hours = Math.abs(choice.freeTime);
-		chips.push((choice.freeTime > 0 ? '+' : '\u2212') + hours + 'h');
-	}
-
-	if (choice.sets?.bnpl) chips.push(`${choice.sets.bnpl} \u00d7 ${formatMoney(30)}`);
-
-	return chips;
-}
+import { expectedIncome, obligationsFor } from './economy';
+import type { RunState } from './types';
 
 export interface PlanWarning {
 	/** This month's Obligations, as far as the plan can know them. */

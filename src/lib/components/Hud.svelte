@@ -2,15 +2,15 @@
 	import {
 		formatMoney,
 		formatMoneyExact,
-		goalName,
 		goalTarget,
 		netWorth,
 		savedTowardGoal,
-		spendable,
-		STAGES
+		spendable
 	} from '$lib/game/economy';
 	import type { RunState } from '$lib/game/types';
-	import { threadChip } from '$lib/game/threads';
+	import { goalName, pathLabel, stageName, threadChip } from '$lib/i18n/game-text';
+	import { m } from '$lib/i18n/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
 	import Avatar from './Avatar.svelte';
 	import Money from './Money.svelte';
 
@@ -18,7 +18,8 @@
 	let { run, onStats }: { run: RunState; onStats: (trigger: HTMLButtonElement) => void } =
 		$props();
 
-	const stage = $derived(STAGES[run.stage]);
+	const locale = getLocale();
+	const name = $derived(stageName(run.stage));
 	const goal = $derived(goalTarget(run));
 	const saved = $derived(savedTowardGoal(run));
 	const pct = $derived(Math.max(0, Math.min(100, (saved / goal) * 100)));
@@ -31,21 +32,23 @@
 			<Avatar stage={run.stage} />
 		</div>
 		<div class="min-w-0 flex-1">
-			<p class="kicker">Month {run.month} of 60</p>
+			<p class="kicker">{m.hud_month_of_60({ month: run.month })}</p>
 			<p class="truncate text-sm">
-				{run.age} · {stage.name}{run.path ? ` · ${run.path}` : ''}
+				{run.path
+					? m.hud_age_stage_path({ age: run.age, stage: name, path: pathLabel(run.path) })
+					: m.hud_age_stage({ age: run.age, stage: name })}
 			</p>
 		</div>
 		<button
 			class="min-h-11 shrink-0 rounded-full border border-[var(--line)] bg-[var(--surface)] px-4 text-xs font-semibold transition active:scale-[0.99]"
 			onclick={(e) => onStats(e.currentTarget)}
 		>
-			Stats
+			{m.hud_stats()}
 		</button>
 	</div>
 
 	<div>
-		<p class="kicker">Net worth</p>
+		<p class="kicker">{m.hud_net_worth()}</p>
 		<Money amount={netWorth(run)} size="hero" />
 	</div>
 
@@ -59,18 +62,18 @@
 		<div class="mt-2 flex items-baseline justify-between">
 			<span class="kicker">{goalName(run)}</span>
 			<span class="figure text-xs text-[var(--muted)]">
-				{formatMoneyExact(saved)} / {formatMoney(goal)}
+				{formatMoneyExact(saved, locale)} / {formatMoney(goal, locale)}
 			</span>
 		</div>
 	</div>
 
 	<div class="flex gap-8">
 		<div>
-			<p class="kicker">Cash</p>
+			<p class="kicker">{m.hud_cash()}</p>
 			<Money amount={spendable(run)} size="lg" />
 		</div>
 		<div>
-			<p class="kicker">Free time</p>
+			<p class="kicker">{m.hud_free_time()}</p>
 			<p class="figure text-2xl font-medium">
 				{Math.max(0, Math.round(run.freeTime))}<span class="text-base text-[var(--muted)]">h</span>
 			</p>
@@ -87,7 +90,7 @@
 		<p
 			class="w-fit rounded-full bg-[var(--money-wash)] px-3 py-1 text-xs text-[var(--money)]"
 		>
-			BNPL — {run.bnpl.monthsLeft} payments of {formatMoney(run.bnpl.amount)} left
+			{m.hud_bnpl({ months: run.bnpl.monthsLeft, amount: formatMoney(run.bnpl.amount, locale) })}
 		</p>
 	{/if}
 </header>

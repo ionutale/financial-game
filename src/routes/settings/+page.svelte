@@ -5,6 +5,7 @@
 	 * cookie behind a typed confirmation, then returns the player to a fresh Run.
 	 */
 	import { goto } from '$app/navigation';
+	import { m } from '$lib/i18n/messages';
 	import { tick } from 'svelte';
 
 	let confirming = $state(false);
@@ -15,7 +16,8 @@
 	let deleteTrigger = $state<HTMLButtonElement | null>(null);
 
 	// Case-insensitive so a phone keyboard cannot dead-end the player, but still
-	// a deliberate typed word rather than a single tap (ticket 14).
+	// a deliberate typed word rather than a single tap (ticket 14). The token is
+	// literal and never translated — the label says which word to type.
 	const confirmed = $derived(typed.trim().toUpperCase() === 'DELETE');
 
 	async function openConfirm() {
@@ -45,53 +47,50 @@
 			// the load reruns with the new profile and starts at month 1.
 			await goto('/', { invalidateAll: true });
 		} catch {
-			error = 'That did not go through. Nothing was deleted — try again.';
+			error = m.settings_delete_error();
 			deleting = false;
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>Settings · Financial Life-Sim</title>
+	<title>{m.settings_title()}</title>
 </svelte:head>
 
 <main class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col gap-7 px-5 py-10">
 	<header>
-		<p class="kicker">Settings</p>
+		<p class="kicker">{m.settings_kicker()}</p>
 		<h1 class="mt-3 text-[32px] leading-[1.12] font-semibold tracking-tight">
-			Your data, your call.
+			{m.settings_heading()}
 		</h1>
 		<p class="mt-4 text-[15px] leading-relaxed text-[var(--muted)]">
-			The game keeps one thing about you: a random id and the Run it points at. Take it with
-			you or delete it — neither needs an account.
+			{m.settings_lead()}
 		</p>
 	</header>
 
 	<section class="surface p-5" aria-labelledby="settings-download">
-		<p class="kicker" id="settings-download">Download my data</p>
+		<p class="kicker" id="settings-download">{m.settings_download_kicker()}</p>
 		<p class="mt-3 text-sm leading-relaxed text-[var(--muted)]">
-			A JSON file holding everything the game keeps: the Run in progress, if there is one, and
-			every finished Run kept for replay — the month, the money, the plan and the choices.
+			{m.settings_download_body()}
 		</p>
 		<a
 			href="/api/profile/export"
 			download="financial-game-export.json"
 			class="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--money)] px-5 font-semibold text-white transition active:scale-[0.99]"
 		>
-			Download my data
+			{m.settings_download_button()}
 		</a>
 	</section>
 
 	<section class="surface p-5" aria-labelledby="settings-delete">
-		<p class="kicker" id="settings-delete">Delete everything</p>
+		<p class="kicker" id="settings-delete">{m.settings_delete_kicker()}</p>
 		<p class="mt-3 text-sm leading-relaxed text-[var(--muted)]">
-			Removes every stored Run — the one in progress and any finished ones — and clears the id
-			on this device. It cannot be undone: a fresh Run starts from month 1.
+			{m.settings_delete_body()}
 		</p>
 
 		{#if confirming}
 			<label class="mt-4 block text-sm font-semibold" for="delete-confirm">
-				Type DELETE to confirm
+				{m.settings_delete_confirm_label()}
 			</label>
 			<input
 				id="delete-confirm"
@@ -108,13 +107,13 @@
 					disabled={!confirmed || deleting}
 					onclick={deleteEverything}
 				>
-					{deleting ? 'Deleting…' : 'Delete for good'}
+					{deleting ? m.settings_deleting() : m.settings_delete_confirm()}
 				</button>
 				<button
 					class="min-h-11 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-5 font-semibold transition active:scale-[0.99]"
 					onclick={cancelConfirm}
 				>
-					Keep my progress
+					{m.settings_delete_cancel()}
 				</button>
 			</div>
 		{:else}
@@ -123,7 +122,7 @@
 				bind:this={deleteTrigger}
 				onclick={openConfirm}
 			>
-				Delete everything
+				{m.settings_delete_button()}
 			</button>
 		{/if}
 
@@ -131,7 +130,7 @@
 	</section>
 
 	<footer class="mt-auto flex flex-col gap-2 text-sm">
-		<a class="underline underline-offset-2" href="/privacy">Privacy policy</a>
-		<a class="underline underline-offset-2" href="/">Back to the game</a>
+		<a class="underline underline-offset-2" href="/privacy">{m.link_privacy_policy()}</a>
+		<a class="underline underline-offset-2" href="/">{m.link_back_to_game()}</a>
 	</footer>
 </main>

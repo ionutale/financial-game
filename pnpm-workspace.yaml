@@ -5,3 +5,6 @@ packages:
 # links its platform binary and Vite needs it.
 allowBuilds:
   esbuild: true
+
+minimumReleaseAgeExclude:
+  - '@inlang/cli@3.3.8'
