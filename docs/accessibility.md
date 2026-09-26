@@ -116,8 +116,12 @@ alone. Throughout: focus is always visible, never trapped, never lands somewhere
 
 **Status now:** `tests/a11y/zoom.spec.ts` drives intro → Plan → work hours (ArrowRight) → month
 start → a reachable Choice using only Tab and Enter; axe verifies the names and roles; the Stats
-Sheet's own focus trap and Escape-to-close are implemented in `StatsSheet.svelte`.
-**Human-owed:** a complete month played keyboard-only, and the visible-focus judgement.
+Sheet's own focus trap and Escape-to-close are implemented in `StatsSheet.svelte`; and the month
+close test in `tests/a11y/screens.spec.ts` proves the close arrives as a labelled region whose
+heading receives focus — the focus move ticket 14 promised, which axe cannot see (ticket 25).
+**Human-owed:** a complete month played keyboard-only, the visible-focus judgement, and hearing the
+month close actually announced — a tool can prove focus landed on the heading, only a person can
+hear that it was spoken and made sense.
 
 ### 4. Greyscale
 
@@ -167,3 +171,13 @@ traces (`test-results/`) are uploaded as workflow artifacts on every run.
 - **Judge calls on record:** axe runs with reduced motion (see above); Lighthouse gates only the
   accessibility category; the `landmark-one-main` audit is the kind of best-practice item the 0.95
   threshold tolerates, though the intro was given a `<main>` anyway.
+- **The month close's announcement (ticket 25):** a named `<section>` — an implicit `region`, so the
+  explicit `role="region"` is left off and Svelte's `a11y_no_redundant_roles` warning stays quiet —
+  labelled by the heading that takes focus (`tabindex="-1"`) when the close appears. **No live
+  region** — the focus move already announces the heading, and one would say it twice; **no focus
+  trap** — the close is inline, not modal, so Tab must still reach the HUD and the Stats pill.
+  Focus moves only on arrival, after CONTINUE, so the Feedback's own live region is never
+  interrupted.
+- **A saved Run can load straight into the close** (the write at CONTINUE is the month's snapshot).
+  Focusing the heading on mount is deliberate there too: a full page load announces the document,
+  and the focus move says which screen the save restored.

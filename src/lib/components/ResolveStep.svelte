@@ -8,11 +8,25 @@
 	const close = $derived(run.close);
 	const change = $derived(close ? close.monthChange : 0);
 	const over = $derived(close ? (!close.adherence.need || !close.adherence.want) : false);
+
+	/*
+	 * The close appears only after CONTINUE, so nothing is still being read
+	 * when it arrives. Focus the heading rather than live-announcing the whole
+	 * sheet: the heading names the screen, and Tab from it lands on Next month
+	 * (ticket 14: a labelled region that receives focus, no focus trap).
+	 */
+	let heading = $state<HTMLHeadingElement | null>(null);
+
+	$effect(() => {
+		heading?.focus();
+	});
 </script>
 
 {#if close}
-	<section class="surface p-5">
-		<p class="kicker">Month {run.month} closes</p>
+	<section class="surface p-5" aria-labelledby="month-close-title">
+		<h2 id="month-close-title" class="kicker" tabindex="-1" bind:this={heading}>
+			Month {run.month} closes
+		</h2>
 
 		<div class="mt-3">
 			<p class="kicker">Net worth this month</p>

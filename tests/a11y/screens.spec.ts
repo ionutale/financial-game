@@ -32,8 +32,22 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 
 	test('month screen: month close', async ({ page }) => {
 		await seedRun(page, FEEDBACK_RUN);
-		await page.getByRole('button', { name: 'Continue' }).click();
-		await expect(page.getByText('Month 1 closes')).toBeVisible();
+		await page.getByRole('button', { name: 'Continue' }).press('Enter');
+
+		/*
+		 * Ticket 25: the close announces itself. The region is labelled by its
+		 * heading, and the heading takes focus when the close replaces the
+		 * Feedback, so a screen reader reads it without navigation.
+		 */
+		const heading = page.getByRole('heading', { name: 'Month 1 closes' });
+		await expect(page.getByRole('region', { name: 'Month 1 closes' })).toBeVisible();
+		await expect(heading).toBeFocused();
+		await expect(heading).toHaveAttribute('tabindex', '-1');
+
+		/* The heading is not a tab stop: Tab moves on to the close's action. */
+		await page.keyboard.press('Tab');
+		await expect(page.getByRole('button', { name: 'Next month' })).toBeFocused();
+
 		await expectNoAxeViolations(page, 'the month close');
 	});
 
