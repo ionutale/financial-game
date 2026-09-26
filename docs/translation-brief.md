@@ -11,6 +11,8 @@ defined there, and the English wording in the catalogues follows it exactly.
 green (ticket 26). They are not translations. Ticket 26 deliberately did not machine-translate
 them; the next tickets are where they get real text.
 
+_2026-09-26: both `it` and `ro` were machine-translated by an agent (ticket 27) and are complete but unreviewed — they still want a human pass in Fink._
+
 ## The key convention
 
 Card prose never lives in TypeScript. Keys are derived from immutable ids:

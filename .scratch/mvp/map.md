@@ -133,9 +133,10 @@ Closed tickets:
 
 **Empty of the original work — every decision is resolved.** The build's tickets:
 
+- [x] **27 translate-it-ro** — resolved: both catalogues translated in full (695 keys each);
+  a Fink human pass is recorded as owed.
 - [x] **26 i18n-build** — resolved: Paraglide wired on the ticket-07 strategy, the deck is
-  language-neutral, 695 keys × 3 locales, formatting is locale-aware, and the three gates run;
-  `it`/`ro` are drafts to translate next.
+  language-neutral, 695 keys × 3 locales, formatting is locale-aware, and the three gates run.
 - [x] **25 month-close-focus** — resolved: the close is a labelled region whose heading takes
   focus on mount, covered by the a11y suite.
 - [x] **24 accessibility-ci** — resolved: axe (WCAG 2.2 AA) over nine screens plus reflow and
