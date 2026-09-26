@@ -133,6 +133,10 @@ Closed tickets:
 
 **Empty of the original work — every decision is resolved.** The build's tickets:
 
+- [ ] **25 month-close-focus** — `issues/25-month-close-focus.md` — the month close should
+  announce itself to screen readers (ticket 14); not axe-detectable, found by ticket 24.
+- [x] **24 accessibility-ci** — resolved: axe (WCAG 2.2 AA) over nine screens plus reflow and
+  keyboard proxies, Lighthouse accessibility gated at 0.95, all in CI; six real violations fixed.
 - [x] **23 run-archive** — resolved: finished Runs are archived on the profile; the done write
   frees the active slot, so replay persists from month 1 (a latent replay bug, fixed).
 - [x] **22 privacy-build** — resolved: export/delete routes, Settings and policy pages, the LIA,

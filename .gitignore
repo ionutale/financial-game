@@ -9,3 +9,5 @@ build
 !.env.example
 vite.config.ts.timestamp-*
 .scratch
+reports
+test-results

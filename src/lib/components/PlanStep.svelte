@@ -51,21 +51,23 @@
 
 	<div class="mt-6">
 		<div class="flex items-baseline justify-between">
-			<span class="kicker">Work hours</span>
+			<label class="kicker" for="work-hours">Work hours</label>
 			<span class="figure text-sm">
 				{run.hours}h
 				<span class="text-[var(--muted)]">· {formatMoney(run.hours * stage.rate)}</span>
 			</span>
 		</div>
 		<input
+			id="work-hours"
 			type="range"
 			class="mt-2 w-full accent-[var(--money)]"
+			aria-describedby="work-hours-hint"
 			min="0"
 			max={stage.freeTime}
 			value={run.hours}
 			oninput={(e) => dispatch({ type: 'SET_HOURS', hours: Number(e.currentTarget.value) })}
 		/>
-		<p class="mt-1 text-xs text-[var(--muted)]">
+		<p id="work-hours-hint" class="mt-1 text-xs text-[var(--muted)]">
 			Every hour worked is an hour you do not get back.
 		</p>
 	</div>

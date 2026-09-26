@@ -1,0 +1,53 @@
+name: Accessibility
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: a11y-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  a11y:
+    name: axe (WCAG 2.2 AA) + Lighthouse
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          # The Vercel function runtime pinned in svelte.config.js.
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install the test browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build, serve, and run both gates
+        run: pnpm a11y
+        env:
+          # Preview is a production build and refuses to boot without the
+          # pepper. Throwaway: CI uses the in-process store (no MONGODB_URI).
+          PROFILE_PEPPER: ci-accessibility-pepper
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-reports
+          path: |
+            reports/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 14

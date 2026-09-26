@@ -51,6 +51,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Settings · Financial Life-Sim</title>
+</svelte:head>
+
 <main class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col gap-7 px-5 py-10">
 	<header>
 		<p class="kicker">Settings</p>
@@ -115,7 +119,7 @@
 			</div>
 		{:else}
 			<button
-				class="mt-4 min-h-11 rounded-xl border border-[var(--down)] px-5 font-semibold text-[var(--down)] transition active:scale-[0.99]"
+				class="mt-4 max-w-full min-h-11 rounded-xl border border-[var(--down)] px-5 font-semibold text-[var(--down)] transition active:scale-[0.99]"
 				bind:this={deleteTrigger}
 				onclick={openConfirm}
 			>

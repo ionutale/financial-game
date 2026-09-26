@@ -70,7 +70,7 @@
 		{/if}
 
 		{#if run.feedback}
-			<div class="mt-6 border-l-2 border-[var(--money)] pl-4">
+			<div class="mt-6 border-l-2 border-[var(--money)] pl-4" aria-live="polite">
 				<p class="kicker">What happened</p>
 				<p class="mt-2 text-[15px] leading-relaxed">{run.feedback}</p>
 

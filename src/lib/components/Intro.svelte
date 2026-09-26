@@ -36,7 +36,7 @@
 	}
 </script>
 
-<div class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-6 py-10">
+<main class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-6 py-10">
 	<div class="flex-1">
 		{#key step}
 			<div class="rise">
@@ -75,4 +75,4 @@
 			{last ? 'Start month 1' : 'Next'}
 		</button>
 	</div>
-</div>
+</main>

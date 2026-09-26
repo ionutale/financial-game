@@ -1,3 +1,7 @@
+<svelte:head>
+	<title>Privacy · Financial Life-Sim</title>
+</svelte:head>
+
 <main class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col gap-8 px-5 py-10">
 	<header>
 		<p class="kicker">Privacy policy</p>

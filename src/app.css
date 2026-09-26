@@ -25,14 +25,17 @@
 	--ink: #191714;
 	--muted: #6f6a61;
 	--line: #e6dfd1;
-	--money: #1f6feb;
+	/* Ticket 14: the accent is checked against the light surface — at 4.5:1 for
+	   small text. #1f6feb was 4.18:1 on paper (and 4.00:1 on its own wash), so
+	   the token is this darker blue; white-on-money improves with it. */
+	--money: #1a5ec7;
 	--up: #16794a;
 	--down: #ad4f1c;
 	--wash: rgb(25 23 20 / 0.055);
-	--money-wash: rgb(31 111 235 / 0.1);
+	--money-wash: rgb(26 94 199 / 0.1);
 	/* Explicit tints: opacity modifiers on var() colours are not reliable. */
-	--money-35: rgb(31 111 235 / 0.35);
-	--money-60: rgb(31 111 235 / 0.6);
+	--money-35: rgb(26 94 199 / 0.35);
+	--money-60: rgb(26 94 199 / 0.6);
 	--ink-25: rgb(25 23 20 / 0.25);
 	--ink-40: rgb(25 23 20 / 0.4);
 	--shadow: 0 1px 2px rgb(25 23 20 / 0.04), 0 10px 28px -12px rgb(25 23 20 / 0.14);
@@ -57,14 +60,18 @@ body {
 	-webkit-font-smoothing: antialiased;
 }
 
-/* Micro-label: the small caps that name things. Ledger voice. */
-.kicker {
-	font-family: var(--font-mono);
-	font-size: 10px;
-	font-weight: 500;
-	letter-spacing: 0.13em;
-	text-transform: uppercase;
-	color: var(--muted);
+/* Micro-label: the small caps that name things. Ledger voice.
+   In the components layer, so a utility (e.g. an accent-coloured kicker)
+   overrides it — unlayered CSS would always beat Tailwind utilities. */
+@layer components {
+	.kicker {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		font-weight: 500;
+		letter-spacing: 0.13em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
 }
 
 /* Every figure in the game is set in the mono face with tabular numerals,

@@ -4,4 +4,8 @@
 	let { data } = $props();
 </script>
 
+<svelte:head>
+	<title>Financial Life-Sim</title>
+</svelte:head>
+
 <MonthScreen initial={data.saved} seed={data.seed} />
