@@ -54,6 +54,13 @@ export function createMongoStore(uri: string): RunStore {
 
 		async remove(key) {
 			await runs(uri).deleteOne({ _id: key });
+		},
+
+		async sweep(cutoff) {
+			// updatedAt is written as an ISO 8601 UTC string everywhere, so $lt
+			// against the cutoff's ISO string orders correctly (ticket 12).
+			const result = await runs(uri).deleteMany({ updatedAt: { $lt: cutoff.toISOString() } });
+			return result.deletedCount;
 		}
 	};
 }

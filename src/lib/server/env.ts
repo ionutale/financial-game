@@ -17,3 +17,11 @@ export function profilePepper(): string {
 export function mongoUri(): string | undefined {
 	return env.MONGODB_URI || undefined;
 }
+
+/**
+ * The shared secret Vercel sends as `Authorization: Bearer $CRON_SECRET` on
+ * scheduled requests. Server-only; the retention sweep refuses to run without it.
+ */
+export function cronSecret(): string | undefined {
+	return env.CRON_SECRET || undefined;
+}

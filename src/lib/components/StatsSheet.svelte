@@ -177,5 +177,11 @@
 				<p class="mt-2 text-sm text-[var(--muted)]">No threads yet.</p>
 			{/if}
 		</section>
+
+		<footer class="mt-auto pt-2">
+			<a class="text-sm text-[var(--muted)] underline underline-offset-2" href="/settings">
+				Settings
+			</a>
+		</footer>
 	</div>
 </div>

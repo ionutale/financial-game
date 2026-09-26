@@ -133,9 +133,8 @@ Closed tickets:
 
 **Empty of the original work — every decision is resolved.** The build's tickets:
 
-- [ ] **19 exhausted-pool-fallback** — `issues/19-exhausted-pool-fallback.md` — the fallback that
-  stops a Stage stalling deals cards with their `requires` and Thread rules bypassed; found by
-  playing a full Run.
+- [x] **22 privacy-build** — resolved: export/delete routes, Settings and policy pages, the LIA,
+  the first-run notice, and the daily retention sweep.
 - [x] **20 stats-sheet** — resolved: the Stats pill opens a full-screen sheet with Savings, Fund,
   Debt, Credit score, the net-worth curve, Obligations and Thread history (live + past arcs).
 - [x] **19 exhausted-pool-fallback** — resolved: the fallback now repeats legally and only as a

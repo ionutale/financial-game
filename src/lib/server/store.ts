@@ -12,6 +12,8 @@ export interface RunStore {
 	/** Returns false if the incoming write is older than what is already stored. */
 	save(key: string, run: SavedRun): Promise<boolean>;
 	remove(key: string): Promise<void>;
+	/** Deletes every Run untouched since `cutoff`; returns how many were removed (ticket 12). */
+	sweep(cutoff: Date): Promise<number>;
 }
 
 /**
@@ -32,6 +34,21 @@ export function createMemoryStore(): RunStore {
 		},
 		async remove(key) {
 			runs.delete(key);
+		},
+		async sweep(cutoff) {
+			// Writes always store `updatedAt` as an ISO 8601 UTC string, so the
+			// lexicographic comparison is the same one MongoDB's $lt makes. A run
+			// whose date is missing or unreadable is left alone: deleting data we
+			// cannot date would be worse than keeping it.
+			const iso = cutoff.toISOString();
+			let deleted = 0;
+			for (const [key, run] of runs) {
+				if (typeof run.updatedAt === 'string' && run.updatedAt < iso) {
+					runs.delete(key);
+					deleted += 1;
+				}
+			}
+			return deleted;
 		}
 	};
 }

@@ -50,7 +50,14 @@
 		{/key}
 	</div>
 
-	<div class="mt-10 flex items-center justify-between">
+	<p class="mt-8 text-xs leading-relaxed text-[var(--muted)]">
+		Your progress is saved on this device with a random id. No name, no email, no tracking.
+		<a class="underline underline-offset-2" href="/privacy">Privacy policy</a>
+		<span aria-hidden="true">·</span>
+		<a class="underline underline-offset-2" href="/settings">Settings</a>
+	</p>
+
+	<div class="mt-6 flex items-center justify-between">
 		<div class="flex gap-1.5" aria-hidden="true">
 			{#each SCREENS as _, i (i)}
 				<span

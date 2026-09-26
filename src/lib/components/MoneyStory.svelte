@@ -142,5 +142,11 @@
 		>
 			Play another five years
 		</button>
+		<a
+			class="mt-3 inline-block text-sm text-[var(--muted)] underline underline-offset-2"
+			href="/settings"
+		>
+			Settings
+		</a>
 	</section>
 </main>
