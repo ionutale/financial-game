@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatMoney, formatMoneyExact } from '$lib/game/economy';
+	import { formatMoney, formatMoneyExact, goalName } from '$lib/game/economy';
 	import { BAND_LABEL, computeMetrics, outcomeBand, turningPoints } from '$lib/game/metrics';
 	import type { RunState } from '$lib/game/types';
 	import Money from './Money.svelte';
@@ -119,7 +119,7 @@
 				{ k: 'Income saved', v: asPct(m.savingsRate) },
 				{ k: 'Income spent on wants', v: asPct(m.wantShare) },
 				{ k: 'Debt taken', v: `${formatMoney(m.debtTaken)} · peak ${formatMoney(m.peakDebt)}` },
-				{ k: 'Emergency fund', v: `${formatMoneyExact(m.goalProgress)} / ${formatMoney(m.goalTarget)}` },
+				{ k: goalName(run), v: `${formatMoneyExact(m.goalProgress)} / ${formatMoney(m.goalTarget)}` },
 				{ k: 'Net worth', v: formatMoney(m.finalNetWorth) },
 				{ k: 'Credit score', v: m.finalScore === null ? 'never had a card' : String(m.finalScore) }
 			] as row (row.k)}

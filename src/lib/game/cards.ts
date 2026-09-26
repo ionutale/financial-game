@@ -770,6 +770,38 @@ export const CARDS: Card[] = [
 		]
 	},
 
+	{
+		id: 'till_impulse',
+		kind: 'decision',
+		stages: [2],
+		concept: 'budgeting',
+		branch: 'shared',
+		weight: 2,
+		teaches: 'small repeated purchases are the budget leak',
+		title: 'The till aisle',
+		situation:
+			'Every shop puts the same small things by the till. You have walked past them four times this week and bought them twice.',
+		choices: [
+			{
+				id: 'rule',
+				label: 'Set a rule for it',
+				cost: 0,
+				freeTime: -1,
+				category: null,
+				feedback:
+					'One hour to decide what the till aisle is allowed to cost. Rules beat willpower, because willpower has homework.'
+			},
+			{
+				id: 'buy',
+				label: 'Buy the snacks',
+				cost: 12,
+				category: 'want',
+				feedback:
+					'Twelve this week. The till aisle is not an accident; it is the most profitable square metre in the shop.'
+			}
+		]
+	},
+
 	// ---------------------------------------------------------------- Stage 3
 	{
 		id: 'first_payslip',
@@ -1095,6 +1127,221 @@ export const CARDS: Card[] = [
 		]
 	},
 
+	{
+		id: 'payday_timing',
+		kind: 'decision',
+		stages: [3],
+		concept: 'budgeting',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'when the wage lands decides how long it lasts',
+		title: 'Friday, and it landed',
+		situation:
+			'The wage hits the account on Friday. By Sunday the weekend has taken a third of it, and the month is still twenty-eight days long.',
+		choices: [
+			{
+				id: 'move',
+				label: 'Move the month\u2019s money aside',
+				cost: 0,
+				freeTime: -1,
+				category: null,
+				feedback:
+					'One hour on Friday to decide what the weekend may spend. The same wage, a different month.'
+			},
+			{
+				id: 'weekend',
+				label: 'See how the weekend goes',
+				cost: 25,
+				category: 'want',
+				feedback:
+					'Twenty-five on the weekend and the rest of the month does the adjusting. Wages come monthly; weekends come weekly.'
+			}
+		]
+	},
+	{
+		id: 'shift_clash',
+		kind: 'decision',
+		stages: [3],
+		concept: 'earning_work',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'every shift is a trade, and the other side is invisible',
+		title: 'Saturday shifts',
+		situation:
+			'The caf\u00e9 offers you every Saturday for the next two months. Your friends have started planning things that happen on Saturdays.',
+		choices: [
+			{
+				id: 'work',
+				label: 'Take every Saturday',
+				gain: 60,
+				freeTime: -12,
+				category: null,
+				feedback:
+					'Sixty for eight weekends. Real money and a real cost, and only one of them shows on a statement.'
+			},
+			{
+				id: 'life',
+				label: 'Keep two Saturdays free',
+				cost: 15,
+				category: 'want',
+				feedback:
+					'Fifteen for the two weekends and the version of you who is not always at work. Both lines are real.'
+			}
+		]
+	},
+	{
+		id: 'meal_deal',
+		kind: 'decision',
+		stages: [3],
+		concept: 'budgeting',
+		branch: 'shared',
+		weight: 2,
+		teaches: 'a bundle only saves money on what you already wanted',
+		title: 'The meal deal',
+		situation:
+			'The meal deal is six: sandwich, drink, snack. The sandwich alone is four. The drink is one you would not have bought.',
+		choices: [
+			{
+				id: 'alone',
+				label: 'Just the sandwich',
+				cost: 4,
+				category: 'need',
+				feedback:
+					'Four for the thing you came in for. The deal saves money on a bigger basket than you meant to buy.'
+			},
+			{
+				id: 'deal',
+				label: 'Take the deal',
+				cost: 6,
+				category: 'want',
+				feedback:
+					'Six and a free drink that was not free. Bundles win when you wanted all of it, and only then.'
+			}
+		]
+	},
+	{
+		id: 'phone_repair',
+		kind: 'decision',
+		stages: [3],
+		concept: 'budgeting',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'repair is usually cheaper than replace, and never feels like it',
+		title: 'The screen again',
+		situation:
+			'The phone is cracked again. Repair is sixty; a refurbished one is a hundred and fifty, and yours has two good years left.',
+		choices: [
+			{
+				id: 'repair',
+				label: 'Repair it',
+				cost: 60,
+				category: 'need',
+				feedback:
+					'Sixty to keep something that works. Repair is almost always cheaper than replace, and almost never feels like it.'
+			},
+			{
+				id: 'replace',
+				label: 'Buy the refurbished one',
+				cost: 150,
+				category: 'need',
+				feedback:
+					'One hundred fifty for new glass and a fresh battery. The old one was not broken enough to justify it.'
+			}
+		]
+	},
+	{
+		id: 'cut_a_shift',
+		kind: 'decision',
+		stages: [3],
+		concept: 'earning_work',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'hours given back are a purchase with a price',
+		title: 'Five shifts is too many',
+		situation:
+			'You are on the rota five evenings a week and the schoolwork is starting to show it. A shift is worth about thirty.',
+		choices: [
+			{
+				id: 'cut',
+				label: 'Cut to three shifts',
+				cost: 30,
+				category: null,
+				feedback:
+					'Thirty given up to get the evenings back. That is the exchange rate, and now you have priced it.'
+			},
+			{
+				id: 'keep',
+				label: 'Keep all five',
+				gain: 30,
+				freeTime: -8,
+				category: null,
+				feedback:
+					'Thirty for eight more hours. Both choices are a trade; only one of them leaves room for homework.'
+			}
+		]
+	},
+	{
+		id: 'trial_renewal',
+		kind: 'decision',
+		stages: [3],
+		concept: 'budgeting',
+		branch: 'shared',
+		weight: 2,
+		teaches: 'a subscription is the only bill you must remember to stop',
+		title: 'The free trial ends today',
+		situation:
+			'The app you signed up to in the summer is about to bill you nine a month. You have opened it twice since June.',
+		choices: [
+			{
+				id: 'cancel',
+				label: 'Cancel it',
+				cost: 0,
+				freeTime: -1,
+				category: null,
+				feedback:
+					'Ten minutes and nine a month stays yours. The trial was designed for exactly this moment to be easy to skip.'
+			},
+			{
+				id: 'renew',
+				label: 'Let it renew',
+				cost: 9,
+				category: 'need',
+				feedback:
+					'Nine for something you might use. Subscriptions are the only bill you have to remember to stop.'
+			}
+		]
+	},
+	{
+		id: 'quarterly_interest',
+		kind: 'decision',
+		stages: [3],
+		concept: 'interest',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'interest withdrawn is the snowball starting again',
+		title: 'It added a line',
+		situation:
+			'The statement has a new line: interest paid. Nine units have appeared that nobody worked for.',
+		choices: [
+			{
+				id: 'leave',
+				label: 'Leave it compounding',
+				cost: 10,
+				category: 'save',
+				feedback:
+					'Ten more where the nine came from. Compounding is a snowball with a very long hill, and you just started it.'
+			},
+			{
+				id: 'skim',
+				label: 'Withdraw the nine',
+				gain: 9,
+				category: null,
+				feedback:
+					'Nine units out and the snowball starts again. Withdrawing interest feels like free money; it is the opposite.'
+			}
+		]
+	},
+
 	// ---------------------------------------------------------------- Stage 4
 	{
 		id: 'bnpl_offer',
@@ -1342,6 +1589,161 @@ export const CARDS: Card[] = [
 				category: null,
 				feedback:
 					'The number is still there, still moving, still deciding what the next loan costs. Not looking is free until it is not.'
+			}
+		]
+	},
+
+	{
+		id: 'score_goal',
+		kind: 'decision',
+		stages: [4],
+		concept: 'credit',
+		branch: 'shared',
+		weight: 2,
+		teaches: 'a score you understand is cheaper than a deposit you resent',
+		title: 'The contract needs a check',
+		situation:
+			'The phone contract needs a credit check. No score means a deposit of a hundred, or buying a handset outright today.',
+		choices: [
+			{
+				id: 'wait',
+				label: 'Wait and build the score',
+				cost: 0,
+				freeTime: -2,
+				category: null,
+				feedback:
+					'Two hours to learn which payments move the number. The deposit exists because nobody can see you yet.'
+			},
+			{
+				id: 'outright',
+				label: 'Buy the handset outright',
+				cost: 120,
+				category: 'need',
+				feedback:
+					'One hundred twenty to skip a queue nobody wants to be in. Owning it outright is never the wrong answer.'
+			}
+		]
+	},
+	{
+		id: 'refuse_the_limit',
+		kind: 'decision',
+		stages: [4],
+		concept: 'credit',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'the checkout button is someone else’s arithmetic',
+		title: 'The bigger basket',
+		situation:
+			'The shop app now lets you spread four hundred in four payments. It suggests this at the checkout now, above the button.',
+		choices: [
+			{
+				id: 'stick',
+				label: 'Stick to what you can repay',
+				cost: 0,
+				category: null,
+				feedback:
+					'The basket went down to what the account could cover. The one-tap button is doing arithmetic you are not.'
+			},
+			{
+				id: 'basket',
+				label: 'Take the bigger basket',
+				cost: 80,
+				category: 'want',
+				feedback:
+					'Eighty spread over four payments, decided in a second. The decision was made by whoever put the button there.'
+			}
+		]
+	},
+	{
+		id: 'credit_check_free',
+		kind: 'decision',
+		stages: [4],
+		concept: 'credit',
+		branch: 'shared',
+		weight: 2,
+		teaches: 'the people who watch the number pay less for the same money',
+		title: 'The free report',
+		situation:
+			'The bank lets you see your score for free, with a page explaining every line. It takes about an evening.',
+		choices: [
+			{
+				id: 'read',
+				label: 'Read it',
+				cost: 0,
+				freeTime: -2,
+				category: null,
+				feedback:
+					'Two hours to find the late payment you had forgotten and the fix that takes one phone call. Cheapest maintenance there is.'
+			},
+			{
+				id: 'skip',
+				label: 'Skip it',
+				cost: 0,
+				category: null,
+				feedback:
+					'Skipped. The number keeps moving either way, and the people who watch it pay less for the same borrowings.'
+			}
+		]
+	},
+	{
+		id: 'bnpl_pressure',
+		kind: 'decision',
+		stages: [4],
+		concept: 'credit',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'the third instalment lands in a month you cannot see yet',
+		title: 'Everyone is splitting it',
+		situation:
+			'The group is buying the same trainers in four payments. Nobody is talking about what the third payment feels like in a thin month.',
+		choices: [
+			{
+				id: 'save',
+				label: 'Save for two months first',
+				cost: 40,
+				category: 'save',
+				feedback:
+					'Forty now, the rest when the money exists. The trainers arrive later and nobody is owed anything.'
+			},
+			{
+				id: 'split',
+				label: 'Split it like everyone else',
+				cost: 0,
+				category: null,
+				sets: { bnpl: 4 },
+				feedback:
+					'Four payments, and the first one is not the problem. The third one lands in the month you cannot see yet.'
+			}
+		]
+	},
+	{
+		id: 'payday_drain',
+		kind: 'decision',
+		stages: [4],
+		concept: 'budgeting',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'wages land in spikes and lives cost in drips',
+		title: 'Forty-eight hours later',
+		situation:
+			'The wage landed Friday and the account is already thin. Nothing big happened; a lot of small things did.',
+		choices: [
+			{
+				id: 'map',
+				label: 'Map the month',
+				cost: 0,
+				freeTime: -3,
+				category: null,
+				feedback:
+					'Three hours to put the month on a line. You have watched the same Friday twice a month for a year.'
+			},
+			{
+				id: 'wait',
+				label: 'Let the month settle',
+				cost: 20,
+				category: 'want',
+				feedback:
+					'Twenty that went somewhere unplanned, which is a fine definition of drift. Wages land in spikes; lives cost in drips.'
 			}
 		]
 	},
@@ -1730,6 +2132,69 @@ export const CARDS: Card[] = [
 				sets: { minimumStreak: 1 },
 				feedback:
 					'Ten now and a balance that ignores you. The minimum is affordable forever, which is exactly the business model.'
+			}
+		]
+	},
+	{
+		id: 'payslip_error',
+		kind: 'decision',
+		stages: [5],
+		concept: 'earning_work',
+		branch: 'shared',
+		weight: 2,
+		teaches: 'payroll mistakes only get fixed when someone asks',
+		title: 'Sixty-two hours',
+		situation:
+			'The payslip says sixty-two hours. You worked seventy. The difference is about \u25c845 before the deduction line even sees it.',
+		choices: [
+			{
+				id: 'query',
+				label: 'Query it',
+				gain: 45,
+				freeTime: -3,
+				category: null,
+				feedback:
+					'Three hours of rota printouts and the missing hours arrived next pay. Payroll errs in both directions, and only one of them fixes itself.'
+			},
+			{
+				id: 'drop',
+				label: 'Let it go',
+				cost: 0,
+				category: null,
+				feedback:
+					'Forty-five left on the table because chasing it felt awkward. That is the most expensive kind of awkward there is.'
+			}
+		]
+	},
+	{
+		id: 'side_work',
+		kind: 'decision',
+		stages: [5],
+		concept: 'earning_work',
+		branch: 'shared',
+		weight: 2,
+		teaches: 'extra money always costs something, and the arithmetic starts at the number',
+		title: 'Weekend gig',
+		situation:
+			'A mate\u2019s market stall needs a hand on weekends. Forty a day, cash, and both days are possible.',
+		choices: [
+			{
+				id: 'take',
+				label: 'Take both days',
+				gain: 80,
+				freeTime: -14,
+				category: null,
+				feedback:
+					'Eighty for the weekend. Extra money always costs something; the arithmetic only starts with the number.'
+			},
+			{
+				id: 'one',
+				label: 'Take one day',
+				gain: 40,
+				freeTime: -7,
+				category: null,
+				feedback:
+					'Forty and one day left. Half the money, half the cost, and the option to do it again next week.'
 			}
 		]
 	},

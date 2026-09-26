@@ -93,6 +93,28 @@ function plantsBeyondRun(s: RunState, card: Card): boolean {
 }
 
 /**
+ * Everything a card must satisfy to be dealt this Turn: its Stage, the branch,
+ * its `requires`, the one-live-Thread rules, and the run-end plant guard. The
+ * seen-cards rule is applied only when a pool is passed (ticket 19: the
+ * exhausted-pool fallback may repeat, but never break any other rule).
+ */
+function drawableCards(s: RunState, seen: Set<string> | null): Card[] {
+	const liveThread = s.thread?.id ?? null;
+	return CARDS.filter(
+		(c) =>
+			c.stages.includes(s.stage) &&
+			(c.weight ?? 1) > 0 &&
+			(seen === null || !seen.has(c.id)) &&
+			(c.branch === undefined || c.branch === 'shared' || c.branch === s.path) &&
+			requiresSatisfied(s, c.requires) &&
+			// A resolve card waits for its own Thread; a plant waits for a free slot.
+			(!c.resolves || c.resolves === liveThread) &&
+			(!liveThread || !c.choices.some((ch) => ch.sets?.thread)) &&
+			!plantsBeyondRun(s, c)
+	);
+}
+
+/**
  * Which card this Turn deals.
  *
  * 1. The **spine** wins: fixed beats guarantee every Teachable Moment lands.
@@ -116,24 +138,11 @@ export function pickCard(s: RunState): Card | null {
 	}
 
 	const stageConcepts = new Set(stageOf(s).concepts);
-	const liveThread = s.thread?.id ?? null;
-	let pool = CARDS.filter(
-		(c) =>
-			c.stages.includes(s.stage) &&
-			(c.weight ?? 1) > 0 &&
-			!seen.has(c.id) &&
-			(c.branch === undefined || c.branch === 'shared' || c.branch === s.path) &&
-			requiresSatisfied(s, c.requires) &&
-			// A resolve card waits for its own Thread; a plant waits for a free slot.
-			(!c.resolves || c.resolves === liveThread) &&
-			(!liveThread || !c.choices.some((ch) => ch.sets?.thread)) &&
-			!plantsBeyondRun(s, c)
-	);
+	let pool = drawableCards(s, seen);
 
-	// A long Stage can exhaust its pool; repeating beats stalling.
-	if (pool.length === 0) {
-		pool = CARDS.filter((c) => c.stages.includes(s.stage) && (c.weight ?? 1) > 0);
-	}
+	// A long Stage can exhaust its pool; repeating beats stalling, but a repeat
+	// must still obey every other rule (ticket 19, found by playing a full Run).
+	if (pool.length === 0) pool = drawableCards(s, null);
 	if (pool.length === 0) return null;
 
 	// A planted Thread cannot dangle: once due, its resolve card is dealt.

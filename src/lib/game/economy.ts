@@ -125,6 +125,11 @@ export function goalTarget(state: Pick<RunState, 'stage' | 'path'>): number {
 	return state.stage === 5 && state.path === 'study' ? STUDY_BUFFER : GOAL_TARGET;
 }
 
+/** The Named Goal's player-facing name: a Buffer on the Study path (ticket 21). */
+export function goalName(state: Pick<RunState, 'stage' | 'path'>): string {
+	return state.stage === 5 && state.path === 'study' ? 'Buffer' : 'Emergency fund';
+}
+
 /** Money the player can actually reach: cash plus what the envelopes hold. */
 export function available(state: Pick<RunState, 'cash' | 'pots'>): number {
 	return state.cash + state.pots.need + state.pots.want + state.pots.save;

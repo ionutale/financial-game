@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CARDS, cardById } from './cards';
-import { applyAction, createRun } from './loop';
+import { applyAction, createRun, requiresSatisfied } from './loop';
 import { turnRng } from './rng';
 import { SPINE } from './spine';
 import { STAGES } from './economy';
@@ -99,22 +99,59 @@ describe('the draw', () => {
 });
 
 describe('a whole Run', () => {
-	it('keeps enough of every pool that a Stage never runs out of unseen cards', () => {
+	it('keeps enough cards that cannot have been seen before a Stage (ticket 19)', () => {
 		for (let stage = 1; stage <= 5; stage++) {
 			const spineBeats = Object.keys(SPINE).filter(
 				(month) => Math.floor((Number(month) - 1) / 12) + 1 === stage
 			).length;
 			const draws = 12 - spineBeats;
 			for (const path of [null, 'study', 'work'] as const) {
-				const pool = CARDS.filter(
+				// Guaranteed unseen: no earlier Stage could have consumed it (its minimum
+				// Stage is this one). Guaranteed eligible: no gate, no Thread card (a live
+				// Thread blocks plants), and the branch fits. This floor is what a Stage
+				// can always deal, so it must cover its random draws.
+				const floor = CARDS.filter(
 					(c) =>
-						c.stages.includes(stage) &&
 						(c.weight ?? 1) > 0 &&
+						Math.min(...c.stages) === stage &&
+						c.requires === undefined &&
+						c.resolves === undefined &&
+						!c.choices.some((ch) => ch.sets?.thread) &&
 						(c.branch === undefined || c.branch === 'shared' || c.branch === path)
-				);
-				// Every gated card could be ineligible at once; the rest must still fill the Stage.
-				const always = pool.filter((c) => !c.requires?.length).length;
-				expect(always, `Stage ${stage}, path ${path ?? 'shared'}`).toBeGreaterThanOrEqual(draws);
+				).length;
+				expect(floor, `Stage ${stage}, path ${path ?? 'shared'}: ${floor} < ${draws}`).toBeGreaterThanOrEqual(draws);
+			}
+		}
+	});
+
+	it('never deals a card whose rules are unmet, across full Runs (ticket 19)', () => {
+		// The playtest policy: work the wage years, allocate 50/30/20, first affordable choice.
+		for (const seed of [2024, 8, 777]) {
+			let s = applyAction(createRun(seed), { type: 'DISMISS_INTRO' });
+			while (s.phase !== 'done') {
+				if (s.phase === 'stage_up' && s.card) {
+					s = applyAction(s, { type: 'CHOOSE', choiceId: s.card.choices[0].id });
+					s = applyAction(s, { type: 'CONTINUE' });
+				}
+				const hours = s.stage === 3 || s.stage === 4 ? 35 : 0;
+				s = applyAction(s, { type: 'SET_HOURS', hours });
+				s = applyAction(s, { type: 'SET_NEED', amount: Math.round(s.income * 0.5) });
+				s = applyAction(s, { type: 'SET_WANT', amount: Math.round(s.income * 0.3) });
+				s = applyAction(s, { type: 'CONFIRM_PLAN' });
+				if (!s.card) break;
+				const dealt = s.card;
+				expect(requiresSatisfied(s, dealt.requires), `seed ${seed} m${s.month} ${dealt.id} requires`).toBe(true);
+				expect(
+					!dealt.resolves || dealt.resolves === s.thread?.id,
+					`seed ${seed} m${s.month} ${dealt.id} resolves`
+				).toBe(true);
+				const affordable = dealt.choices.find((c) => {
+					const h = c.freeTime ?? 0;
+					return !(h < 0 && Math.abs(h) > s.freeTime);
+				});
+				s = applyAction(s, { type: 'CHOOSE', choiceId: (affordable ?? dealt.choices[0]).id });
+				s = applyAction(s, { type: 'CONTINUE' });
+				if (s.phase !== 'done') s = applyAction(s, { type: 'NEXT_MONTH' });
 			}
 		}
 	});

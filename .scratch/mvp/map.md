@@ -131,8 +131,17 @@ Closed tickets:
 
 ## Frontier
 
-**Empty of the original work — every decision is resolved.** The build's tickets, all resolved:
+**Empty of the original work — every decision is resolved.** The build's tickets:
 
+- [ ] **19 exhausted-pool-fallback** — `issues/19-exhausted-pool-fallback.md` — the fallback that
+  stops a Stage stalling deals cards with their `requires` and Thread rules bypassed; found by
+  playing a full Run.
+- [ ] **20 stats-sheet** — `issues/20-stats-sheet.md` — Debt, Savings, Fund and the score are
+  invisible during play.
+- [x] **19 exhausted-pool-fallback** — resolved: the fallback now repeats legally and only as a
+  last resort; the deck grew to 84 cards so every Stage can fill its draws unseen (0 repeats
+  across four seeds).
+- [x] **21 study-buffer-label** — resolved: one `goalName()` for the HUD and the Money Story.
 - [x] **18 fork-before-plan** — resolved: the Fork is a Stage-up interstitial that resolves before
   month 49's Plan, with the compact stage announcement.
 - [x] **16 deck-content-pass** — resolved: 69 cards, pools of 15/15/16/15 and 25 drawable in

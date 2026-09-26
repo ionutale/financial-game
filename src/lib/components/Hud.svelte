@@ -2,6 +2,7 @@
 	import {
 		formatMoney,
 		formatMoneyExact,
+		goalName,
 		goalTarget,
 		netWorth,
 		savedTowardGoal,
@@ -48,7 +49,7 @@
 			></div>
 		</div>
 		<div class="mt-2 flex items-baseline justify-between">
-			<span class="kicker">{run.stage === 5 && run.path === 'study' ? 'Buffer' : 'Emergency fund'}</span>
+			<span class="kicker">{goalName(run)}</span>
 			<span class="figure text-xs text-[var(--muted)]">
 				{formatMoneyExact(saved)} / {formatMoney(goal)}
 			</span>
