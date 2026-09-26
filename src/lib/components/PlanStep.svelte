@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { expectedIncome, formatMoney, obligationsFor, stageOf } from '$lib/game/economy';
+	import { planWarning, workHintVisible } from '$lib/game/presentation';
 	import type { Action, RunState } from '$lib/game/types';
 
 	let { run, dispatch }: { run: RunState; dispatch: (a: Action) => void } = $props();
@@ -8,6 +9,8 @@
 	const income = $derived(expectedIncome(run));
 	const saving = $derived(Math.max(0, income - run.need - run.want));
 	const due = $derived(obligationsFor(run));
+	const warning = $derived(planWarning(run));
+	const hint = $derived(workHintVisible(run));
 
 	// The split of expected income, as widths.
 	const share = (n: number) => (income > 0 ? Math.max(0, Math.min(100, (n / income) * 100)) : 0);
@@ -37,6 +40,14 @@
 	<p class="mt-1 text-sm text-[var(--muted)]">
 		Put the money where you want it before the month gets a say.
 	</p>
+
+	{#if hint}
+		<div class="mt-6 rounded-xl border border-[var(--money-35)] bg-[var(--money-wash)] p-4">
+			<p class="kicker text-[var(--money)]">{stage.name} · no allowance</p>
+			<p class="mt-1.5 text-sm leading-relaxed">The allowance stopped. This year, hours are the money.</p>
+			<p class="mt-1 text-xs text-[var(--muted)]">Set them before the month starts.</p>
+		</div>
+	{/if}
 
 	<div class="mt-6">
 		<div class="flex items-baseline justify-between">
@@ -126,6 +137,21 @@
 			50 / 30 / 20
 		</button>
 	</div>
+
+	{#if warning}
+		<div class="mt-5 rounded-xl border border-dashed border-[var(--down)] px-4 py-3">
+			<p class="figure text-sm text-[var(--down)]">
+				{formatMoney(warning.due)} fixed · {formatMoney(warning.income)} coming in
+			</p>
+			<p class="mt-1 text-sm leading-snug">
+				{#if warning.source === 'savings'}
+					Covered from savings.
+				{:else}
+					The {formatMoney(warning.gap)} gap becomes debt.
+				{/if}
+			</p>
+		</div>
+	{/if}
 
 	<button
 		class="mt-5 w-full rounded-xl bg-[var(--money)] py-3.5 font-semibold text-white transition active:scale-[0.99]"

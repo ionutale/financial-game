@@ -47,6 +47,12 @@ describe('the Plan step', () => {
 		expect(s.need + s.want).toBeLessThanOrEqual(40);
 		expect(s.saveAlloc).toBe(0);
 	});
+
+	it('retires the Stage-3 work hint the first time hours are set above zero', () => {
+		expect(createRun().workHintDone).toBe(false);
+		expect(applyAction(createRun(), { type: 'SET_HOURS', hours: 0 }).workHintDone).toBe(false);
+		expect(applyAction(createRun(), { type: 'SET_HOURS', hours: 12 }).workHintDone).toBe(true);
+	});
 });
 
 describe('the cascade', () => {

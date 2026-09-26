@@ -162,6 +162,9 @@ export interface RunState {
 	/** The three-screen intro (ticket 04) shows before the first month. */
 	showIntro: boolean;
 
+	/** The Stage-3 "hours are the money" hint, retired once hours are set (ticket 17). */
+	workHintDone: boolean;
+
 	/** Seeds the per-Turn draw (ticket 03). Same seed, same Run. */
 	seed: number;
 

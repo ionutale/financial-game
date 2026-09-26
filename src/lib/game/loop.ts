@@ -160,6 +160,7 @@ export function createRun(seed = 1): RunState {
 		forcedCard: null,
 		lastPlan: null,
 		showIntro: true,
+		workHintDone: false,
 		seed,
 		flags: [],
 		history: []
@@ -273,6 +274,8 @@ export function applyAction(state: RunState, action: Action): RunState {
 	switch (action.type) {
 		case 'SET_HOURS': {
 			s.hours = Math.max(0, Math.min(action.hours, s.freeTimeMax));
+			// The Stage-3 hint has done its job once hours have been set (ticket 17).
+			if (s.hours > 0) s.workHintDone = true;
 			s.freeTime = s.freeTimeMax - s.hours;
 			s.income = expectedIncome(s);
 			s.saveAlloc = Math.max(0, s.income - s.need - s.want);

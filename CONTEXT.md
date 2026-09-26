@@ -15,6 +15,8 @@ Glossary for this project. Terms only — no implementation detail.
   rule**: nothing a player has learned is taken away.
 - **Stage-up Card** — the interstitial that announces a new Stage: its age, income tier, unlocked
   Concept and that Concept's Teachable Moment. It is not one of a Stage's Event Cards.
+- **Wage Hint** — the one-time note at the start of Stage 3 that the allowance has stopped and
+  hours are the money; it stays while the plan holds zero hours and never returns once hours are set.
 - **Teachable Moment** — the single first experience that introduces a Concept (the first payslip,
   the first dry Want envelope, the crash).
 - **Concept** — one of the eight financial capabilities the game teaches: budgeting & tracking,
@@ -40,6 +42,9 @@ Glossary for this project. Terms only — no implementation detail.
 - **Month Screen** — the single scrolling screen a Turn is played on, carrying all three phases.
 - **Plan Step** — the first phase: allocate money across the Envelopes and hours to work, before
   the month's card is known.
+- **Shortfall Warning** — the Plan Step's plain-arithmetic line for a month whose Obligations
+  outrun expected income; it names whether the buffer absorbs the gap or Debt does, and never
+  mentions the month's card.
 - **Month Close** — the third phase: the compact sheet showing income, obligations, interest, goal
   progress and net-worth change, and where progress commits.
 - **Stats Sheet** — the on-demand view of Savings, Fund, Debt, Credit Score, the net-worth

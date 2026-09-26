@@ -107,6 +107,11 @@ Closed tickets:
   Banqer High; budgeting, saving, interest, credit and investing have proven interactive
   treatments; tax/scams/needs-vs-wants must be consequences, never quizzes; let the player play
   the villain; no XP/coins/lives or leaderboards.
+- [15 — Interest rounding](issues/15-interest-rounding.md) — the savings line keeps two decimals,
+  so the compounding lesson is visible when it is first taught.
+- [17 — The default plan trap](issues/17-default-plan-trap.md) — hours still default to 0 and the
+  economy is unchanged; the Plan step gains a Shortfall Warning and Stage 3 a one-time Wage Hint,
+  so doing nothing is legible instead of silent.
 
 ## Not yet specified
 
@@ -126,12 +131,15 @@ Closed tickets:
 
 ## Frontier
 
-**Empty of the original work — every decision is resolved.**
+**Empty of the original work — every decision is resolved.** The build has since opened its own
+tickets:
 
-One ticket has been opened by the build itself:
-
-- [ ] **15 interest-rounding** — `issues/15-interest-rounding.md` (grilling) — interest renders as
-  ◈0 for most of the early run, so the compounding lesson is invisible when it is first taught.
+- [ ] **16 deck-content-pass** — `issues/16-deck-content-pass.md` — the pool is 30 cards against a
+  target of ~81, and `requires` / `thread` from ticket 03 are still unimplemented.
+- [ ] **18 fork-before-plan** — `issues/18-fork-before-plan.md` — the Plan step at month 49 runs
+  before the Fork is chosen and quotes an obligation the player may never owe.
+- [x] **15 interest-rounding** — resolved and shipped.
+- [x] **17 default-plan-trap** — resolved: the Shortfall Warning and the Wage Hint; no economy change.
 
 What remains of the original map is not a decision — it is two artifacts awaiting a human:
 
