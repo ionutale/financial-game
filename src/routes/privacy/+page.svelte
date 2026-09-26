@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 </script>
 
@@ -72,7 +73,7 @@
 	<section>
 		<h2 class="text-lg font-semibold tracking-tight">Downloading and deleting</h2>
 		<p class="mt-2 text-sm leading-relaxed">
-			Both live in <a class="underline underline-offset-2" href="/settings">Settings</a>:
+			Both live in <a class="underline underline-offset-2" href={localizedHref('/settings')}>Settings</a>:
 			<strong>Download my data</strong> gives you a JSON file of everything stored, and
 			<strong>Delete everything</strong> removes every stored Run and clears the id behind a
 			typed confirmation. A fresh Run then starts from month 1.
@@ -92,7 +93,7 @@
 	</section>
 
 	<footer class="mt-auto flex flex-col gap-2 text-sm">
-		<a class="underline underline-offset-2" href="/settings">{m.link_settings()}</a>
-		<a class="underline underline-offset-2" href="/">{m.link_back_to_game()}</a>
+		<a class="underline underline-offset-2" href={localizedHref('/settings')}>{m.link_settings()}</a>
+		<a class="underline underline-offset-2" href={localizedHref('/')}>{m.link_back_to_game()}</a>
 	</footer>
 </main>

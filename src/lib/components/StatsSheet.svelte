@@ -10,6 +10,7 @@
 	import { statsSheet, type StatsRow, type StatsTone } from '$lib/game/stats';
 	import type { RunState } from '$lib/game/types';
 	import { threadChipText, threadLabel } from '$lib/i18n/game-text';
+	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import Money from './Money.svelte';
@@ -209,7 +210,7 @@
 		</section>
 
 		<footer class="mt-auto pt-2">
-			<a class="text-sm text-[var(--muted)] underline underline-offset-2" href="/settings">
+			<a class="text-sm text-[var(--muted)] underline underline-offset-2" href={localizedHref('/settings')}>
 				{m.link_settings()}
 			</a>
 		</footer>

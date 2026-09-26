@@ -9,12 +9,12 @@
 	 * `/it/settings`).
 	 */
 	import { page } from '$app/state';
+	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 	import {
 		baseLocale,
 		deLocalizeHref,
 		extractLocaleFromUrl,
-		localizeHref,
 		locales,
 		setLocale,
 		type Locale
@@ -38,9 +38,7 @@
 	};
 
 	function href(locale: Locale): string {
-		const localized = localizeHref(deLocalizeHref(page.url.pathname), { locale });
-		// SvelteKit serves `/it`, not the `/it/` Paraglide builds for the root.
-		return localized === '/' ? '/' : localized.replace(/\/$/, '');
+		return localizedHref(deLocalizeHref(page.url.pathname), locale);
 	}
 
 	function choose(event: MouseEvent, locale: Locale) {

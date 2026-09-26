@@ -3,6 +3,7 @@
 	 * Three screens before the first month (ticket 04): who you are, what you are
 	 * aiming at, and how a month works. No tutorial — the first card teaches.
 	 */
+	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 	import LanguageSwitcher from './LanguageSwitcher.svelte';
 
@@ -55,9 +56,9 @@
 
 	<p class="mt-8 text-xs leading-relaxed text-[var(--muted)]">
 		{m.intro_privacy()}
-		<a class="underline underline-offset-2" href="/privacy">{m.link_privacy_policy()}</a>
+		<a class="underline underline-offset-2" href={localizedHref('/privacy')}>{m.link_privacy_policy()}</a>
 		<span aria-hidden="true">·</span>
-		<a class="underline underline-offset-2" href="/settings">{m.link_settings()}</a>
+		<a class="underline underline-offset-2" href={localizedHref('/settings')}>{m.link_settings()}</a>
 	</p>
 
 	<!-- Ticket 28: the first-run notice is where language matters most, so the

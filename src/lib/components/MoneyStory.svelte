@@ -3,6 +3,7 @@
 	import { computeMetrics, outcomeBand, turningPoints } from '$lib/game/metrics';
 	import type { RunState } from '$lib/game/types';
 	import { bandLabel, comparisonLabel, flagText, goalName } from '$lib/i18n/game-text';
+	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import Money from './Money.svelte';
@@ -186,7 +187,7 @@
 		</button>
 		<a
 			class="mt-3 inline-block text-sm text-[var(--muted)] underline underline-offset-2"
-			href="/settings"
+			href={localizedHref('/settings')}
 		>
 			{m.link_settings()}
 		</a>

@@ -6,6 +6,7 @@
 	 */
 	import { goto } from '$app/navigation';
 	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 	import { tick } from 'svelte';
 
@@ -141,7 +142,7 @@
 	</section>
 
 	<footer class="mt-auto flex flex-col gap-2 text-sm">
-		<a class="underline underline-offset-2" href="/privacy">{m.link_privacy_policy()}</a>
-		<a class="underline underline-offset-2" href="/">{m.link_back_to_game()}</a>
+		<a class="underline underline-offset-2" href={localizedHref('/privacy')}>{m.link_privacy_policy()}</a>
+		<a class="underline underline-offset-2" href={localizedHref('/')}>{m.link_back_to_game()}</a>
 	</footer>
 </main>

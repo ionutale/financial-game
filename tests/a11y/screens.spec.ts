@@ -135,6 +135,22 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 	});
 
+	test('settings in Italian: the privacy link stays Italian, with no locale hop', async ({ page }) => {
+		await page.goto('/it/settings');
+		await expect(page.getByRole('heading', { name: 'I tuoi dati, la tua scelta.' })).toBeVisible();
+
+		// Ticket 29: the link itself carries the locale, so the markup — not a
+		// middleware redirect — is what sends a reader of Italian to Italian.
+		const privacy = page.getByRole('link', { name: 'Informativa sulla privacy' });
+		await expect(privacy).toHaveAttribute('href', '/it/privacy');
+
+		await privacy.click();
+		await expect(page).toHaveURL(/\/it\/privacy$/);
+		await expect(page.locator('html')).toHaveAttribute('lang', 'it');
+		await expect(page.getByRole('heading', { name: 'Cosa sa il gioco di te.' })).toBeVisible();
+		await expectNoAxeViolations(page, 'the privacy policy in Italian');
+	});
+
 	test('intro: the language switcher reaches Italian before the first month', async ({ page }) => {
 		await page.goto('/');
 		await expect(page.getByRole('heading', { name: 'You are 14.' })).toBeVisible();
