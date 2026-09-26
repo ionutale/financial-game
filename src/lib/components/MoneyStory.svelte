@@ -6,6 +6,7 @@
 	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
+	import BeatArt from './BeatArt.svelte';
 	import Money from './Money.svelte';
 	import Sparkline from './Sparkline.svelte';
 
@@ -57,6 +58,11 @@
 		<h1 class="mt-3 text-[32px] leading-[1.12] font-semibold tracking-tight">
 			{m.story_title()}
 		</h1>
+
+		<!-- The closing panel (ticket 30): five years as five bars. -->
+		<div class="mt-5">
+			<BeatArt beat="money_story" />
+		</div>
 
 		<div class="mt-5 flex flex-col gap-3">
 			{#each story as line, i (i)}

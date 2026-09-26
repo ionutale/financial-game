@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { playCue } from '$lib/audio/sfx';
+	import { beatArtFor } from '$lib/game/beats';
 	import { formatMoney } from '$lib/game/economy';
 	import type { Action, Choice, RunState } from '$lib/game/types';
 	import {
@@ -12,6 +14,7 @@
 	import { kindLabel } from '$lib/i18n/game-text';
 	import { m } from '$lib/i18n/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
+	import BeatArt from './BeatArt.svelte';
 
 	let { run, dispatch }: { run: RunState; dispatch: (a: Action) => void } = $props();
 
@@ -23,11 +26,25 @@
 		const hours = c.freeTime ?? 0;
 		return hours < 0 && Math.abs(hours) > run.freeTime;
 	}
+
+	function choose(choiceId: string) {
+		playCue('choice');
+		dispatch({ type: 'CHOOSE', choiceId });
+	}
 </script>
 
 {#if card}
 	{@const odds = cardOdds(card)}
+	<!-- Art only at the beats (ticket 30), never on every card; the Fork's own
+	     illustration belongs to StageUp, which renders this component too. -->
+	{@const art = card.kind === 'stage_up' ? null : beatArtFor(card.id)}
 	<section class="surface p-5">
+		{#if art}
+			<div class="mb-5">
+				<BeatArt beat={art} />
+			</div>
+		{/if}
+
 		<p class="kicker">{kindLabel(card.kind)}</p>
 		<h2 class="mt-2 text-xl leading-snug font-semibold tracking-tight">{cardTitle(card)}</h2>
 		<p class="mt-3 text-[15px] leading-relaxed">{cardSituation(card)}</p>
@@ -47,7 +64,7 @@
 						class="group w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3.5 text-left transition
 							{off ? 'opacity-40' : 'hover:border-[var(--ink-25)] active:scale-[0.995]'}"
 						disabled={off}
-						onclick={() => dispatch({ type: 'CHOOSE', choiceId: c.id })}
+						onclick={() => choose(c.id)}
 					>
 						<span class="block text-[15px] font-medium">{choiceLabel(card, c)}</span>
 						<span class="mt-1.5 flex flex-wrap items-center gap-1.5">

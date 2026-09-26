@@ -133,6 +133,8 @@ Closed tickets:
 
 **Empty of the original work — every decision is resolved.** The build's tickets:
 
+- [x] **30 art-audio** — resolved: ten inline beat illustrations on the tokens, and four
+  synthesised cues off by default behind a Settings switch; CC0 attribution and docs in place.
 - [x] **29 localized-internal-links** — resolved: one `localizedHref()` helper and every internal
   link localizes; the a11y suite proves the `/it/settings` → `/it/privacy` hop is gone.
 - [x] **28 language-switcher-ci** — resolved: the EN/IT/RO switcher, hreflang on every page, the

@@ -26,8 +26,9 @@ Card prose never lives in TypeScript. Keys are derived from immutable ids:
 | `card_<cardId>_choice_<choiceId>_feedback` | the Feedback shown after the Choice |
 
 UI strings use descriptive keys grouped by screen: `intro_*`, `plan_*`, `event_*`, `resolve_*`,
-`hud_*`, `stats_*`, `story_*`, `settings_*`, `privacy_*`, `link_*`, `language_*`, plus vocabulary
-keys (`concept_*`, `stage_<n>_name`, `thread_*`, `band_*`, `flag_*`, `comparison_*`, `goal_*`).
+`hud_*`, `stats_*`, `story_*`, `settings_*`, `privacy_*`, `link_*`, `beat_art_*`, `language_*`, plus
+vocabulary keys (`concept_*`, `stage_<n>_name`, `thread_*`, `band_*`, `flag_*`, `comparison_*`,
+`goal_*`).
 
 **Never rename or invent keys.** The deck-integrity test (`src/lib/i18n/messages.test.ts`) fails on
 a missing key, an orphan `card_*` key, an empty value, a key set that differs between locales, or

@@ -1,4 +1,4 @@
-import { expect, expectNoAxeViolations, seedRun, test } from './helpers';
+import { expect, expectNoAxeViolations, seedRun, test, waitForHydration } from './helpers';
 import { CHIP_RUN, EVENT_RUN, FEEDBACK_RUN, PLAN_RUN, STAGE_UP_RUN } from './seed';
 
 /**
@@ -27,6 +27,16 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await page.locator('section button').first().click();
 		await expect(page.getByText('What happened')).toBeVisible();
 		await expectNoAxeViolations(page, 'the feedback');
+	});
+
+	test('month screen: a spine beat carries its illustration and alt text', async ({ page }) => {
+		await seedRun(page, EVENT_RUN);
+		// Month 1's spine beat is the allowance; its alt text comes from the catalogue.
+		const art = page.getByRole('img', {
+			name: 'Three coins dropping into a wallet, the middle one highlighted.'
+		});
+		await expect(art).toBeVisible();
+		await expectNoAxeViolations(page, 'a spine beat illustration');
 	});
 
 	test('month screen: month close', async ({ page }) => {
@@ -66,6 +76,12 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 	test('month screen: stage-up (the Fork)', async ({ page }) => {
 		await seedRun(page, STAGE_UP_RUN);
 		await expect(page.getByText('A new stage')).toBeVisible();
+		// The Fork's illustration rides the Stage-up, above its banner (ticket 30).
+		await expect(
+			page.getByRole('img', {
+				name: 'A path forking in two, one branch ending at a book and the other at a briefcase.'
+			})
+		).toBeVisible();
 		await expectNoAxeViolations(page, 'the Stage-up screen');
 	});
 
@@ -79,6 +95,36 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await page.goto('/settings');
 		await expect(page.getByRole('heading', { name: 'Your data, your call.' })).toBeVisible();
 		await expectNoAxeViolations(page, 'Settings');
+	});
+
+	test('settings: the sound toggle is off by default and remembers the choice', async ({
+		page
+	}) => {
+		await page.goto('/settings');
+		await expect(page.getByRole('heading', { name: 'Your data, your call.' })).toBeVisible();
+
+		/* Ticket 30: a monochrome switch, its state on aria-checked and in words. */
+		const toggle = page.getByRole('switch', { name: 'Sound effects' });
+		await expect(toggle).toHaveAttribute('aria-checked', 'false');
+		await expect(toggle).toContainText('Off');
+
+		await toggle.click();
+		await expect(toggle).toHaveAttribute('aria-checked', 'true');
+		await expect(toggle).toContainText('On');
+		await expectNoAxeViolations(page, 'Settings with sound on');
+
+		/* The preference is localStorage, not RunState: a reload keeps it. */
+		await page.reload();
+		await waitForHydration(page);
+		await expect(page.getByRole('switch', { name: 'Sound effects' })).toHaveAttribute(
+			'aria-checked',
+			'true'
+		);
+
+		// Back off for the rest of the context, and prove the toggle reverses.
+		const reloaded = page.getByRole('switch', { name: 'Sound effects' });
+		await reloaded.click();
+		await expect(reloaded).toHaveAttribute('aria-checked', 'false');
 	});
 
 	test('settings: the language switcher, and hreflang for every locale', async ({ page }) => {
