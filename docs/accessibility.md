@@ -52,6 +52,10 @@ what Vite preview serves — no Vercel runtime needed locally. Preview is a prod
 needs `PROFILE_PEPPER`; the scripts pass a throwaway value and the in-process store is used because
 no `MONGODB_URI` is set. Set `A11Y_BASE_URL` to audit an already-running server instead.
 
+The whole gate set — type check, unit tests, this accessibility gate and the translation gate — also
+runs as one command, `pnpm verify`; see the pre-deploy use in
+[deployment.md](deployment.md#7-the-gate-pnpm-verify).
+
 ### How the month screens are seeded
 
 `/` mints a fresh seed on every load, so the gate cannot use the UI path for a reproducible card.

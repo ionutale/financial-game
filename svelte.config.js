@@ -11,7 +11,8 @@ const config = {
 			// driver cannot run on Edge).
 			runtime: 'nodejs22.x'
 		})
-		// Region co-location with MongoDB Atlas is set in the Vercel project config (ticket 12).
+		// Region co-location with MongoDB Atlas is pinned in vercel.json
+		// ("regions": ["fra1"] — Frankfurt), not here (ticket 12).
 	}
 };
 

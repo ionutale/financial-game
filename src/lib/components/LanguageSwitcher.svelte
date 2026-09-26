@@ -52,7 +52,7 @@
 </script>
 
 <div
-	class={compact ? 'flex flex-wrap gap-1.5' : 'flex gap-2'}
+	class={compact ? 'flex flex-wrap gap-1.5' : 'flex flex-wrap gap-2'}
 	role="group"
 	aria-label={labelledBy ? undefined : m.language_label()}
 	aria-labelledby={labelledBy}

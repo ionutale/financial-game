@@ -3,6 +3,10 @@
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
+	"packageManager": "pnpm@12.6.0",
+	"engines": {
+		"node": "22.x"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -17,6 +21,7 @@
 		"i18n:validate": "inlang validate --project ./project.inlang",
 		"i18n:lint": "inlang lint --project ./project.inlang",
 		"i18n:check": "pnpm i18n:validate && pnpm i18n:lint && vitest run src/lib/i18n/messages.test.ts",
+		"verify": "pnpm check && pnpm test && pnpm i18n:check && pnpm a11y",
 		"prepare": "svelte-kit sync && pnpm i18n:compile || echo ''"
 	},
 	"devDependencies": {
