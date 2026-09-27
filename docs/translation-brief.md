@@ -23,7 +23,8 @@ Card prose never lives in TypeScript. Keys are derived from immutable ids:
 | `card_<cardId>_situation` | the situation paragraph |
 | `card_<cardId>_odds` | the odds line (only some Risk Moments have one) |
 | `card_<cardId>_choice_<choiceId>_label` | a Choice's button label |
-| `card_<cardId>_choice_<choiceId>_feedback` | the Feedback shown after the Choice |
+| `card_<cardId>_choice_<choiceId>_feedback` | the Why (ADR-0004): the Feedback's second part |
+| `card_<cardId>_choice_<choiceId>_reaction` | the Reaction, optional: what the world did, in the fiction. Absent means the Feedback renders as today's single Why paragraph |
 
 UI strings use descriptive keys grouped by screen: `intro_*`, `plan_*`, `event_*`, `resolve_*`,
 `hud_*`, `stats_*`, `story_*`, `settings_*`, `privacy_*`, `link_*`, `beat_art_*`, `language_*`, plus
@@ -35,6 +36,10 @@ a missing key, an orphan `card_*` key, an empty value, a key set that differs be
 parameters that disagree across locales.
 
 ## Tone
+
+Read `docs/voice.md` first: it is the style sheet for the game's one narrator
+and for the Feedback's two parts (Reaction + Why, ADR-0004), including the ban
+list and the translation rules. The lines below are its short form.
 
 - Second person, present tense, direct. "You kept the weekend." Not "The player kept the weekend."
 - Dry and honest, never scolding and never chirpy. No exclamation marks, no emoji.

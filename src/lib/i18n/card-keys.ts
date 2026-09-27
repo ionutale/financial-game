@@ -13,3 +13,6 @@ export const choiceLabelKey = (cardId: string, choiceId: string): string =>
 	`${CARD_KEY_PREFIX}${cardId}_choice_${choiceId}_label`;
 export const choiceFeedbackKey = (cardId: string, choiceId: string): string =>
 	`${CARD_KEY_PREFIX}${cardId}_choice_${choiceId}_feedback`;
+/** The optional Reaction (ADR-0004); absent means today's single-paragraph Feedback. */
+export const choiceReactionKey = (cardId: string, choiceId: string): string =>
+	`${CARD_KEY_PREFIX}${cardId}_choice_${choiceId}_reaction`;

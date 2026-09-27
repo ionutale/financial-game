@@ -4,6 +4,7 @@
  * because they are locale-formatted text (ticket 26).
  */
 
+import { cardById } from './cards';
 import { expectedIncome, obligationsFor } from './economy';
 import type { RunState } from './types';
 
@@ -42,4 +43,29 @@ export function planWarning(run: RunState): PlanWarning | null {
  */
 export function workHintVisible(run: RunState): boolean {
 	return !run.workHintDone && run.hours === 0 && (run.stage === 3 || run.stage === 4);
+}
+
+/**
+ * Taught once, trusted after (ADR-0004, ticket 01): is the Run's current card
+ * the first played card carrying its Concept? True at the Teachable Moment, so
+ * the Why renders open there and collapsed at every later card.
+ *
+ * Pure and derived: the log and the deck answer it, no state is added. The
+ * card's own entry (written when the Choice is taken) is not an earlier
+ * encounter; an unknown card id in a legacy log carries no Concept and is
+ * skipped, and a save without a log is read as a Run that has met nothing.
+ * A card with no Concept of its own teaches nothing, so it never opens the Why.
+ */
+export function isFirstEncounter(run: Pick<RunState, 'log' | 'card'>): boolean {
+	const card = run.card;
+	const concept = card?.concept;
+	if (!card || !concept) return false;
+
+	// The draw deals a card at most once, so the current card's id marks its
+	// own entry; every other entry is earlier than this meeting.
+	for (const entry of run.log ?? []) {
+		if (entry.card === card.id) continue;
+		if (cardById(entry.card)?.concept === concept) return false;
+	}
+	return true;
 }

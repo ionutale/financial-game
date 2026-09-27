@@ -9,7 +9,8 @@ import {
 	cardSituationKey,
 	cardTitleKey,
 	choiceFeedbackKey,
-	choiceLabelKey
+	choiceLabelKey,
+	choiceReactionKey
 } from './card-keys';
 import { hasMessage, message } from './messages';
 
@@ -40,4 +41,38 @@ export function chosenFeedback(card: Card | null, chosen: string | null): string
 	if (!card || !chosen) return null;
 	const choice = card.choices.find((c) => c.id === chosen);
 	return choice ? choiceFeedback(card, choice) : null;
+}
+
+/**
+ * The two parts of a Choice's Feedback (ADR-0004): the Reaction — what the
+ * world did, in the fiction — and the Why, shown as "Why it happened". The
+ * reaction key is optional: an unauthored Choice resolves to today's exact
+ * single paragraph as the Why, with no Reaction above it.
+ */
+export interface FeedbackParts {
+	/** The authored Reaction, or null when the Choice has none. */
+	reaction: string | null;
+	/** The Why; always today's `_feedback` paragraph. */
+	why: string;
+}
+
+/** A Choice's Reaction, or null when none is authored. */
+export function choiceReaction(card: Card, choice: Choice): string | null {
+	const key = choiceReactionKey(card.id, choice.id);
+	return hasMessage(key) ? message(key) : null;
+}
+
+/** A Choice's Feedback as its two parts, reaction first. */
+export function feedbackParts(card: Card, choice: Choice): FeedbackParts {
+	return { reaction: choiceReaction(card, choice), why: choiceFeedback(card, choice) };
+}
+
+/** The Feedback parts for the chosen Choice, or null while none is chosen. */
+export function chosenFeedbackParts(
+	card: Card | null,
+	chosen: string | null
+): FeedbackParts | null {
+	if (!card || !chosen) return null;
+	const choice = card.choices.find((c) => c.id === chosen);
+	return choice ? feedbackParts(card, choice) : null;
 }

@@ -9,7 +9,8 @@ import {
 	cardSituationKey,
 	cardTitleKey,
 	choiceFeedbackKey,
-	choiceLabelKey
+	choiceLabelKey,
+	choiceReactionKey
 } from './card-keys';
 
 /**
@@ -58,7 +59,12 @@ function mandatoryDeckKeys(): string[] {
 /** The whole `card_*` key space the deck can legitimately author. */
 function allowedCardKeys(): Set<string> {
 	const allowed = new Set(mandatoryDeckKeys());
-	for (const card of CARDS) allowed.add(cardOddsKey(card.id));
+	for (const card of CARDS) {
+		allowed.add(cardOddsKey(card.id));
+		// A Reaction is optional (ADR-0004); the orphan gate allows it wherever
+		// a real Choice exists, and the key-set parity test covers it ×3.
+		for (const choice of card.choices) allowed.add(choiceReactionKey(card.id, choice.id));
+	}
 	return allowed;
 }
 
@@ -126,6 +132,19 @@ describe('the deck’s message keys (ticket 07, gate 3)', () => {
 		for (const key of mandatoryDeckKeys()) {
 			for (const locale of LOCALES) {
 				expect(typeof catalogues[locale][key], `${locale} is missing ${key}`).toBe('string');
+			}
+		}
+	});
+
+	it('leaves room for the optional Reaction keys (ADR-0004)', () => {
+		// The Reaction is optional, so it is absent from the mandatory keys; the
+		// orphan gate must still allow it for a real card and choice the moment
+		// an author lands one. The key-set parity test then holds it ×3.
+		const allowed = allowedCardKeys();
+		for (const card of CARDS) {
+			for (const choice of card.choices) {
+				const key = choiceReactionKey(card.id, choice.id);
+				expect(allowed.has(key), `not allowed: ${key}`).toBe(true);
 			}
 		}
 	});
