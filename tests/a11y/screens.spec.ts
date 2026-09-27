@@ -28,6 +28,7 @@ import {
 	SHOCK_RUN,
 	STAGE_2_UP_RUN,
 	STAGE_UP_RUN,
+	VILLAIN_SHIFT_RUN,
 	WHY_COLLAPSED_RUN,
 	WHY_OPEN_RUN
 } from './seed';
@@ -1062,5 +1063,34 @@ test.describe('fun-pass ticket 07: Callbacks, the Cast and named Threads', () =>
 		await expect(chapter.getByText(cast.map(castName).join(' · '))).toBeVisible();
 
 		await expectNoAxeViolations(page, 'the Journal with a Chapter’s Cast');
+	});
+});
+
+/**
+ * Fun-pass ticket 08: the villain cards (ADR-0007). The player is the seller;
+ * the Thread carries the buyer's consequence back. One screen per card, no
+ * excludes added.
+ */
+test.describe('fun-pass ticket 08: the villain cards', () => {
+	test('month screen: the phone-shop shift sells the split, and the Thread follows', async ({
+		page
+	}) => {
+		await seedRun(page, VILLAIN_SHIFT_RUN);
+		await expect(page.getByRole('heading', { name: 'The Saturday shift' })).toBeVisible();
+		await expect(
+			page.getByText(
+				'You pick up a Saturday at the phone shop. A mate walks in wanting the handset in the window, and the four-payment plan is the only way they leave with it today.'
+			)
+		).toBeVisible();
+
+		/* The player is the seller: the Choice is theirs to offer. */
+		await expect(page.getByRole('button', { name: 'Sell the four payments' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Sell it paid in full' })).toBeVisible();
+
+		/* The Choice plants the Thread; the world chip counts it down. */
+		await page.getByRole('button', { name: 'Sell the four payments' }).click();
+		await expect(page.getByText('The phone you sold — the third payment in 3 months')).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the phone-shop villain card with a live Thread');
 	});
 });

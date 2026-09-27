@@ -241,6 +241,13 @@ export const CALLBACK_RUN: RunState = {
 /** The same memory on a cast card: Mum's week, with her message line. */
 export const CAST_RUN: RunState = forcedCard('mum_late_pay');
 
+/**
+ * Fun-pass ticket 08: the villain cards (ADR-0007). The player is the seller —
+ * the phone-shop shift, and the app's referral page — each a real deck card
+ * forced at month 1 through the reducer, the way the other screens do it.
+ */
+export const VILLAIN_SHIFT_RUN: RunState = forcedCard('phone_shop_shift');
+
 function availableChoice(state: RunState) {
 	const choice = state.card?.choices.find(
 		(c) => (c.freeTime ?? 0) >= 0 || Math.abs(c.freeTime ?? 0) <= state.freeTime

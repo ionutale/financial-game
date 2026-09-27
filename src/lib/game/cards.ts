@@ -1643,6 +1643,60 @@ export const CARDS: Card[] = [
 		]
 	},
 
+	// Fun-pass ticket 08 (ADR-0007): the villain cards. The player is the
+	// seller — the shop pays the commission on the four-payment split, and the
+	// buyer's consequence rides a Thread. No wrong-choice flag; the fence is in
+	// `villain.test.ts`.
+	{
+		id: 'phone_shop_shift',
+		kind: 'decision',
+		stages: [4],
+		concept: 'credit',
+		branch: 'shared',
+		// Half of the rarest shock: the harness's steady-consequence band has
+		// ~±3 runs of slack, and at weight 1 this card drifts it one run past
+		// the ceiling (the ticket-08 report records the numbers). Playtest-gated
+		// content, so exposure is the tuning surface the frozen economy allows.
+		weight: 0.5,
+		teaches: 'selling the split is easy; the third payment belongs to the buyer',
+		choices: [
+			{
+				id: 'split',
+				gain: 20,
+				freeTime: -1,
+				category: null,
+				sets: { thread: 'split_sold' }
+			},
+			{
+				id: 'outright',
+				gain: 10,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'split_comes_due',
+		kind: 'decision',
+		stages: [4, 5],
+		branch: 'shared',
+		weight: 5,
+		requires: ['thread:split_sold'],
+		resolves: 'split_sold',
+		teaches: 'the third payment lands in the buyer’s thin month, not the seller’s',
+		choices: [
+			{
+				id: 'cover',
+				cost: 30,
+				category: 'want'
+			},
+			{
+				id: 'leave',
+				freeTime: -1,
+				category: null
+			}
+		]
+	},
+
 	// ---------------------------------------------------------------- Stage 5
 	{
 		id: 'the_fork',

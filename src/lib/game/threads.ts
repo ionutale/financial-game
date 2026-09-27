@@ -23,7 +23,10 @@ export const THREADS: Record<string, ThreadSpec> = {
 	trip_tally: { months: 3 },
 	priya_swap: { months: 3 },
 	grandma_visit: { months: 2 },
-	ravi_cover: { months: 3 }
+	ravi_cover: { months: 3 },
+	// Fun-pass ticket 08: the villain cards' buyers — starting with the friend
+	// who took the four-payment split.
+	split_sold: { months: 3 }
 };
 
 /** The month a Thread falls due. */

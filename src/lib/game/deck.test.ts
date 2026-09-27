@@ -172,3 +172,88 @@ describe('a whole Run', () => {
 		expect(s.log).toHaveLength(64);
 	});
 });
+
+/**
+ * Fun-pass ticket 08: the villain cards use the existing effect vocabulary only
+ * — no new fields, verbs or state. This is the fixture over the deck shape that
+ * pins it: a card may carry only the fields the loop already applies, a Choice
+ * only the shipped effect fields, `sets` only the shipped verbs, and `createRun`
+ * only the stored state old saves already render. A new field would have to be
+ * added here first — which is exactly the review this pin exists to force.
+ */
+describe('the deck shape (ADR-0005: content grows, the vocabulary is frozen)', () => {
+	const CARD_FIELDS = [
+		'id',
+		'kind',
+		'stages',
+		'concept',
+		'branch',
+		'weight',
+		'teaches',
+		'requires',
+		'resolves',
+		'choices'
+	];
+	const CHOICE_FIELDS = ['id', 'cost', 'gain', 'freeTime', 'category', 'insuredCost', 'sets'];
+	const SET_VERBS = ['insurance', 'bnpl', 'path', 'overdraft', 'minimumStreak', 'thread'];
+
+	it('carries no card, choice or set field the loop cannot apply', () => {
+		for (const card of CARDS) {
+			for (const key of Object.keys(card)) {
+				expect(CARD_FIELDS, `${card.id} carries ${key}`).toContain(key);
+			}
+			for (const choice of card.choices) {
+				for (const key of Object.keys(choice)) {
+					expect(CHOICE_FIELDS, `${card.id}/${choice.id} carries ${key}`).toContain(key);
+				}
+				for (const verb of Object.keys(choice.sets ?? {})) {
+					expect(SET_VERBS, `${card.id}/${choice.id} sets ${verb}`).toContain(verb);
+				}
+			}
+		}
+	});
+
+	it('keeps the stored Run shape frozen — no new state', () => {
+		expect(Object.keys(createRun()).sort()).toEqual(
+			[
+				'age',
+				'bnpl',
+				'card',
+				'cascade',
+				'cash',
+				'chosen',
+				'close',
+				'debt',
+				'flags',
+				'forcedCard',
+				'freeTime',
+				'freeTimeMax',
+				'fund',
+				'history',
+				'hours',
+				'income',
+				'inflationIndex',
+				'insurance',
+				'lastPlan',
+				'log',
+				'month',
+				'need',
+				'netWorthAtStart',
+				'obligations',
+				'path',
+				'phase',
+				'pots',
+				'saveAlloc',
+				'savings',
+				'score',
+				'seed',
+				'showIntro',
+				'spent',
+				'stage',
+				'thread',
+				'want',
+				'workHintDone'
+			].sort()
+		);
+	});
+});
