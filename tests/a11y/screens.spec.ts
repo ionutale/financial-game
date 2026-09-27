@@ -1,10 +1,13 @@
 import { formatMoney } from '$lib/game/economy';
-import { conceptCoverage } from '$lib/game/journal';
+import { conceptCoverage, coverageAcross } from '$lib/game/journal';
+import { outcomeBand, turningPoints } from '$lib/game/metrics';
 import { earnedMilestones, longestInsideBudgetMonths, yearInReview } from '$lib/game/milestones';
-import { conceptLabel, milestoneLabel } from '$lib/i18n/game-text';
+import { bandLabel, conceptLabel, flagText, milestoneLabel } from '$lib/i18n/game-text';
 import { expect, expectNoAxeViolations, seedRun, test, waitForHydration } from './helpers';
 import {
 	CHIP_RUN,
+	DONE_STUDY_RUN,
+	DONE_WORK_RUN,
 	EVENT_RUN,
 	FEEDBACK_RUN,
 	FINAL_MONTH_RUN,
@@ -242,6 +245,13 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 			page.getByText(`Your longest run inside your own budget was ${longest} months.`)
 		).toBeVisible();
 
+		/* Gamification ticket 05: the way into the Journal, after the record and
+		   before "What next". */
+		await expect(page.getByRole('link', { name: 'Open your Journal' })).toHaveAttribute(
+			'href',
+			'/journal'
+		);
+
 		/* Story-first order: the numbers, then the Run's record, then what next.
 		   Kickers are uppercased by CSS, and innerText reports what is rendered. */
 		const order = await page.evaluate(() => {
@@ -252,6 +262,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 				'CONCEPT COVERAGE',
 				'YEAR 5 IN REVIEW',
 				'Your longest run',
+				'YOUR JOURNAL',
 				'WHAT NEXT'
 			].map((needle) => text.indexOf(needle));
 		});
@@ -287,6 +298,11 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 	test('settings', async ({ page }) => {
 		await page.goto('/settings');
 		await expect(page.getByRole('heading', { name: 'Your data, your call.' })).toBeVisible();
+		/* Gamification ticket 05: the quiet way into the Journal. */
+		await expect(page.getByRole('link', { name: 'Your Journal' })).toHaveAttribute(
+			'href',
+			'/journal'
+		);
 		await expectNoAxeViolations(page, 'Settings');
 	});
 
@@ -388,6 +404,141 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await expect(page.locator('html')).toHaveAttribute('lang', 'it');
 		await expect(page.getByRole('heading', { name: 'Cosa sa il gioco di te.' })).toBeVisible();
 		await expectNoAxeViolations(page, 'the privacy policy in Italian');
+	});
+
+	test('the Journal: an honest empty state', async ({ page }) => {
+		await page.goto('/journal');
+		await expect(page.getByRole('heading', { name: 'The life so far, kept.' })).toBeVisible();
+
+		/* Gamification ticket 05: a first-time player has nothing to fake. */
+		await expect(page.getByText('No chapters yet.')).toBeVisible();
+		await expect(page.getByRole('heading', { name: /^Chapter/ })).toHaveCount(0);
+		const numbers = page.getByRole('definition');
+		await expect(numbers).toHaveCount(2);
+		await expect(numbers.nth(0)).toHaveText('0');
+		await expect(numbers.nth(1)).toHaveText('0 / 8');
+
+		/* The eight Concepts still read as a curriculum, without naming the
+		   ones no Run has opened. */
+		await expect(
+			page.getByRole('region', { name: 'Concept coverage' }).getByRole('listitem')
+		).toHaveCount(8);
+		await expect(page.getByText('No milestones yet.')).toBeVisible();
+		await expectNoAxeViolations(page, 'the empty Journal');
+	});
+
+	test('the Journal: Chapters in the order lived, coverage and collected Milestones', async ({
+		page
+	}) => {
+		/*
+		 * Two finished Runs, archived by the game's own write path: the Study
+		 * Run lived first, the Work Run second — so the archive holds both
+		 * paths and the cross-Run `both_paths` recognition lands.
+		 */
+		await seedRun(page, DONE_STUDY_RUN);
+		await seedRun(page, DONE_WORK_RUN);
+		await page.goto('/journal');
+		await expect(page.getByRole('heading', { name: 'The life so far, kept.' })).toBeVisible();
+
+		/* Story-first: Chapter 1 is the Run lived first, Chapter 2 the next.
+		   Chronological, never ranked. */
+		const first = page.getByRole('region', { name: 'Chapter 1' });
+		const second = page.getByRole('region', { name: 'Chapter 2' });
+		await expect(first).toBeVisible();
+		await expect(second).toBeVisible();
+		await expect(first.getByText(`seed ${DONE_STUDY_RUN.seed}`)).toBeVisible();
+		await expect(second.getByText(`seed ${DONE_WORK_RUN.seed}`)).toBeVisible();
+		await expect(first.getByText(bandLabel(outcomeBand(DONE_STUDY_RUN)))).toBeVisible();
+		await expect(second.getByText(bandLabel(outcomeBand(DONE_WORK_RUN)))).toBeVisible();
+
+		/* Each Chapter carries its own Turning Points and Milestones. */
+		for (const [chapter, run] of [
+			[first, DONE_STUDY_RUN],
+			[second, DONE_WORK_RUN]
+		] as const) {
+			for (const id of earnedMilestones(run).map((milestone) => milestone.id)) {
+				await expect(chapter.getByText(milestoneLabel(id))).toBeVisible();
+			}
+			for (const moment of turningPoints(run)) {
+				const text = flagText(moment.kind, moment.month);
+				if (text) await expect(chapter.getByText(text)).toBeVisible();
+			}
+		}
+
+		/* The header counts, the eight-Concept union, and the collected
+		   Milestones — including both_paths, now that both paths are lived. */
+		const met = coverageAcross([DONE_STUDY_RUN, DONE_WORK_RUN]).filter(
+			(entry) => entry.state === 'experienced'
+		).length;
+		const numbers = page.getByRole('definition');
+		await expect(numbers.nth(0)).toHaveText('2');
+		await expect(numbers.nth(1)).toHaveText(`${met} / 8`);
+		await expect(
+			page.getByRole('region', { name: 'Concept coverage' }).getByRole('listitem')
+		).toHaveCount(8);
+
+		const collected = page.getByRole('region', { name: 'Milestones collected' });
+		const union = new Set(
+			[...earnedMilestones(DONE_STUDY_RUN), ...earnedMilestones(DONE_WORK_RUN)].map(
+				(milestone) => milestone.id
+			)
+		);
+		for (const id of union) await expect(collected.getByText(milestoneLabel(id))).toBeVisible();
+		await expect(collected.getByText(milestoneLabel('both_paths'))).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the populated Journal');
+	});
+
+	test('the Journal: the route and its entry links carry the locale', async ({ page }) => {
+		await page.goto('/journal');
+		await expect(page.getByRole('heading', { name: 'The life so far, kept.' })).toBeVisible();
+
+		/* Like every app page, the route is localized in all three locales. */
+		const origin = new URL(page.url()).origin;
+		const alternates = page.locator('head link[rel="alternate"][hreflang]');
+		await expect(alternates).toHaveCount(4);
+		expect(
+			await alternates.evaluateAll((links) =>
+				links.map((link) => [link.getAttribute('hreflang'), link.getAttribute('href')])
+			)
+		).toEqual([
+			['en', `${origin}/journal`],
+			['it', `${origin}/it/journal`],
+			['ro', `${origin}/ro/journal`],
+			['x-default', `${origin}/journal`]
+		]);
+
+		/* Settings' quiet link, and the route in Italian. */
+		await page.goto('/it/settings');
+		await expect(page.getByRole('heading', { name: 'I tuoi dati, la tua scelta.' })).toBeVisible();
+		const italian = page.getByRole('link', { name: 'Il tuo diario' });
+		await expect(italian).toHaveAttribute('href', '/it/journal');
+		await italian.click();
+		await expect(
+			page.getByRole('heading', { name: 'La vita fin qui, tenuta in ordine.' })
+		).toBeVisible();
+		expect(new URL(page.url()).pathname).toBe('/it/journal');
+		await expect(page.locator('html')).toHaveAttribute('lang', 'it');
+		await expectNoAxeViolations(page, 'the Journal in Italian');
+
+		/* Romanian too: the link is built from the canonical path. */
+		await page.goto('/ro/settings');
+		await expect(page.getByRole('link', { name: 'Jurnalul tău' })).toHaveAttribute(
+			'href',
+			'/ro/journal'
+		);
+
+		/* The Money Story's "Your Journal" section localizes the same way: the
+		   Run finished in English, read in Italian, links into Italian. */
+		await seedRun(page, FINAL_MONTH_RUN);
+		await page.goto('/it');
+		await page.getByRole('button', { name: 'Mese prossimo' }).click();
+		await expect(page.getByRole('heading', { name: 'Cinque anni, in una pagina.' })).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Apri il tuo diario' })).toHaveAttribute(
+			'href',
+			'/it/journal'
+		);
+		await expectNoAxeViolations(page, 'the Money Story in Italian with its Journal link');
 	});
 
 	test('intro: the language switcher reaches Italian before the first month', async ({ page }) => {

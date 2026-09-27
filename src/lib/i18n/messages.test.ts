@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CARDS } from '../game/cards';
+import { CROSS_RUN_MILESTONE_IDS } from '../game/journal';
 import { MILESTONE_IDS } from '../game/milestones';
 import {
 	CARD_KEY_PREFIX,
@@ -78,9 +79,15 @@ function params(value: MessageValue): string[] {
 
 const MILESTONE_KEY_PREFIX = 'milestone_';
 
-describe('the milestone catalogue’s message keys (ticket 01)', () => {
+/**
+ * Every Milestone the catalogues must name: the twelve in-Run ids (ticket 01)
+ * and the cross-Run `both_paths` (ticket 05).
+ */
+const ALL_MILESTONE_IDS = [...MILESTONE_IDS, ...CROSS_RUN_MILESTONE_IDS];
+
+describe('the milestone catalogue’s message keys (tickets 01, 05)', () => {
 	it('has every milestone key in all three locales', () => {
-		for (const id of MILESTONE_IDS) {
+		for (const id of ALL_MILESTONE_IDS) {
 			for (const locale of LOCALES) {
 				expect(
 					typeof catalogues[locale][`${MILESTONE_KEY_PREFIX}${id}`],
@@ -91,7 +98,7 @@ describe('the milestone catalogue’s message keys (ticket 01)', () => {
 	});
 
 	it('has no orphan milestone_* key in any locale', () => {
-		const allowed = new Set(MILESTONE_IDS.map((id) => `${MILESTONE_KEY_PREFIX}${id}`));
+		const allowed = new Set(ALL_MILESTONE_IDS.map((id) => `${MILESTONE_KEY_PREFIX}${id}`));
 		for (const locale of LOCALES) {
 			for (const key of Object.keys(catalogues[locale])) {
 				if (!key.startsWith(MILESTONE_KEY_PREFIX)) continue;

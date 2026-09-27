@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { expect, horizontalOverflow, seedRun, test } from './helpers';
-import { FEEDBACK_RUN, FINAL_MONTH_RUN, PLAN_RUN, STAGE_UP_RUN } from './seed';
+import { DONE_STUDY_RUN, FEEDBACK_RUN, FINAL_MONTH_RUN, PLAN_RUN, STAGE_UP_RUN } from './seed';
 
 /**
  * Automated proxies for two of ticket 14's four manual passes.
@@ -50,6 +50,14 @@ test.describe('zoom and reflow (proxy checks)', () => {
 				await page.getByRole('button', { name: 'Next month' }).click();
 			},
 			'Five years, in one page.'
+		],
+		[
+			'the Journal with a Chapter',
+			async (page) => {
+				await seedRun(page, DONE_STUDY_RUN);
+				await page.goto('/journal');
+			},
+			'The life so far, kept.'
 		],
 		[
 			'the privacy policy',

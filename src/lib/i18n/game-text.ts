@@ -5,6 +5,7 @@
  * message catalogue, so only ids stay in TypeScript.
  */
 import { threadDue, THREADS } from '$lib/game/threads';
+import type { CrossRunMilestoneId } from '$lib/game/journal';
 import type { MilestoneId } from '$lib/game/milestones';
 import type { CardKind, ConceptId, PathId, RunState } from '$lib/game/types';
 import type { ComparisonId, OutcomeBand } from '$lib/game/metrics';
@@ -74,8 +75,8 @@ export function threadChip(run: Pick<RunState, 'thread' | 'month'>): string | nu
 	return threadChipText(run.thread.id, threadDue(run.thread) - run.month);
 }
 
-/** A Milestone's player-facing name (gamification ticket 01). */
-export function milestoneLabel(id: MilestoneId): string {
+/** A Milestone's player-facing name — the in-Run ids and the cross-Run `both_paths` (tickets 01/05). */
+export function milestoneLabel(id: MilestoneId | CrossRunMilestoneId): string {
 	return message(`milestone_${id}`);
 }
 

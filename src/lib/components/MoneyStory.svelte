@@ -301,6 +301,21 @@
 		{/if}
 	</p>
 
+	<!--
+		Gamification ticket 05: the way into the Journal — every finished Run
+		kept on the profile as a Chapter. After the record, before "What next".
+	-->
+	<section aria-labelledby="story-journal-title">
+		<p class="kicker" id="story-journal-title">{m.link_journal()}</p>
+		<p class="mt-2 text-sm leading-relaxed text-[var(--muted)]">{m.story_journal_body()}</p>
+		<a
+			class="mt-3 inline-block text-sm underline underline-offset-2"
+			href={localizedHref('/journal')}
+		>
+			{m.story_journal_link()}
+		</a>
+	</section>
+
 	<section>
 		<p class="kicker">{m.story_what_next()}</p>
 		<p class="mt-2 text-sm text-[var(--muted)]">{m.story_what_next_body()}</p>

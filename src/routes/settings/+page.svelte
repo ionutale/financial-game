@@ -188,6 +188,7 @@
 	</section>
 
 	<footer class="mt-auto flex flex-col gap-2 text-sm">
+		<a class="underline underline-offset-2" href={localizedHref('/journal')}>{m.link_journal()}</a>
 		<a class="underline underline-offset-2" href={localizedHref('/privacy')}>{m.link_privacy_policy()}</a>
 		<a class="underline underline-offset-2" href={localizedHref('/')}>{m.link_back_to_game()}</a>
 	</footer>

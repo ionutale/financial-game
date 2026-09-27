@@ -1,5 +1,5 @@
 import { applyAction, createRun } from '$lib/game/loop';
-import type { Action, RunState } from '$lib/game/types';
+import type { Action, PathId, RunState } from '$lib/game/types';
 
 /**
  * Deterministic month screens for the axe gate (ticket 24).
@@ -72,13 +72,16 @@ export const STAGE_UP_RUN = playedToFork(GATE_SEED);
  * The fixture stops at month 60's `resolve`: the gate finishes the Run with a
  * "Next month" click, because a done state posted to `/api/run` is archived
  * and frees the active slot — the Money Story is the last client-side screen.
+ *
+ * `fork` resolves the Stage-5 Fork by hand (ticket 05 needs both paths lived);
+ * without it, the policy takes the first affordable Choice, which is Study.
  */
-function playedToTheLastClose(seed: number): RunState {
+function playedToTheLastClose(seed: number, fork?: PathId): RunState {
 	let state = applyAction(createRun(seed), { type: 'DISMISS_INTRO' });
 	for (let month = 1; month <= 60; month++) {
 		// A Stage-up card is resolved before its month can be planned (ticket 18).
 		if (state.phase === 'stage_up' && state.card) {
-			state = applyAction(state, { type: 'CHOOSE', choiceId: availableChoice(state).id });
+			state = applyAction(state, { type: 'CHOOSE', choiceId: gateChoice(state, fork) });
 			state = applyAction(state, { type: 'CONTINUE' });
 		}
 		const hours = state.stage === 3 || state.stage === 4 ? 35 : 0;
@@ -86,7 +89,7 @@ function playedToTheLastClose(seed: number): RunState {
 		state = applyAction(state, { type: 'SET_NEED', amount: Math.round(state.income * 0.5) });
 		state = applyAction(state, { type: 'SET_WANT', amount: Math.round(state.income * 0.3) });
 		state = applyAction(state, { type: 'CONFIRM_PLAN' });
-		state = applyAction(state, { type: 'CHOOSE', choiceId: availableChoice(state).id });
+		state = applyAction(state, { type: 'CHOOSE', choiceId: gateChoice(state, fork) });
 		state = applyAction(state, { type: 'CONTINUE' });
 		// The sixtieth close is where the gate takes over, one click from the Story.
 		if (month < 60) state = applyAction(state, { type: 'NEXT_MONTH' });
@@ -96,6 +99,21 @@ function playedToTheLastClose(seed: number): RunState {
 
 /** One "Next month" from the Money Story: sixty closed months behind it. */
 export const FINAL_MONTH_RUN = playedToTheLastClose(GATE_SEED);
+
+/**
+ * The same Run finished: phase `done`, month 61. Posted to `/api/run` it is
+ * archived and freed, so the Journal renders it as a Chapter (ticket 05).
+ */
+export const DONE_STUDY_RUN: RunState = applyAction(FINAL_MONTH_RUN, { type: 'NEXT_MONTH' });
+
+/**
+ * A Work Run played through the same loop to its finish, so the Journal has a
+ * second Chapter and the two paths have both been lived — the `both_paths`
+ * recognition. A different seed keeps the archive's own dedup happy.
+ */
+export const DONE_WORK_RUN: RunState = applyAction(playedToTheLastClose(GATE_SEED + 1, 'work'), {
+	type: 'NEXT_MONTH'
+});
 
 /**
  * The retrospective line's zero case: the same last close with no month inside
@@ -116,4 +134,13 @@ function availableChoice(state: RunState) {
 	);
 	if (!choice) throw new Error('the gate seed dealt a card with no available choice');
 	return choice;
+}
+
+/** The gate's Choice: the Fork by hand when asked, else the first affordable one. */
+function gateChoice(state: RunState, fork?: PathId): string {
+	if (fork && state.card?.id === 'the_fork') {
+		const chosen = state.card.choices.find((choice) => choice.id === fork);
+		if (chosen) return chosen.id;
+	}
+	return availableChoice(state).id;
 }
