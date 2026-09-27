@@ -1,3 +1,5 @@
+import { formatMoney } from '$lib/game/economy';
+import { yearInReview } from '$lib/game/milestones';
 import { expect, expectNoAxeViolations, seedRun, test, waitForHydration } from './helpers';
 import { CHIP_RUN, EVENT_RUN, FEEDBACK_RUN, MILESTONE_RUN, PLAN_RUN, STAGE_UP_RUN } from './seed';
 
@@ -16,6 +18,9 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 	test('month screen: plan', async ({ page }) => {
 		await seedRun(page, PLAN_RUN);
 		await expect(page.getByRole('heading', { name: 'Plan the month' })).toBeVisible();
+		/* Gamification ticket 02: the Year in Review is a Stage-up thing, never
+		   part of the month loop (ADR-0003). */
+		await expect(page.getByRole('region', { name: /in review$/ })).toHaveCount(0);
 		await expectNoAxeViolations(page, 'the Plan step');
 	});
 
@@ -107,7 +112,27 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 				name: 'A path forking in two, one branch ending at a book and the other at a briefcase.'
 			})
 		).toBeVisible();
-		await expectNoAxeViolations(page, 'the Stage-up screen');
+
+		/* Gamification ticket 02: the Stage-up carries year 4's Year in Review,
+		   with the numbers the stored record actually holds. */
+		const review = yearInReview(STAGE_UP_RUN, 4);
+		const recap = page.getByRole('region', { name: 'Year 4 in review' });
+		await expect(recap).toBeVisible();
+		await expect(recap.getByText('Net worth')).toBeVisible();
+		await expect(recap.getByText(formatMoney(review.netWorth as number, 'en'))).toBeVisible();
+		await expect(recap.getByText('The year’s change')).toBeVisible();
+		await expect(recap.getByText(`+${formatMoney(review.change as number, 'en')}`)).toBeVisible();
+		await expect(recap.getByText('Months inside budget')).toBeVisible();
+		await expect(
+			recap.getByText(`${review.monthsInsideBudget} / 12`, { exact: true })
+		).toBeVisible();
+
+		/* Purely retrospective: the Fork's own deposit moves live money, and the
+		   closed year's headline must not budge. */
+		await page.getByRole('button', { name: /Work — full time/ }).click();
+		await expect(recap.getByText(formatMoney(review.netWorth as number, 'en'))).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the Stage-up screen with its Year in Review');
 	});
 
 	test('privacy policy', async ({ page }) => {

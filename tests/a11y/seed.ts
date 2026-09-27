@@ -39,11 +39,29 @@ export const MILESTONE_RUN: RunState = seededRun(
 	{ type: 'CONTINUE' }
 );
 
+/**
+ * A Run played to the Stage-5 Fork through the real reducer (gamification
+ * ticket 02), so the Stage-up carries the year 4→5 Year in Review with real
+ * months behind it. The plan is deck.test.ts's playtest policy: work the wage
+ * years, allocate half and a third.
+ */
+function playedToFork(seed: number): RunState {
+	let state = applyAction(createRun(seed), { type: 'DISMISS_INTRO' });
+	for (let month = 1; month <= 48; month++) {
+		const hours = state.stage === 3 || state.stage === 4 ? 35 : 0;
+		state = applyAction(state, { type: 'SET_HOURS', hours });
+		state = applyAction(state, { type: 'SET_NEED', amount: Math.round(state.income * 0.5) });
+		state = applyAction(state, { type: 'SET_WANT', amount: Math.round(state.income * 0.3) });
+		state = applyAction(state, { type: 'CONFIRM_PLAN' });
+		state = applyAction(state, { type: 'CHOOSE', choiceId: availableChoice(state).id });
+		state = applyAction(state, { type: 'CONTINUE' });
+		state = applyAction(state, { type: 'NEXT_MONTH' });
+	}
+	return state;
+}
+
 /** Stage 5 opens with the Fork's Stage-up card (ticket 18). */
-export const STAGE_UP_RUN = seededRun(
-	{ type: 'DISMISS_INTRO' },
-	{ type: 'JUMP_STAGE', stage: 5 }
-);
+export const STAGE_UP_RUN = playedToFork(GATE_SEED);
 
 /** A run carrying state chips (the BNPL pill), so their contrast is gated. */
 export const CHIP_RUN: RunState = { ...PLAN_RUN, bnpl: { amount: 30, monthsLeft: 2 } };

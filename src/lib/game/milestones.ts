@@ -13,6 +13,7 @@
  */
 
 import { GOAL_TARGET, STUDY_BUFFER } from './economy';
+import { computeMetrics } from './metrics';
 import type { MonthSnapshot, RunState } from './types';
 
 /** The v1 catalogue, in the order the design lists it. */
@@ -162,6 +163,58 @@ export function milestonesForYear(run: RunState, year: number): MilestoneId[] {
 	return earnedMilestones(run)
 		.filter((milestone) => milestone.month >= from && milestone.month <= to)
 		.map((milestone) => milestone.id);
+}
+
+/** One closed year as the Stage-up Card's Year in Review reports it (ticket 02). */
+export interface YearInReview {
+	year: number;
+	/** Net worth at the year's close, or null when the record does not cover it. */
+	netWorth: number | null;
+	/** The year's movement against the previous close (the ◈60 start for year 1). */
+	change: number | null;
+	/** Months closed inside both envelopes, out of twelve. */
+	monthsInsideBudget: number;
+	/** The ids first true within the year. */
+	milestones: MilestoneId[];
+}
+
+/** Every Run starts at 14 with ◈60 — the Money Story's opening figure. */
+const STARTING_NET_WORTH = 60;
+
+/**
+ * The Year in Review for one closed year: the money headline from the stored
+ * month history, the metrics' own inside-budget count, and the year's
+ * Milestones. Purely retrospective — it reads the record and never the live
+ * balance, so the Fork's deposit cannot move the numbers it reports.
+ */
+export function yearInReview(run: RunState, year: number): YearInReview {
+	const h = months(run);
+	const atClose = (month: number) => h.find((row) => row.month === month)?.netWorth ?? null;
+
+	const netWorth = atClose(year * 12);
+	// Year 1 measures from the Run's start, so the recap and the Money Story agree.
+	const baseline = year === 1 ? STARTING_NET_WORTH : atClose((year - 1) * 12);
+
+	return {
+		year,
+		netWorth,
+		change: netWorth === null || baseline === null ? null : netWorth - baseline,
+		// The metrics read `history` directly; hand them the legacy-safe rows.
+		monthsInsideBudget: computeMetrics({ ...run, history: h }).adherenceByYear[year - 1] ?? 0,
+		milestones: milestonesForYear(run, year)
+	};
+}
+
+/**
+ * The review a Stage-up Card carries: the year just closed, which is
+ * `stage - 1` — the Stage-up that opens stage N opens year N, so stages 2–5
+ * carry years 1–4 and the Fork carries year 4→5. Null at stage 1, whose
+ * opening has no closed year behind it, and null in every other phase: the
+ * recap is a Stage-up thing and can never appear mid-month (ADR-0003).
+ */
+export function stageUpReview(run: RunState): YearInReview | null {
+	if (run.phase !== 'stage_up' || run.stage < 2) return null;
+	return yearInReview(run, run.stage - 1);
 }
 
 /** The longest run of consecutive months inside budget — the retrospective line. */

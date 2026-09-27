@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { GOAL_TARGET, STUDY_BUFFER } from './economy';
-import { createRun, runActions } from './loop';
+import { applyAction, createRun, runActions } from './loop';
+import { computeMetrics } from './metrics';
 import {
 	MILESTONE_IDS,
 	earnedMilestones,
 	longestInsideBudgetMonths,
 	milestonesForYear,
 	milestonesNewThisMonth,
+	stageUpReview,
+	yearInReview,
 	type MilestoneId
 } from './milestones';
 import type { MonthSnapshot, RunState } from './types';
@@ -37,6 +40,28 @@ const idsOf = (run: RunState): MilestoneId[] => earnedMilestones(run).map((m) =>
 /** `length` consecutive months inside budget, starting at `from`. */
 function inside(from: number, length: number): MonthSnapshot[] {
 	return Array.from({ length }, (_, i) => row(from + i, { insideBudget: true }));
+}
+
+/** Plays a Run taking the first affordable Choice every month, as `deck.test.ts` does. */
+function play(state: RunState, months: number): RunState {
+	let s = state;
+	for (let i = 0; i < months; i++) {
+		if (s.phase === 'stage_up' && s.card) {
+			s = applyAction(s, { type: 'CHOOSE', choiceId: s.card.choices[0].id });
+			s = applyAction(s, { type: 'CONTINUE' });
+		}
+		s = applyAction(s, { type: 'SET_HOURS', hours: 0 });
+		s = applyAction(s, { type: 'CONFIRM_PLAN' });
+		if (!s.card) break;
+		const affordable = s.card.choices.find((c) => {
+			const hours = c.freeTime ?? 0;
+			return !(hours < 0 && Math.abs(hours) > s.freeTime);
+		});
+		s = applyAction(s, { type: 'CHOOSE', choiceId: (affordable ?? s.card.choices[0]).id });
+		s = applyAction(s, { type: 'CONTINUE' });
+		s = applyAction(s, { type: 'NEXT_MONTH' });
+	}
+	return s;
 }
 
 /**
@@ -392,6 +417,201 @@ describe('a Run the reducer actually lived', () => {
 	});
 });
 
+/**
+ * A Run that lived `count` closed years: net worth climbing ◈10 a month from
+ * the ◈60 start, a clean month every third, Save first used in year 2, the
+ * first interest in year 4, the first payslip in year 3, and — from year 5 —
+ * the Fork.
+ */
+function livedYears(count: number): RunState {
+	const history: MonthSnapshot[] = [];
+	for (let month = 1; month <= count * 12; month++) {
+		history.push(
+			row(month, {
+				netWorth: 60 + month * 10,
+				insideBudget: month % 3 === 0,
+				saved: month === 13 ? 10 : 0,
+				interest: month === 40 ? 0.1 : 0
+			})
+		);
+	}
+	return withState({
+		history,
+		log:
+			count >= 5
+				? [
+						{ month: 25, card: 'first_payslip', choice: 'measured' },
+						{ month: 49, card: 'the_fork', choice: 'work' }
+					]
+				: [{ month: 25, card: 'first_payslip', choice: 'measured' }],
+		flags: count >= 5 ? [{ month: 49, kind: 'fork:work' }] : []
+	});
+}
+
+/** A Run at the Stage-5 Stage-up, the Fork on the table (month 49). */
+function atTheFork(run: RunState, phase: RunState['phase'] = 'stage_up'): RunState {
+	return { ...run, stage: 5, month: 49, path: 'work', phase };
+}
+
+describe('the Year in Review (ticket 02)', () => {
+	it('reports each closed year’s money from the stored history', () => {
+		const run = livedYears(5);
+
+		expect(yearInReview(run, 1)).toEqual({
+			year: 1,
+			netWorth: 180,
+			// The Run starts at ◈60, the Money Story's opening figure.
+			change: 120,
+			monthsInsideBudget: 4,
+			milestones: ['first_budget_month']
+		});
+		expect(yearInReview(run, 2)).toEqual({
+			year: 2,
+			netWorth: 300,
+			change: 120,
+			monthsInsideBudget: 4,
+			milestones: ['first_saved']
+		});
+		expect(yearInReview(run, 3)).toEqual({
+			year: 3,
+			netWorth: 420,
+			change: 120,
+			monthsInsideBudget: 4,
+			milestones: ['first_pay']
+		});
+		expect(yearInReview(run, 4)).toEqual({
+			year: 4,
+			netWorth: 540,
+			change: 120,
+			monthsInsideBudget: 4,
+			milestones: ['first_interest']
+		});
+		expect(yearInReview(run, 5)).toEqual({
+			year: 5,
+			netWorth: 660,
+			change: 120,
+			monthsInsideBudget: 4,
+			milestones: ['fork_chosen']
+		});
+	});
+
+	it('measures year one’s change from the Run’s ◈60 start, like the Money Story', () => {
+		const flat = withState({ history: [row(12, { netWorth: 60 })] });
+		expect(yearInReview(flat, 1).change).toBe(0);
+
+		const spent = withState({ history: [row(12, { netWorth: 20 })] });
+		expect(yearInReview(spent, 1).change).toBe(-40);
+	});
+
+	it('agrees with the metrics for the months inside budget', () => {
+		const run = livedYears(5);
+		const metrics = computeMetrics(run);
+		for (let year = 1; year <= 5; year++) {
+			expect(yearInReview(run, year).monthsInsideBudget).toBe(metrics.adherenceByYear[year - 1]);
+		}
+	});
+
+	it('agrees with the Milestone year slicing', () => {
+		const run = livedYears(5);
+		for (let year = 1; year <= 5; year++) {
+			expect(yearInReview(run, year).milestones).toEqual(milestonesForYear(run, year));
+		}
+	});
+
+	it('opens stages 2–5 with years 1–4, and stage 1 with no review', () => {
+		const run = livedYears(5);
+		for (const stage of [2, 3, 4, 5]) {
+			const at = { ...run, stage, month: (stage - 1) * 12 + 1, phase: 'stage_up' as const };
+			expect(stageUpReview(at)?.year).toBe(stage - 1);
+			expect(stageUpReview(at)?.netWorth).toBe(yearInReview(run, stage - 1).netWorth);
+		}
+		expect(stageUpReview({ ...run, stage: 1, month: 1, phase: 'stage_up' })).toBeNull();
+	});
+
+	it('carries year 4 on the Stage-5 Fork, on both paths', () => {
+		const run = livedYears(5);
+		for (const path of ['study', 'work'] as const) {
+			const review = stageUpReview(atTheFork({ ...run, path }));
+			expect(review?.year).toBe(4);
+			expect(review).toEqual(yearInReview(run, 4));
+		}
+	});
+
+	it('never reports during the month loop', () => {
+		const run = livedYears(5);
+		for (const phase of ['plan', 'event', 'resolve', 'done'] as const) {
+			expect(stageUpReview(atTheFork(run, phase))).toBeNull();
+		}
+		expect(stageUpReview(atTheFork(run))).not.toBeNull();
+	});
+
+	it('reads only the closed record, so the Fork’s own cost cannot move it', () => {
+		const before = livedYears(4);
+		const review = yearInReview(before, 4);
+		// Choosing Work pays a deposit from live money; the review must not budge.
+		const after = {
+			...before,
+			cash: 0,
+			savings: 0,
+			debt: 5000,
+			month: 49,
+			stage: 5,
+			phase: 'stage_up' as const
+		};
+		expect(stageUpReview(after)).toEqual(review);
+	});
+
+	it('reports only the part of a year the record covers', () => {
+		// A Run dropped straight into Stage 4 has no year-3 close to measure against.
+		const jumped = withState({
+			history: [row(37), row(48, { netWorth: 500 })],
+			stage: 5,
+			month: 49,
+			phase: 'stage_up'
+		});
+		expect(yearInReview(jumped, 4)).toEqual({
+			year: 4,
+			netWorth: 500,
+			change: null,
+			monthsInsideBudget: 0,
+			milestones: []
+		});
+	});
+
+	it('tolerates an empty, short or legacy record', () => {
+		const bare = withState({ history: undefined as unknown as RunState['history'] });
+		expect(() => yearInReview(bare, 4)).not.toThrow();
+		expect(yearInReview(bare, 4)).toEqual({
+			year: 4,
+			netWorth: null,
+			change: null,
+			monthsInsideBudget: 0,
+			milestones: []
+		});
+		expect(stageUpReview({ ...bare, stage: 5, phase: 'stage_up' })).toEqual({
+			year: 4,
+			netWorth: null,
+			change: null,
+			monthsInsideBudget: 0,
+			milestones: []
+		});
+	});
+
+	it('carries year 4 on a Run the reducer actually played to the Fork', () => {
+		const run = play(applyAction(createRun(20260926), { type: 'DISMISS_INTRO' }), 48);
+		expect(run.phase).toBe('stage_up');
+		expect(run.stage).toBe(5);
+
+		const review = stageUpReview(run);
+		expect(review?.year).toBe(4);
+		expect(review?.netWorth).toBe(run.history[47].netWorth);
+		expect(review?.change).toBe(run.history[47].netWorth - run.history[35].netWorth);
+		expect(review?.monthsInsideBudget).toBe(
+			run.history.slice(36, 48).filter((r) => r.insideBudget).length
+		);
+	});
+});
+
 describe('Milestones grant nothing', () => {
 	it('leaves the Run untouched', () => {
 		const run = fullRun();
@@ -400,6 +620,8 @@ describe('Milestones grant nothing', () => {
 		milestonesNewThisMonth(run);
 		milestonesForYear(run, 2);
 		longestInsideBudgetMonths(run);
+		yearInReview(run, 2);
+		stageUpReview({ ...run, stage: 5, month: 49, phase: 'stage_up' });
 		expect(run).toStrictEqual(before);
 	});
 });
