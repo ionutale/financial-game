@@ -67,7 +67,7 @@
 		</div>
 	</div>
 
-	<div class="flex gap-8">
+	<div class="flex flex-wrap gap-8">
 		<div>
 			<p class="kicker">{m.hud_cash()}</p>
 			<Money amount={spendable(run)} size="lg" />

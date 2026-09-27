@@ -85,6 +85,45 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await expectNoAxeViolations(page, 'the Stats Sheet');
 	});
 
+	test('month screen: stats sheet states Concept Coverage without spoilers', async ({ page }) => {
+		await seedRun(page, PLAN_RUN);
+		await page.getByRole('button', { name: 'Stats' }).click();
+		const coverage = page.getByRole('region', { name: 'Concept coverage' });
+		await expect(coverage).toBeVisible();
+
+		/* Gamification ticket 03: all eight Concepts, each in a text state —
+		   stage 1's two Introduced, nothing played, six locked and unnamed. */
+		await expect(coverage.getByRole('listitem')).toHaveCount(8);
+		await expect(coverage.getByText('needs vs wants')).toBeVisible();
+		await expect(coverage.getByText('earning & work')).toBeVisible();
+		await expect(coverage.getByText('Introduced')).toHaveCount(2);
+		await expect(coverage.getByText('Experienced')).toHaveCount(0);
+		await expect(coverage.getByText('Not yet')).toHaveCount(6);
+		/* Locked Concepts reveal no more than the Stage-up banner already has. */
+		await expect(
+			coverage.getByText(/budgeting & tracking|saving & goals|interest & compounding|credit & debt/)
+		).toHaveCount(0);
+		await expect(
+			coverage.getByText(/investing & risk|taxes, insurance & scams/)
+		).toHaveCount(0);
+		await expectNoAxeViolations(page, 'the Stats Sheet with Concept Coverage');
+	});
+
+	test('month screen: stats sheet marks a played Concept Experienced', async ({ page }) => {
+		await seedRun(page, MILESTONE_RUN);
+		await page.getByRole('button', { name: 'Stats' }).click();
+		const coverage = page.getByRole('region', { name: 'Concept coverage' });
+		await expect(coverage).toBeVisible();
+
+		/* Month 1 played birthday_gift, which carries needs vs wants. */
+		await expect(coverage.getByText('needs vs wants')).toBeVisible();
+		await expect(coverage.getByText('Experienced')).toHaveCount(1);
+		await expect(coverage.getByText('Introduced')).toHaveCount(1);
+		await expect(coverage.getByText('Not yet')).toHaveCount(6);
+		await expect(coverage.getByText('investing & risk')).toHaveCount(0);
+		await expectNoAxeViolations(page, 'the Stats Sheet with an Experienced Concept');
+	});
+
 	test('month screen: stats sheet lists earned Milestones in text', async ({ page }) => {
 		await seedRun(page, MILESTONE_RUN);
 		await page.getByRole('button', { name: 'Stats' }).click();

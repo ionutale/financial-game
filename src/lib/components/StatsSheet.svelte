@@ -6,11 +6,12 @@
 	 * money formatting come from the catalogue and the active locale (ticket 26).
 	 */
 	import { formatMoney, formatMoneyExact } from '$lib/game/economy';
+	import { conceptCoverage, type ConceptCoverageState } from '$lib/game/journal';
 	import { computeMetrics } from '$lib/game/metrics';
 	import { earnedMilestones } from '$lib/game/milestones';
 	import { statsSheet, type StatsRow, type StatsTone } from '$lib/game/stats';
 	import type { RunState } from '$lib/game/types';
-	import { milestoneLabel, threadChipText, threadLabel } from '$lib/i18n/game-text';
+	import { conceptLabel, milestoneLabel, threadChipText, threadLabel } from '$lib/i18n/game-text';
 	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -32,6 +33,17 @@
 	const milestones = $derived(
 		earnedMilestones(run).map((milestone) => milestoneLabel(milestone.id))
 	);
+	/*
+	 * Concept Coverage (gamification ticket 03) for this Run: Introduced by the
+	 * Stage ladder, Experienced by a played card, or locked. Exposure only —
+	 * the state is a word, never a bar, and a locked Concept shows no name.
+	 */
+	const coverage = $derived(conceptCoverage(run));
+	const STATE_LABEL: Record<ConceptCoverageState, () => string> = {
+		experienced: () => m.coverage_experienced(),
+		introduced: () => m.coverage_introduced(),
+		locked: () => m.coverage_not_yet()
+	};
 	const trajectory = $derived(metrics.trajectory);
 	const latest = $derived(trajectory[trajectory.length - 1] ?? 0);
 
@@ -232,6 +244,30 @@
 			{:else}
 				<p class="mt-2 text-sm text-[var(--muted)]">{m.stats_no_milestones()}</p>
 			{/if}
+		</section>
+
+		<section aria-labelledby="stats-coverage">
+			<p class="kicker" id="stats-coverage">{m.stats_coverage()}</p>
+
+			<ul class="mt-2 flex flex-col">
+				{#each coverage as entry (entry.concept)}
+					<li
+						class="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-dashed border-[var(--line)] py-2.5 last:border-0"
+					>
+						{#if entry.state === 'locked'}
+							<!--
+								A locked Concept names nothing the Stage-up banner has not
+								announced; the state sits where the state column is, so no
+								reader mistakes it for a Concept's name.
+							-->
+							<span class="ml-auto text-xs text-[var(--muted)]">{STATE_LABEL.locked()}</span>
+						{:else}
+							<span class="text-sm">{conceptLabel(entry.concept)}</span>
+							<span class="text-xs text-[var(--muted)]">{STATE_LABEL[entry.state]()}</span>
+						{/if}
+					</li>
+				{/each}
+			</ul>
 		</section>
 
 		<footer class="mt-auto pt-2">
