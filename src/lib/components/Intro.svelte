@@ -1,60 +1,45 @@
 <script lang="ts">
 	/**
-	 * Three screens before the first month (ticket 04): who you are, what you are
-	 * aiming at, and how a month works. No tutorial — the first card teaches.
+	 * The Cold Open (fun-pass ticket 02): one scene before month 1 — who you
+	 * are, the Named Goal as the horizon, Start. It replaces the three intro
+	 * screens; how a month works moved to the first month's Plan hint, where it
+	 * is needed. The privacy line, the language switcher and the sound toggle
+	 * stay surfaced.
 	 */
 	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 	import LanguageSwitcher from './LanguageSwitcher.svelte';
+	import SoundToggle from './SoundToggle.svelte';
 
 	let { onDone }: { onDone: () => void } = $props();
-
-	const SCREENS = [
-		{
-			kicker: () => m.intro_screen_1_kicker(),
-			title: () => m.intro_screen_1_title(),
-			body: () => m.intro_screen_1_body(),
-			footnote: () => m.intro_screen_1_footnote()
-		},
-		{
-			kicker: () => m.intro_screen_2_kicker(),
-			title: () => m.intro_screen_2_title(),
-			body: () => m.intro_screen_2_body(),
-			footnote: () => m.intro_screen_2_footnote()
-		},
-		{
-			kicker: () => m.intro_screen_3_kicker(),
-			title: () => m.intro_screen_3_title(),
-			body: () => m.intro_screen_3_body(),
-			footnote: () => m.intro_screen_3_footnote()
-		}
-	];
-
-	let step = $state(0);
-	const screen = $derived(SCREENS[step]);
-	const last = $derived(step === SCREENS.length - 1);
-
-	function next() {
-		if (last) onDone();
-		else step += 1;
-	}
 </script>
 
 <main class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-6 py-10">
 	<div class="flex-1">
-		{#key step}
-			<div class="rise">
-				<p class="kicker">{screen.kicker()}</p>
-				<h1 class="mt-4 text-[34px] leading-[1.1] font-semibold tracking-tight">
-					{screen.title()}
-				</h1>
-				<p class="mt-5 text-[17px] leading-relaxed">{screen.body()}</p>
-				<p class="mt-5 text-sm leading-relaxed text-[var(--muted)]">{screen.footnote()}</p>
-			</div>
-		{/key}
+		<p class="kicker">{m.intro_kicker()}</p>
+		<h1 class="mt-4 text-[34px] leading-[1.1] font-semibold tracking-tight">
+			{m.intro_screen_1_title()}
+		</h1>
+		<p class="mt-5 text-[17px] leading-relaxed">{m.intro_screen_1_body()}</p>
+
+		<!-- The goal as the horizon: the one number the whole Run points at. -->
+		<div class="mt-8 rounded-xl bg-[var(--money-wash)] px-4 py-3.5">
+			<p class="kicker text-[var(--money)]">{m.intro_screen_2_kicker()}</p>
+			<p class="mt-1.5 text-[17px] font-semibold tracking-tight">
+				{m.intro_screen_2_title()}
+			</p>
+			<p class="mt-2 text-[15px] leading-relaxed">{m.intro_screen_2_body()}</p>
+		</div>
 	</div>
 
-	<p class="mt-8 text-xs leading-relaxed text-[var(--muted)]">
+	<button
+		class="mt-8 w-full rounded-xl bg-[var(--money)] py-3.5 font-semibold text-white transition active:scale-[0.99]"
+		onclick={onDone}
+	>
+		{m.intro_start()}
+	</button>
+
+	<p class="mt-6 text-xs leading-relaxed text-[var(--muted)]">
 		{m.intro_privacy()}
 		<a class="underline underline-offset-2" href={localizedHref('/privacy')}>{m.link_privacy_policy()}</a>
 		<span aria-hidden="true">·</span>
@@ -68,22 +53,9 @@
 		<LanguageSwitcher compact labelledBy="intro-language" />
 	</div>
 
-	<div class="mt-6 flex items-center justify-between">
-		<div class="flex gap-1.5" aria-hidden="true">
-			{#each SCREENS as _, i (i)}
-				<span
-					class="h-1.5 rounded-full transition-all duration-300 {i === step
-						? 'w-6 bg-[var(--money)]'
-						: 'w-1.5 bg-[var(--wash)]'}"
-				></span>
-			{/each}
-		</div>
-
-		<button
-			class="rounded-xl bg-[var(--money)] px-6 py-3 font-semibold text-white transition active:scale-[0.99]"
-			onclick={next}
-		>
-			{last ? m.intro_start() : m.intro_next()}
-		</button>
+	<!-- Sound stays surfaced here too (ticket 30's switch, off by default). -->
+	<div class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+		<p class="kicker" id="intro-sound">{m.settings_sound_label()}</p>
+		<SoundToggle labelledBy="intro-sound" />
 	</div>
 </main>

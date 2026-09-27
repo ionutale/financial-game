@@ -46,6 +46,16 @@ export function workHintVisible(run: RunState): boolean {
 }
 
 /**
+ * Fun-pass ticket 02: the Cold Open moved “how a month works” to where it is
+ * needed. The hint shows on the first Plan step — month 1, before any plan has
+ * been confirmed — in the shipped Wage-Hint pattern, and retires itself: once
+ * the plan is confirmed the record says so (self-retiring, no new state).
+ */
+export function firstMonthHintVisible(run: Pick<RunState, 'month' | 'lastPlan'>): boolean {
+	return run.month === 1 && run.lastPlan === null;
+}
+
+/**
  * Taught once, trusted after (ADR-0004, ticket 01): is the Run's current card
  * the first played card carrying its Concept? True at the Teachable Moment, so
  * the Why renders open there and collapsed at every later card.

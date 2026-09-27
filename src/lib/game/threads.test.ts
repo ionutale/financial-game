@@ -5,9 +5,17 @@ import { THREADS, threadDue } from './threads';
 import { threadChip } from '$lib/i18n/game-text';
 import type { RunState } from './types';
 
-/** A fresh Run dropped into a Stage, the way the test scaffolding does it. */
+/**
+ * A fresh Run dropped into a Stage, the way the test scaffolding does it, with
+ * the Stage's Stage-up resolved (fun-pass ticket 02: stages 2–4 open with an
+ * interstitial; stage 5's Fork is left for the caller).
+ */
 function atStage(stage: number, month?: number): RunState {
-	const s = applyAction(createRun(), { type: 'JUMP_STAGE', stage });
+	let s = applyAction(createRun(), { type: 'JUMP_STAGE', stage });
+	if (s.phase === 'stage_up' && s.card && s.card.id !== 'the_fork') {
+		s = applyAction(s, { type: 'CHOOSE', choiceId: s.card.choices[0].id });
+		s = applyAction(s, { type: 'CONTINUE' });
+	}
 	return month === undefined ? s : { ...s, month };
 }
 

@@ -6,12 +6,18 @@
 	 * money formatting come from the catalogue and the active locale (ticket 26).
 	 */
 	import { formatMoney, formatMoneyExact } from '$lib/game/economy';
-	import { conceptCoverage, type ConceptCoverageState } from '$lib/game/journal';
+	import { conceptCoverage } from '$lib/game/journal';
 	import { computeMetrics } from '$lib/game/metrics';
 	import { earnedMilestones } from '$lib/game/milestones';
 	import { statsSheet, type StatsRow, type StatsTone } from '$lib/game/stats';
 	import type { RunState } from '$lib/game/types';
-	import { conceptLabel, milestoneLabel, threadChipText, threadLabel } from '$lib/i18n/game-text';
+	import {
+		conceptLabel,
+		coverageStateLabel,
+		milestoneLabel,
+		threadChipText,
+		threadLabel
+	} from '$lib/i18n/game-text';
 	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -34,16 +40,12 @@
 		earnedMilestones(run).map((milestone) => milestoneLabel(milestone.id))
 	);
 	/*
-	 * Concept Coverage (gamification ticket 03) for this Run: Introduced by the
-	 * Stage ladder, Experienced by a played card, or locked. Exposure only —
-	 * the state is a word, never a bar, and a locked Concept shows no name.
+	 * Concept Coverage (gamification ticket 03, display words ticket 02) for
+	 * this Run: Introduced by the Stage ladder, Experienced by a played card,
+	 * or locked. Exposure only — the state is a word (“coming up” / “met” /
+	 * “later”), never a bar, and a locked Concept shows no name.
 	 */
 	const coverage = $derived(conceptCoverage(run));
-	const STATE_LABEL: Record<ConceptCoverageState, () => string> = {
-		experienced: () => m.coverage_experienced(),
-		introduced: () => m.coverage_introduced(),
-		locked: () => m.coverage_not_yet()
-	};
 	const trajectory = $derived(metrics.trajectory);
 	const latest = $derived(trajectory[trajectory.length - 1] ?? 0);
 
@@ -260,10 +262,10 @@
 								announced; the state sits where the state column is, so no
 								reader mistakes it for a Concept's name.
 							-->
-							<span class="ml-auto text-xs text-[var(--muted)]">{STATE_LABEL.locked()}</span>
+							<span class="ml-auto text-xs text-[var(--muted)]">{coverageStateLabel(entry.state)}</span>
 						{:else}
 							<span class="text-sm">{conceptLabel(entry.concept)}</span>
-							<span class="text-xs text-[var(--muted)]">{STATE_LABEL[entry.state]()}</span>
+							<span class="text-xs text-[var(--muted)]">{coverageStateLabel(entry.state)}</span>
 						{/if}
 					</li>
 				{/each}

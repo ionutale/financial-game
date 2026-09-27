@@ -14,7 +14,11 @@ import {
 	MILESTONE_RUN,
 	NO_BUDGET_RUN,
 	PLAN_RUN,
-	STAGE_UP_RUN
+	REPEAT_PLAN_RUN,
+	STAGE_2_UP_RUN,
+	STAGE_UP_RUN,
+	WHY_COLLAPSED_RUN,
+	WHY_OPEN_RUN
 } from './seed';
 
 /**
@@ -26,6 +30,16 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 	test('intro / home', async ({ page }) => {
 		await page.goto('/');
 		await expect(page.getByRole('heading', { name: 'You are 14.' })).toBeVisible();
+
+		/* Fun-pass ticket 02: one Cold Open scene. The old three screens are
+		   gone, and the privacy line, the language switcher and the sound
+		   toggle are all still surfaced in it. */
+		await expect(page.getByRole('link', { name: 'Privacy policy' })).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+		await expect(page.getByRole('group', { name: 'Language' })).toBeVisible();
+		await expect(page.getByRole('switch', { name: 'Sound effects' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Start month 1' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Next' })).toHaveCount(0);
 		await expectNoAxeViolations(page, 'the intro');
 	});
 
@@ -59,6 +73,62 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await expectNoAxeViolations(page, 'the Plan step with the goal ticks');
 	});
 
+	test('month screen: month one suggests a plan — one tap, never automatic', async ({ page }) => {
+		await seedRun(page, PLAN_RUN);
+		await expect(page.getByRole('heading', { name: 'Plan the month' })).toBeVisible();
+
+		/* Fun-pass ticket 02: “how a month works” is just-in-time, on the first
+		   Plan step, and retires itself once the first plan is confirmed. */
+		await expect(page.getByText('How a month works')).toBeVisible();
+
+		/* The suggested chip has done nothing by itself. */
+		const ranges = page.locator('input[type="range"]');
+		await expect(ranges.nth(1)).toHaveValue('0'); // Need
+		await expect(ranges.nth(2)).toHaveValue('0'); // Want
+
+		const chip = page.getByRole('button', { name: 'Suggested: 50 / 30 / 20' });
+		await expect(chip).toBeVisible();
+		await chip.click();
+
+		/* One tap fills the envelopes: 50% and 30% of the ◈40 allowance (the
+		   range's step=5 grid shows the 12 as 10; the RunState holds 12). */
+		await expect(ranges.nth(1)).toHaveValue('20');
+		await expect(ranges.nth(2)).toHaveValue('10');
+		await expectNoAxeViolations(page, 'month one with the suggested plan applied');
+	});
+
+	test('month screen: a last plan makes Repeat primary, sliders behind “Change the plan”', async ({
+		page
+	}) => {
+		await seedRun(page, REPEAT_PLAN_RUN);
+		await expect(page.getByRole('heading', { name: 'Plan the month' })).toBeVisible();
+
+		/* The last plan is shown as a receipt, Repeat is the one action, and
+		   nothing is planned until the player chooses to change it. */
+		await expect(page.getByText('Last month’s plan')).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Keep last month' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Change the plan' })).toBeVisible();
+		await expect(page.locator('input[type="range"]')).toHaveCount(0);
+		await expect(page.getByRole('button', { name: 'Start the month' })).toHaveCount(0);
+
+		await page.getByRole('button', { name: 'Change the plan' }).click();
+		await expect(page.locator('#work-hours')).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Start the month' })).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the Plan step with a last plan');
+	});
+
+	test('month screen: Keep last month starts the month in one tap', async ({ page }) => {
+		await seedRun(page, REPEAT_PLAN_RUN);
+		await page.getByRole('button', { name: 'Keep last month' }).click();
+
+		/* The two shipped actions — REPEAT_PLAN then CONFIRM_PLAN — composed by
+		   the UI: the Plan step is done and the month's card follows. */
+		await expect(page.getByRole('heading', { name: 'Plan the month' })).toHaveCount(0);
+		await expect(page.locator('section button').first()).toBeVisible();
+		await expectNoAxeViolations(page, 'the month after one-tap repeat');
+	});
+
 	test('month screen: event and feedback', async ({ page }) => {
 		await seedRun(page, EVENT_RUN);
 		await expect(page.locator('h2')).not.toHaveText('Plan the month');
@@ -67,6 +137,42 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await page.locator('section button').first().click();
 		await expect(page.getByText('What happened')).toBeVisible();
 		await expectNoAxeViolations(page, 'the feedback');
+	});
+
+	test('month screen: the Reaction, and the Why open at a first encounter', async ({ page }) => {
+		await seedRun(page, WHY_OPEN_RUN);
+
+		/* Fun-pass ticket 02: the Reaction shows what the world did… */
+		await expect(page.getByText('What happened')).toBeVisible();
+		await expect(page.getByText('The thing is yours. ◈40 is already gone.')).toBeVisible();
+
+		/* …and “Why it happened” is a disclosure, open at the Concept's first
+		   encounter (ADR-0004: taught once, trusted after). */
+		const why = page.locator('details');
+		await expect(why).toHaveCount(1);
+		expect(await why.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(true);
+		await expect(why.getByText('Why it happened')).toBeVisible();
+		await expect(why.getByText(/The first money you ever control/)).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the Feedback with the Why open');
+	});
+
+	test('month screen: the Why stays collapsed once the Concept has been met', async ({ page }) => {
+		await seedRun(page, WHY_COLLAPSED_RUN);
+
+		/* The same card, with an earlier earning & work card in the log: the
+		   Reaction still renders, the Why waits behind its summary. */
+		await expect(page.getByText('The thing is yours. ◈40 is already gone.')).toBeVisible();
+		const why = page.locator('details');
+		await expect(why).toHaveCount(1);
+		expect(await why.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(false);
+		await expect(why.getByText(/The first money you ever control/)).toBeHidden();
+
+		/* The disclosure still opens by hand, natively. */
+		await why.getByText('Why it happened').click();
+		await expect(why.getByText(/The first money you ever control/)).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the Feedback with the Why collapsed');
 	});
 
 	test('month screen: a spine beat carries its illustration and alt text', async ({ page }) => {
@@ -123,17 +229,18 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 	test('month screen: stats sheet states Concept Coverage without spoilers', async ({ page }) => {
 		await seedRun(page, PLAN_RUN);
 		await page.getByRole('button', { name: 'Stats' }).click();
-		const coverage = page.getByRole('region', { name: 'Concept coverage' });
+		const coverage = page.getByRole('region', { name: 'What money’s shown you' });
 		await expect(coverage).toBeVisible();
 
-		/* Gamification ticket 03: all eight Concepts, each in a text state —
-		   stage 1's two Introduced, nothing played, six locked and unnamed. */
+		/* Gamification ticket 03, display words fun-pass ticket 02: all eight
+		   Concepts, each in a text state — stage 1's two “coming up”, nothing
+		   played, six “later” and unnamed. */
 		await expect(coverage.getByRole('listitem')).toHaveCount(8);
 		await expect(coverage.getByText('needs vs wants')).toBeVisible();
 		await expect(coverage.getByText('earning & work')).toBeVisible();
-		await expect(coverage.getByText('Introduced')).toHaveCount(2);
-		await expect(coverage.getByText('Experienced')).toHaveCount(0);
-		await expect(coverage.getByText('Not yet')).toHaveCount(6);
+		await expect(coverage.getByText('coming up')).toHaveCount(2);
+		await expect(coverage.getByText('met')).toHaveCount(0);
+		await expect(coverage.getByText('later')).toHaveCount(6);
 		/* Locked Concepts reveal no more than the Stage-up banner already has. */
 		await expect(
 			coverage.getByText(/budgeting & tracking|saving & goals|interest & compounding|credit & debt/)
@@ -147,14 +254,14 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 	test('month screen: stats sheet marks a played Concept Experienced', async ({ page }) => {
 		await seedRun(page, MILESTONE_RUN);
 		await page.getByRole('button', { name: 'Stats' }).click();
-		const coverage = page.getByRole('region', { name: 'Concept coverage' });
+		const coverage = page.getByRole('region', { name: 'What money’s shown you' });
 		await expect(coverage).toBeVisible();
 
 		/* Month 1 played birthday_gift, which carries needs vs wants. */
 		await expect(coverage.getByText('needs vs wants')).toBeVisible();
-		await expect(coverage.getByText('Experienced')).toHaveCount(1);
-		await expect(coverage.getByText('Introduced')).toHaveCount(1);
-		await expect(coverage.getByText('Not yet')).toHaveCount(6);
+		await expect(coverage.getByText('met')).toHaveCount(1);
+		await expect(coverage.getByText('coming up')).toHaveCount(1);
+		await expect(coverage.getByText('later')).toHaveCount(6);
 		await expect(coverage.getByText('investing & risk')).toHaveCount(0);
 		await expectNoAxeViolations(page, 'the Stats Sheet with an Experienced Concept');
 	});
@@ -180,6 +287,16 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 	test('month screen: stage-up (the Fork)', async ({ page }) => {
 		await seedRun(page, STAGE_UP_RUN);
 		await expect(page.getByText('A new stage')).toBeVisible();
+
+		/* Fun-pass ticket 02: the Stage-up reads as a life moment — its Year
+		   Beat and “What you'll meet”, not a curriculum list. */
+		await expect(
+			page.getByText('Eighteen. School is behind you, and the money gets real.')
+		).toBeVisible();
+		await expect(
+			page.getByText('What you’ll meet: investing & risk · taxes, insurance & scams')
+		).toBeVisible();
+
 		// The Fork's illustration rides the Stage-up, above its banner (ticket 30).
 		await expect(
 			page.getByRole('img', {
@@ -209,6 +326,36 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await expectNoAxeViolations(page, 'the Stage-up screen with its Year in Review');
 	});
 
+	test('month screen: the Stage-2 Stage-up carries year 1 in review', async ({ page }) => {
+		await seedRun(page, STAGE_2_UP_RUN);
+		await expect(page.getByText('A new stage')).toBeVisible();
+
+		/* Fun-pass ticket 02: the missing interstitial, now content — the Stage's
+		   Year Beat, “What you'll meet”, and the year 1 recap the Fork used to
+		   be the only Stage-up to carry. */
+		await expect(
+			page.getByText('Fifteen. A phone bill in your own name, and a month that has to be planned.')
+		).toBeVisible();
+		await expect(page.getByText('What you’ll meet: budgeting & tracking · saving & goals')).toBeVisible();
+
+		const review = yearInReview(STAGE_2_UP_RUN, 1);
+		const recap = page.getByRole('region', { name: 'Year 1 in review' });
+		await expect(recap).toBeVisible();
+		await expect(recap.getByText('Net worth')).toBeVisible();
+		await expect(recap.getByText(formatMoney(review.netWorth as number, 'en'))).toBeVisible();
+		await expect(recap.getByText('Months inside budget')).toBeVisible();
+		await expect(
+			recap.getByText(`${review.monthsInsideBudget} / 12`, { exact: true })
+		).toBeVisible();
+
+		/* The interstitial still resolves: one tap, then the month's Plan. */
+		await page.getByRole('button', { name: 'Start the year' }).click();
+		await page.getByRole('button', { name: 'Continue' }).click();
+		await expect(page.getByRole('heading', { name: 'Plan the month' })).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the Stage-2 Stage-up with its Year in Review');
+	});
+
 	test('the Money Story: milestones, coverage, the final year and the inside-budget line', async ({
 		page
 	}) => {
@@ -230,7 +377,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		/* Concept Coverage: all eight Concepts, the same states the Stats Sheet
 		   shows, with no locked Concept naming itself. */
 		const coverage = conceptCoverage(FINAL_MONTH_RUN);
-		const coverageList = page.getByRole('region', { name: 'Concept coverage' });
+		const coverageList = page.getByRole('region', { name: 'What the five years showed you' });
 		await expect(coverageList).toBeVisible();
 		await expect(coverageList.getByRole('listitem')).toHaveCount(coverage.length);
 		for (const entry of coverage) {
@@ -280,7 +427,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 			return [
 				'THE NUMBERS',
 				'MILESTONES',
-				'CONCEPT COVERAGE',
+				'WHAT THE FIVE YEARS SHOWED YOU',
 				'YEAR 5 IN REVIEW',
 				'Your longest run',
 				'YOUR JOURNAL',
@@ -442,7 +589,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		/* The eight Concepts still read as a curriculum, without naming the
 		   ones no Run has opened. */
 		await expect(
-			page.getByRole('region', { name: 'Concept coverage' }).getByRole('listitem')
+			page.getByRole('region', { name: 'What you’ve met' }).getByRole('listitem')
 		).toHaveCount(8);
 		await expect(page.getByText('No milestones yet.')).toBeVisible();
 		await expectNoAxeViolations(page, 'the empty Journal');
@@ -495,7 +642,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await expect(numbers.nth(0)).toHaveText('2');
 		await expect(numbers.nth(1)).toHaveText(`${met} / 8`);
 		await expect(
-			page.getByRole('region', { name: 'Concept coverage' }).getByRole('listitem')
+			page.getByRole('region', { name: 'What you’ve met' }).getByRole('listitem')
 		).toHaveCount(8);
 
 		const collected = page.getByRole('region', { name: 'Milestones collected' });

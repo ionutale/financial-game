@@ -30,7 +30,9 @@ function play(state: RunState, months: number): RunState {
 }
 
 const cardsPlayed = (s: RunState) => s.log.map((l) => l.card);
-const playedAt = (s: RunState, month: number) => s.log.find((l) => l.month === month)?.card;
+/** The month's drawn card — a Stage-up entry rides the same month (ticket 02). */
+const playedAt = (s: RunState, month: number) =>
+	s.log.find((l) => l.month === month && cardById(l.card)?.kind !== 'stage_up')?.card;
 
 describe('the seeded generator', () => {
 	it('is deterministic for a seed and a turn', () => {
@@ -57,8 +59,14 @@ describe('the spine', () => {
 		const spineIds = new Set(Object.values(SPINE));
 		const s = play(createRun(2024), 48);
 		for (const [month, id] of s.log.map((l) => [l.month, l.card] as const)) {
+			const card = cardById(id);
 			if (spineIds.has(id)) expect(SPINE[month]).toBe(id);
-			else expect(cardById(id)?.weight ?? 1).toBeGreaterThan(0);
+			else if (card?.kind === 'stage_up') {
+				// A Stage-up opens its Stage before the month's Plan (ticket 02):
+				// dealt by `startMonth`, never drawn at random, weight 0.
+				expect(month, `${id} dealt at month ${month}`).toBe((Math.min(...card.stages) - 1) * 12 + 1);
+				expect(card.weight ?? 1).toBe(0);
+			} else expect(card?.weight ?? 1).toBeGreaterThan(0);
 		}
 	});
 });
@@ -160,6 +168,7 @@ describe('a whole Run', () => {
 		const s = play(createRun(8), 60);
 		expect(s.month).toBe(61);
 		expect(s.phase).toBe('done');
-		expect(s.log).toHaveLength(61); // sixty months plus the Fork's stage-up
+		// Sixty months plus one Stage-up per Stage 2–5 (fun-pass ticket 02).
+		expect(s.log).toHaveLength(64);
 	});
 });

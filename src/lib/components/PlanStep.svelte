@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { expectedIncome, formatMoney, obligationsFor, stageOf } from '$lib/game/economy';
-	import { planWarning, workHintVisible } from '$lib/game/presentation';
+	import { firstMonthHintVisible, planWarning, workHintVisible } from '$lib/game/presentation';
 	import type { Action, RunState } from '$lib/game/types';
 	import { stageName } from '$lib/i18n/game-text';
 	import { m } from '$lib/i18n/messages';
@@ -17,6 +17,22 @@
 	const warning = $derived(planWarning(run));
 	const hint = $derived(workHintVisible(run));
 
+	/*
+	 * Fun-pass ticket 02, plan pacing: when a last plan exists, Repeat is the
+	 * primary action and the sliders wait behind “Change the plan”. The month-1
+	 * suggested chip is one tap and never automatic; the Shortfall Warning and
+	 * every plan semantic are untouched.
+	 */
+	let editing = $state(false);
+	const lastPlan = $derived(run.lastPlan);
+	const compact = $derived(lastPlan !== null && !editing);
+	const firstMonth = $derived(firstMonthHintVisible(run));
+
+	// Last month's plan, as a receipt: the rate at the hours it held, so the
+	// summary is true even if this Stage’s economy has moved under it.
+	const lastIncome = $derived(lastPlan ? stage.base + lastPlan.hours * stage.rate : 0);
+	const lastSaving = $derived(lastPlan ? Math.max(0, lastIncome - lastPlan.need - lastPlan.want) : 0);
+
 	// The split of expected income, as widths.
 	const share = (n: number) => (income > 0 ? Math.max(0, Math.min(100, (n / income) * 100)) : 0);
 	const shares = $derived({
@@ -25,8 +41,13 @@
 		save: share(saving)
 	});
 
-	function repeat() {
+	/**
+	 * “Keep last month” repeats the last plan and starts the month in one tap:
+	 * the two shipped actions, composed by the UI — no reducer change.
+	 */
+	function repeatAndStart() {
 		dispatch({ type: 'REPEAT_PLAN' });
+		dispatch({ type: 'CONFIRM_PLAN' });
 	}
 	function preset503020() {
 		const i = income;
@@ -54,98 +75,132 @@
 		</div>
 	{/if}
 
-	<div class="mt-6">
-		<div class="flex items-baseline justify-between">
-			<label class="kicker" for="work-hours">{m.plan_work_hours()}</label>
-			<span class="figure text-sm">
-				{run.hours}h
-				<span class="text-[var(--muted)]">· {formatMoney(run.hours * stage.rate, locale)}</span>
+	{#if firstMonth}
+		<!-- Just-in-time onboarding: “how a month works” arrives here, where it
+		     is needed, and retires itself once the first plan is confirmed. -->
+		<div class="mt-6 rounded-xl border border-[var(--money-35)] bg-[var(--money-wash)] p-4">
+			<p class="kicker text-[var(--money)]">{m.intro_screen_3_kicker()}</p>
+			<p class="mt-1.5 text-sm leading-relaxed">{m.intro_screen_3_body()}</p>
+			<p class="mt-1 text-xs text-[var(--muted)]">{m.intro_screen_3_footnote()}</p>
+		</div>
+	{/if}
+
+	{#if compact && lastPlan}
+		<div class="mt-6 rounded-xl border border-[var(--line)] p-4">
+			<p class="kicker">{m.plan_last()}</p>
+			<dl class="mt-2 flex flex-col">
+				<div class="flex flex-wrap items-baseline justify-between gap-x-4 py-1">
+					<dt class="text-sm text-[var(--muted)]">{m.plan_work_hours()}</dt>
+					<dd class="figure text-sm">
+						{lastPlan.hours}h
+						<span class="text-[var(--muted)]">· {formatMoney(lastPlan.hours * stage.rate, locale)}</span>
+					</dd>
+				</div>
+				<div class="flex flex-wrap items-baseline justify-between gap-x-4 py-1">
+					<dt class="text-sm text-[var(--muted)]">{m.plan_need()}</dt>
+					<dd class="figure text-sm">{formatMoney(lastPlan.need, locale)}</dd>
+				</div>
+				<div class="flex flex-wrap items-baseline justify-between gap-x-4 py-1">
+					<dt class="text-sm text-[var(--muted)]">{m.plan_want()}</dt>
+					<dd class="figure text-sm">{formatMoney(lastPlan.want, locale)}</dd>
+				</div>
+				<div
+					class="mt-1 flex flex-wrap items-baseline justify-between gap-x-4 border-t border-dashed border-[var(--line)] pt-2"
+				>
+					<dt class="text-sm text-[var(--muted)]">{m.plan_saving()}</dt>
+					<dd class="figure text-sm text-[var(--money)]">{formatMoney(lastSaving, locale)}</dd>
+				</div>
+			</dl>
+		</div>
+	{:else}
+		<div class="mt-6">
+			<div class="flex items-baseline justify-between">
+				<label class="kicker" for="work-hours">{m.plan_work_hours()}</label>
+				<span class="figure text-sm">
+					{run.hours}h
+					<span class="text-[var(--muted)]">· {formatMoney(run.hours * stage.rate, locale)}</span>
+				</span>
+			</div>
+			<input
+				id="work-hours"
+				type="range"
+				class="mt-2 w-full accent-[var(--money)]"
+				aria-describedby="work-hours-hint"
+				min="0"
+				max={stage.freeTime}
+				value={run.hours}
+				oninput={(e) => dispatch({ type: 'SET_HOURS', hours: Number(e.currentTarget.value) })}
+			/>
+			<p id="work-hours-hint" class="mt-1 text-xs text-[var(--muted)]">
+				{m.plan_work_hours_hint()}
+			</p>
+		</div>
+
+		<div class="mt-6">
+			<span class="kicker">{m.plan_split()}</span>
+			<div class="mt-2 flex h-2.5 overflow-hidden rounded-full bg-[var(--wash)]">
+				<div class="h-full bg-[var(--money-35)] transition-[width] duration-300" style="width: {shares.need}%"></div>
+				<div class="h-full bg-[var(--money-60)] transition-[width] duration-300" style="width: {shares.want}%"></div>
+				<div class="h-full bg-[var(--money)] transition-[width] duration-300" style="width: {shares.save}%"></div>
+			</div>
+
+			<div class="mt-4 flex flex-col gap-4">
+				<label class="block">
+					<span class="flex items-baseline justify-between">
+						<span class="kicker">{m.plan_need()}</span>
+						<span class="figure text-sm">{formatMoney(run.need, locale)}</span>
+					</span>
+					<input
+						type="range"
+						class="mt-1.5 w-full accent-[var(--money)]"
+						min="0"
+						max={Math.max(income, 1)}
+						step="5"
+						value={run.need}
+						oninput={(e) => dispatch({ type: 'SET_NEED', amount: Number(e.currentTarget.value) })}
+					/>
+				</label>
+
+				<label class="block">
+					<span class="flex items-baseline justify-between">
+						<span class="kicker">{m.plan_want()}</span>
+						<span class="figure text-sm">{formatMoney(run.want, locale)}</span>
+					</span>
+					<input
+						type="range"
+						class="mt-1.5 w-full accent-[var(--money)]"
+						min="0"
+						max={Math.max(income, 1)}
+						step="5"
+						value={run.want}
+						oninput={(e) => dispatch({ type: 'SET_WANT', amount: Number(e.currentTarget.value) })}
+					/>
+				</label>
+			</div>
+		</div>
+
+		<div class="mt-5 flex items-end justify-between border-t border-dashed border-[var(--line)] pt-4">
+			<div>
+				<span class="kicker">{m.plan_saving()}</span>
+				<p class="mt-0.5 text-xs text-[var(--muted)]">{m.plan_saving_note()}</p>
+			</div>
+			<span class="figure text-2xl font-medium text-[var(--money)]">
+				{formatMoney(saving, locale)}
 			</span>
 		</div>
-		<input
-			id="work-hours"
-			type="range"
-			class="mt-2 w-full accent-[var(--money)]"
-			aria-describedby="work-hours-hint"
-			min="0"
-			max={stage.freeTime}
-			value={run.hours}
-			oninput={(e) => dispatch({ type: 'SET_HOURS', hours: Number(e.currentTarget.value) })}
-		/>
-		<p id="work-hours-hint" class="mt-1 text-xs text-[var(--muted)]">
-			{m.plan_work_hours_hint()}
-		</p>
-	</div>
 
-	<div class="mt-6">
-		<span class="kicker">{m.plan_split()}</span>
-		<div class="mt-2 flex h-2.5 overflow-hidden rounded-full bg-[var(--wash)]">
-			<div class="h-full bg-[var(--money-35)] transition-[width] duration-300" style="width: {shares.need}%"></div>
-			<div class="h-full bg-[var(--money-60)] transition-[width] duration-300" style="width: {shares.want}%"></div>
-			<div class="h-full bg-[var(--money)] transition-[width] duration-300" style="width: {shares.save}%"></div>
+		<!-- The month-1 suggested chip: one tap fills the envelopes, never by
+		     itself. The same preset stays available when changing a plan. -->
+		<div class="mt-5 flex flex-wrap gap-2">
+			<button
+				class="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs disabled:opacity-40"
+				disabled={income <= 0}
+				onclick={preset503020}
+			>
+				{m.plan_preset()}
+			</button>
 		</div>
-
-		<div class="mt-4 flex flex-col gap-4">
-			<label class="block">
-				<span class="flex items-baseline justify-between">
-					<span class="kicker">{m.plan_need()}</span>
-					<span class="figure text-sm">{formatMoney(run.need, locale)}</span>
-				</span>
-				<input
-					type="range"
-					class="mt-1.5 w-full accent-[var(--money)]"
-					min="0"
-					max={Math.max(income, 1)}
-					step="5"
-					value={run.need}
-					oninput={(e) => dispatch({ type: 'SET_NEED', amount: Number(e.currentTarget.value) })}
-				/>
-			</label>
-
-			<label class="block">
-				<span class="flex items-baseline justify-between">
-					<span class="kicker">{m.plan_want()}</span>
-					<span class="figure text-sm">{formatMoney(run.want, locale)}</span>
-				</span>
-				<input
-					type="range"
-					class="mt-1.5 w-full accent-[var(--money)]"
-					min="0"
-					max={Math.max(income, 1)}
-					step="5"
-					value={run.want}
-					oninput={(e) => dispatch({ type: 'SET_WANT', amount: Number(e.currentTarget.value) })}
-				/>
-			</label>
-		</div>
-	</div>
-
-	<div class="mt-5 flex items-end justify-between border-t border-dashed border-[var(--line)] pt-4">
-		<div>
-			<span class="kicker">{m.plan_saving()}</span>
-			<p class="mt-0.5 text-xs text-[var(--muted)]">{m.plan_saving_note()}</p>
-		</div>
-		<span class="figure text-2xl font-medium text-[var(--money)]">
-			{formatMoney(saving, locale)}
-		</span>
-	</div>
-
-	<div class="mt-5 flex flex-wrap gap-2">
-		<button
-			class="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs disabled:opacity-40"
-			disabled={!run.lastPlan}
-			onclick={repeat}
-		>
-			{m.plan_repeat()}
-		</button>
-		<button
-			class="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs disabled:opacity-40"
-			disabled={income <= 0}
-			onclick={preset503020}
-		>
-			{m.plan_preset()}
-		</button>
-	</div>
+	{/if}
 
 	{#if warning}
 		<div class="mt-5 rounded-xl border border-dashed border-[var(--down)] px-4 py-3">
@@ -165,10 +220,25 @@
 		</div>
 	{/if}
 
-	<button
-		class="mt-5 w-full rounded-xl bg-[var(--money)] py-3.5 font-semibold text-white transition active:scale-[0.99]"
-		onclick={() => dispatch({ type: 'CONFIRM_PLAN' })}
-	>
-		{m.plan_start()}
-	</button>
+	{#if compact}
+		<button
+			class="mt-5 w-full rounded-xl bg-[var(--money)] py-3.5 font-semibold text-white transition active:scale-[0.99]"
+			onclick={repeatAndStart}
+		>
+			{m.plan_repeat()}
+		</button>
+		<button
+			class="mt-3 w-full rounded-xl border border-[var(--line)] py-3 text-sm font-semibold transition active:scale-[0.99]"
+			onclick={() => (editing = true)}
+		>
+			{m.plan_change()}
+		</button>
+	{:else}
+		<button
+			class="mt-5 w-full rounded-xl bg-[var(--money)] py-3.5 font-semibold text-white transition active:scale-[0.99]"
+			onclick={() => dispatch({ type: 'CONFIRM_PLAN' })}
+		>
+			{m.plan_start()}
+		</button>
+	{/if}
 </section>

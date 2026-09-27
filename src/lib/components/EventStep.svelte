@@ -2,12 +2,13 @@
 	import { playCue } from '$lib/audio/sfx';
 	import { beatArtFor } from '$lib/game/beats';
 	import { formatMoney } from '$lib/game/economy';
+	import { isFirstEncounter } from '$lib/game/presentation';
 	import type { Action, Choice, RunState } from '$lib/game/types';
 	import {
 		cardOdds,
 		cardSituation,
 		cardTitle,
-		chosenFeedback,
+		chosenFeedbackParts,
 		choiceLabel
 	} from '$lib/i18n/card-text';
 	import { chipsFor } from '$lib/i18n/chips';
@@ -20,7 +21,15 @@
 
 	const locale = getLocale();
 	const card = $derived(run.card);
-	const feedback = $derived(chosenFeedback(card, run.chosen));
+	/*
+	 * The two parts of the Feedback (ADR-0004, ticket 02): the Reaction first,
+	 * then the Why under "Why it happened". The Why opens by itself at the
+	 * Concept's first encounter and stays collapsed after (*taught once,
+	 * trusted after*); with no Reaction authored, today's single paragraph
+	 * renders exactly as it always has.
+	 */
+	const feedback = $derived(chosenFeedbackParts(card, run.chosen));
+	const whyOpen = $derived(isFirstEncounter(run));
 
 	function blocked(c: Choice): boolean {
 		const hours = c.freeTime ?? 0;
@@ -92,8 +101,27 @@
 
 		{#if feedback}
 			<div class="mt-6 border-l-2 border-[var(--money)] pl-4" aria-live="polite">
-				<p class="kicker">{m.event_what_happened()}</p>
-				<p class="mt-2 text-[15px] leading-relaxed">{feedback}</p>
+				{#if feedback.reaction}
+					<p class="kicker">{m.event_what_happened()}</p>
+					<p class="mt-2 text-[15px] leading-relaxed">{feedback.reaction}</p>
+
+					<!--
+						The Why is a disclosure, not a hidden lesson (ADR-0004):
+						open at the Concept's first encounter, collapsed after. The
+						summary carries the words; the opening is native and works
+						with no JavaScript.
+					-->
+					<details class="mt-3" open={whyOpen}>
+						<summary class="w-fit cursor-pointer text-sm font-semibold text-[var(--money)]">
+							{m.event_why_it_happened()}
+						</summary>
+						<p class="mt-2 text-sm leading-relaxed text-[var(--muted)]">{feedback.why}</p>
+					</details>
+				{:else}
+					<!-- No Reaction authored: today's exact rendering, byte for byte. -->
+					<p class="kicker">{m.event_what_happened()}</p>
+					<p class="mt-2 text-[15px] leading-relaxed">{feedback.why}</p>
+				{/if}
 
 				{#if run.cascade && run.cascade.toDebt > 0}
 					<p class="mt-3 text-[13px] text-[var(--down)]">

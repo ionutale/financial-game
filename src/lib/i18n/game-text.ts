@@ -5,7 +5,11 @@
  * message catalogue, so only ids stay in TypeScript.
  */
 import { threadDue, THREADS } from '$lib/game/threads';
-import type { CrossRunMilestoneId } from '$lib/game/journal';
+import {
+	coverageStateKey,
+	type ConceptCoverageState,
+	type CrossRunMilestoneId
+} from '$lib/game/journal';
 import type { MilestoneId } from '$lib/game/milestones';
 import type { CardKind, ConceptId, PathId, RunState } from '$lib/game/types';
 import type { ComparisonId, OutcomeBand } from '$lib/game/metrics';
@@ -13,6 +17,14 @@ import { message } from './messages';
 
 export function conceptLabel(id: ConceptId): string {
 	return message(`concept_${id}`);
+}
+
+/**
+ * A Concept Coverage state's player-facing word (fun-pass ticket 02, design
+ * §6): “coming up” / “met” / “later”, from the display map in `journal.ts`.
+ */
+export function coverageStateLabel(state: ConceptCoverageState): string {
+	return message(coverageStateKey(state));
 }
 
 export function stageName(stage: number): string {

@@ -7,21 +7,21 @@
 	 * `both_paths`) sit beside them. Derived only: export, delete-everything
 	 * and the retention sweep already cover everything shown here.
 	 */
-	import { buildJournal, type ConceptCoverageState } from '$lib/game/journal';
+	import { buildJournal } from '$lib/game/journal';
 	import type { OutcomeBand } from '$lib/game/metrics';
-	import { bandLabel, conceptLabel, flagText, milestoneLabel } from '$lib/i18n/game-text';
+	import {
+		bandLabel,
+		conceptLabel,
+		coverageStateLabel,
+		flagText,
+		milestoneLabel
+	} from '$lib/i18n/game-text';
 	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 
 	let { data } = $props();
 
 	const journal = $derived(buildJournal(data.active, data.archive));
-
-	const STATE_LABEL: Record<ConceptCoverageState, () => string> = {
-		experienced: () => m.coverage_experienced(),
-		introduced: () => m.coverage_introduced(),
-		locked: () => m.coverage_not_yet()
-	};
 
 	/** The band chip's wash, by band — the words carry the meaning, never colour. */
 	const BAND_STYLE: Record<OutcomeBand, string> = {
@@ -122,17 +122,17 @@
 		no Run has opened names nothing the Stage-up banner has not announced.
 	-->
 	<section aria-labelledby="journal-coverage">
-		<p class="kicker" id="journal-coverage">{m.stats_coverage()}</p>
+		<p class="kicker" id="journal-coverage">{m.journal_coverage()}</p>
 		<ul class="mt-2 flex flex-col">
 			{#each journal.coverage as entry (entry.concept)}
 				<li
 					class="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-dashed border-[var(--line)] py-2.5 last:border-0"
 				>
 					{#if entry.state === 'locked'}
-						<span class="ml-auto text-xs text-[var(--muted)]">{STATE_LABEL.locked()}</span>
+						<span class="ml-auto text-xs text-[var(--muted)]">{coverageStateLabel(entry.state)}</span>
 					{:else}
 						<span class="text-sm">{conceptLabel(entry.concept)}</span>
-						<span class="text-xs text-[var(--muted)]">{STATE_LABEL[entry.state]()}</span>
+						<span class="text-xs text-[var(--muted)]">{coverageStateLabel(entry.state)}</span>
 					{/if}
 				</li>
 			{/each}

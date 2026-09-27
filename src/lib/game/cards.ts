@@ -337,6 +337,21 @@ export const CARDS: Card[] = [
 
 	// ---------------------------------------------------------------- Stage 2
 	{
+		id: 'the_second_year',
+		kind: 'stage_up',
+		stages: [2],
+		branch: 'shared',
+		weight: 0,
+		teaches: 'the year turns: a fixed cost arrives before the money does',
+		choices: [
+			{
+				id: 'begin',
+				cost: 0,
+				category: null
+			}
+		]
+	},
+	{
 		id: 'phone_plan',
 		kind: 'decision',
 		stages: [2],
@@ -576,6 +591,21 @@ export const CARDS: Card[] = [
 	},
 
 	// ---------------------------------------------------------------- Stage 3
+	{
+		id: 'the_third_year',
+		kind: 'stage_up',
+		stages: [3],
+		branch: 'shared',
+		weight: 0,
+		teaches: 'the allowance stops; the hours start paying',
+		choices: [
+			{
+				id: 'begin',
+				cost: 0,
+				category: null
+			}
+		]
+	},
 	{
 		id: 'first_payslip',
 		kind: 'decision',
@@ -962,6 +992,21 @@ export const CARDS: Card[] = [
 	},
 
 	// ---------------------------------------------------------------- Stage 4
+	{
+		id: 'the_fourth_year',
+		kind: 'stage_up',
+		stages: [4],
+		branch: 'shared',
+		weight: 0,
+		teaches: 'credit arrives before the income that would carry it',
+		choices: [
+			{
+				id: 'begin',
+				cost: 0,
+				category: null
+			}
+		]
+	},
 	{
 		id: 'bnpl_offer',
 		kind: 'decision',

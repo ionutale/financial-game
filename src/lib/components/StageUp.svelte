@@ -5,6 +5,8 @@
 	 * Every Stage-up also carries the Year in Review for the year just closed
 	 * (gamification ticket 02): a small fixed block — money headline, one
 	 * behavioural line, the year's Milestones — never a dashboard (ADR-0003).
+	 * Fun-pass ticket 02: each Stage-up opens with its **Year Beat** and
+	 * "What you'll meet: {concepts}" instead of a curriculum list (design §6).
 	 */
 	import { beatArtFor } from '$lib/game/beats';
 	import { STAGES } from '$lib/game/economy';
@@ -23,6 +25,16 @@
 	const unlocks = $derived(stage.concepts.map((c) => conceptLabel(c)).join(' · '));
 	const art = $derived(run.card ? beatArtFor(run.card.id) : null);
 	const review = $derived(stageUpReview(run));
+
+	// Each Stage's one authored in-fiction line (CONTEXT: Year Beat).
+	const BEAT: Record<number, () => string> = {
+		1: () => m.stage_1_beat(),
+		2: () => m.stage_2_beat(),
+		3: () => m.stage_3_beat(),
+		4: () => m.stage_4_beat(),
+		5: () => m.stage_5_beat()
+	};
+	const beat = $derived(BEAT[run.stage]?.() ?? '');
 </script>
 
 {#if art}
@@ -35,6 +47,7 @@
 	<p class="kicker text-[var(--money)]">
 		{m.stage_up_title({ stage: run.stage, name, age: run.age })}
 	</p>
+	<p class="mt-1.5 text-sm leading-relaxed">{beat}</p>
 	<p class="mt-1.5 text-sm leading-relaxed">{m.stage_up_unlocks({ concepts: unlocks })}</p>
 </div>
 

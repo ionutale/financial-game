@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cardById } from './cards';
-import { isFirstEncounter, planWarning, workHintVisible } from './presentation';
+import { firstMonthHintVisible, isFirstEncounter, planWarning, workHintVisible } from './presentation';
 import { applyAction, createRun, runActions } from './loop';
 import type { RunState } from './types';
 
@@ -30,6 +30,22 @@ describe('the shortfall warning (ticket 17)', () => {
 	it('goes quiet as soon as the plan covers the fixed costs', () => {
 		const planned = applyAction(atStage(3), { type: 'SET_HOURS', hours: 12 });
 		expect(planWarning(planned)).toBeNull();
+	});
+});
+
+describe('the first-month Plan hint (fun-pass ticket 02)', () => {
+	it('shows on month 1 before the first plan is confirmed, and retires itself', () => {
+		// The Cold Open moved “how a month works” to where it is needed: a hint
+		// on the first Plan step, derived from the record (month 1, no confirmed
+		// plan yet) like the Wage Hint — self-retiring, no new state.
+		expect(firstMonthHintVisible(createRun())).toBe(true);
+
+		const confirmed = runActions(createRun(), { type: 'CONFIRM_PLAN' });
+		expect(confirmed.lastPlan).not.toBeNull();
+		expect(firstMonthHintVisible(confirmed)).toBe(false);
+
+		// A later month without a plan (a legacy save) never sees it again.
+		expect(firstMonthHintVisible({ ...confirmed, month: 2, lastPlan: null })).toBe(false);
 	});
 });
 

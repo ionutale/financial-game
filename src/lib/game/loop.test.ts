@@ -3,9 +3,15 @@ import { applyAction, createRun, runActions } from './loop';
 import type { RunState } from './types';
 import { netWorth, savedTowardGoal, spendable } from './economy';
 
-/** A fresh Run, with the loop driven to a known Stage. */
+/** A fresh Run, driven to a known Stage, with the Stage's Stage-up resolved. */
 function atStage(stage: number): RunState {
-	return applyAction(createRun(), { type: 'JUMP_STAGE', stage });
+	let s = applyAction(createRun(), { type: 'JUMP_STAGE', stage });
+	// Stages 2–4 open with their own Stage-up interstitial (fun-pass ticket 02);
+	// stage 5's Fork is the test subject here, so it stays on the table.
+	if (s.phase === 'stage_up' && s.card && s.card.id !== 'the_fork') {
+		s = runActions(s, { type: 'CHOOSE', choiceId: s.card.choices[0].id }, { type: 'CONTINUE' });
+	}
+	return s;
 }
 
 describe('a new Run', () => {

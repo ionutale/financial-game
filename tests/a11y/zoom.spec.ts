@@ -103,11 +103,8 @@ test.describe('keyboard-only (smoke)', () => {
 	test('the intro, the plan and the card can be driven from the keyboard', async ({ page }) => {
 		await page.goto('/');
 
-		/* Next ×2, then Start month 1 — reached only by Tab, activated by Enter. */
-		await tabUntil(page, `['Next', 'Start month 1'].includes(document.activeElement?.textContent?.trim() ?? '')`);
-		await page.keyboard.press('Enter');
-		await tabUntil(page, `['Next', 'Start month 1'].includes(document.activeElement?.textContent?.trim() ?? '')`);
-		await page.keyboard.press('Enter');
+		/* The Cold Open is one scene: Start month 1 is the single action,
+		   reached only by Tab, activated by Enter (fun-pass ticket 02). */
 		await tabUntil(page, `document.activeElement?.textContent?.trim() === 'Start month 1'`);
 		await page.keyboard.press('Enter');
 

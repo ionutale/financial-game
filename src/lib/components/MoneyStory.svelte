@@ -7,7 +7,7 @@
 	 * record (ADR-0002) and purely retrospective (ADR-0003).
 	 */
 	import { formatMoney, formatMoneyExact } from '$lib/game/economy';
-	import { conceptCoverage, type ConceptCoverageState } from '$lib/game/journal';
+	import { conceptCoverage } from '$lib/game/journal';
 	import { computeMetrics, outcomeBand, turningPoints } from '$lib/game/metrics';
 	import { earnedMilestones, longestInsideBudgetMonths, yearInReview } from '$lib/game/milestones';
 	import type { RunState } from '$lib/game/types';
@@ -15,6 +15,7 @@
 		bandLabel,
 		comparisonLabel,
 		conceptLabel,
+		coverageStateLabel,
 		flagText,
 		goalName,
 		milestoneLabel
@@ -51,15 +52,11 @@
 	 */
 	const milestones = $derived(earnedMilestones(run));
 	/*
-	 * Concept Coverage for the Run (ticket 03): Introduced by the Stage ladder,
-	 * Experienced by a played card, or locked — exposure, never performance.
+	 * Concept Coverage for the Run (ticket 03; display words ticket 02):
+	 * Introduced by the Stage ladder, Experienced by a played card, or locked —
+	 * exposure, never performance.
 	 */
 	const coverage = $derived(conceptCoverage(run));
-	const STATE_LABEL: Record<ConceptCoverageState, () => string> = {
-		experienced: () => m.coverage_experienced(),
-		introduced: () => m.coverage_introduced(),
-		locked: () => m.coverage_not_yet()
-	};
 	/*
 	 * Year 5's review — the recap no Stage-up carries (the Fork takes year 4→5),
 	 * in the same shape and from the same derivation as the Stage-up block.
@@ -231,7 +228,7 @@
 	{/if}
 
 	<section aria-labelledby="story-coverage-title">
-		<p class="kicker" id="story-coverage-title">{m.stats_coverage()}</p>
+		<p class="kicker" id="story-coverage-title">{m.story_coverage()}</p>
 		<ul class="mt-2 flex flex-col">
 			{#each coverage as entry (entry.concept)}
 				<li
@@ -239,10 +236,10 @@
 				>
 					{#if entry.state === 'locked'}
 						<!-- A locked Concept names nothing the Stage-up banner has not announced. -->
-						<span class="ml-auto text-xs text-[var(--muted)]">{STATE_LABEL.locked()}</span>
+						<span class="ml-auto text-xs text-[var(--muted)]">{coverageStateLabel(entry.state)}</span>
 					{:else}
 						<span class="text-sm">{conceptLabel(entry.concept)}</span>
-						<span class="text-xs text-[var(--muted)]">{STATE_LABEL[entry.state]()}</span>
+						<span class="text-xs text-[var(--muted)]">{coverageStateLabel(entry.state)}</span>
 					{/if}
 				</li>
 			{/each}

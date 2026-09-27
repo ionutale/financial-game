@@ -27,6 +27,38 @@ export const FEEDBACK_RUN = applyAction(EVENT_RUN, {
 });
 
 /**
+ * The Feedback disclosure, both states (fun-pass ticket 02). The month-1 spine
+ * beat carries the first authored Reaction, so the Feedback is a Reaction plus
+ * a Why: open at the Concept's first encounter (`WHY_OPEN_RUN`), collapsed once
+ * an earlier earning & work card sits in the log (`WHY_COLLAPSED_RUN`).
+ */
+export const WHY_OPEN_RUN: RunState = applyAction(EVENT_RUN, {
+	type: 'CHOOSE',
+	choiceId: 'spend'
+});
+
+export const WHY_COLLAPSED_RUN: RunState = {
+	...WHY_OPEN_RUN,
+	log: [{ month: 1, card: 'odd_job', choice: 'take' }, ...WHY_OPEN_RUN.log]
+};
+
+/**
+ * Month 2's Plan step: a last plan exists, so Repeat is the primary action and
+ * the sliders wait behind "Change the plan" (fun-pass ticket 02).
+ */
+export const REPEAT_PLAN_RUN: RunState = seededRun(
+	{ type: 'DISMISS_INTRO' },
+	{ type: 'SET_HOURS', hours: 0 },
+	{ type: 'SET_NEED', amount: 10 },
+	{ type: 'SET_WANT', amount: 20 },
+	{ type: 'FORCE_CARD', id: 'birthday_gift' },
+	{ type: 'CONFIRM_PLAN' },
+	{ type: 'CHOOSE', choiceId: 'skip' },
+	{ type: 'CONTINUE' },
+	{ type: 'NEXT_MONTH' }
+);
+
+/**
  * A Run with one clean month behind it (gamification ticket 01): month 1
  * closes inside both envelopes, funds Save and credits interest, so the Month
  * Close carries its first Milestones and the Stats Sheet lists them.
@@ -41,13 +73,19 @@ export const MILESTONE_RUN: RunState = seededRun(
 
 /**
  * A Run played to the Stage-5 Fork through the real reducer (gamification
- * ticket 02), so the Stage-up carries the year 4→5 Year in Review with real
- * months behind it. The plan is deck.test.ts's playtest policy: work the wage
- * years, allocate half and a third.
+ * ticket 02), resolving every Stage-up on the way (fun-pass ticket 02), so the
+ * Fork carries the year 4→5 Year in Review with real months behind it. The
+ * plan is deck.test.ts's playtest policy: work the wage years, allocate half
+ * and a third.
  */
 function playedToFork(seed: number): RunState {
 	let state = applyAction(createRun(seed), { type: 'DISMISS_INTRO' });
 	for (let month = 1; month <= 48; month++) {
+		// A Stage-up card opens its Stage before that month can be planned.
+		if (state.phase === 'stage_up' && state.card) {
+			state = applyAction(state, { type: 'CHOOSE', choiceId: availableChoice(state).id });
+			state = applyAction(state, { type: 'CONTINUE' });
+		}
 		const hours = state.stage === 3 || state.stage === 4 ? 35 : 0;
 		state = applyAction(state, { type: 'SET_HOURS', hours });
 		state = applyAction(state, { type: 'SET_NEED', amount: Math.round(state.income * 0.5) });
@@ -62,6 +100,24 @@ function playedToFork(seed: number): RunState {
 
 /** Stage 5 opens with the Fork's Stage-up card (ticket 18). */
 export const STAGE_UP_RUN = playedToFork(GATE_SEED);
+
+/**
+ * Stage 2 opens with its own Stage-up (fun-pass ticket 02): month 13's
+ * interstitial, carrying year 1 in review — the recap that never fired before.
+ */
+export const STAGE_2_UP_RUN: RunState = (() => {
+	let state = applyAction(createRun(GATE_SEED), { type: 'DISMISS_INTRO' });
+	for (let month = 1; month <= 12; month++) {
+		state = applyAction(state, { type: 'SET_HOURS', hours: 0 });
+		state = applyAction(state, { type: 'SET_NEED', amount: Math.round(state.income * 0.5) });
+		state = applyAction(state, { type: 'SET_WANT', amount: Math.round(state.income * 0.3) });
+		state = applyAction(state, { type: 'CONFIRM_PLAN' });
+		state = applyAction(state, { type: 'CHOOSE', choiceId: availableChoice(state).id });
+		state = applyAction(state, { type: 'CONTINUE' });
+		state = applyAction(state, { type: 'NEXT_MONTH' });
+	}
+	return state;
+})();
 
 /**
  * A Run played to the last close through the real reducer (gamification ticket

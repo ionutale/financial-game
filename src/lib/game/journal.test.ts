@@ -5,6 +5,7 @@ import {
 	CONCEPT_IDS,
 	conceptCoverage,
 	coverageAcross,
+	coverageStateKey,
 	CROSS_RUN_MILESTONE_IDS,
 	type ArchivedRunLike,
 	type ConceptCoverageEntry,
@@ -370,5 +371,15 @@ describe('the across-Run Concept Coverage (ticket 05)', () => {
 
 	it('reads no Runs as nothing met at all', () => {
 		expect(coverageAcross([])).toEqual(ALL_LOCKED);
+	});
+});
+
+describe('the coverage display map (fun-pass ticket 02)', () => {
+	it('maps each internal state to its player-facing catalogue key', () => {
+		// Design §6: the internal states keep their names, the words change —
+		// Introduced → “coming up”, Experienced → “met”, locked → “later”.
+		expect(coverageStateKey('introduced')).toBe('coverage_coming_up');
+		expect(coverageStateKey('experienced')).toBe('coverage_met');
+		expect(coverageStateKey('locked')).toBe('coverage_later');
 	});
 });

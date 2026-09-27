@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { applyAction, createRun, runActions } from './loop';
 import { STUDENT_LOAN } from './economy';
 import { chosenFeedback } from '$lib/i18n/card-text';
+import { stageUpReview } from './milestones';
 import type { RunState } from './types';
 
 /** A Run dropped into Stage 4 (month 37), ready to walk into Stage 5. */
@@ -17,6 +18,64 @@ function atFork(): RunState {
 function take(s: RunState, choiceId: string): RunState {
 	return applyAction(s, { type: 'CHOOSE', choiceId });
 }
+
+/**
+ * Plays a whole Run, resolving every Stage-up as it opens, and records each
+ * Stage-up's stage, card and Year in Review (fun-pass ticket 02).
+ */
+function playWholeRun(seed: number): {
+	run: RunState;
+	stageUps: Array<{ stage: number; card: string; year: number; netWorth: number | null }>;
+} {
+	const stageUps: Array<{ stage: number; card: string; year: number; netWorth: number | null }> = [];
+	let s = applyAction(createRun(seed), { type: 'DISMISS_INTRO' });
+
+	for (let month = 1; month <= 60; month++) {
+		// A Stage-up card opens its Stage before that month can be planned.
+		if (s.phase === 'stage_up' && s.card) {
+			const review = stageUpReview(s);
+			stageUps.push({
+				stage: s.stage,
+				card: s.card.id,
+				year: review?.year ?? -1,
+				netWorth: review?.netWorth ?? null
+			});
+			s = applyAction(s, { type: 'CHOOSE', choiceId: s.card.choices[0].id });
+			s = applyAction(s, { type: 'CONTINUE' });
+		}
+
+		s = applyAction(s, { type: 'SET_HOURS', hours: 0 });
+		s = applyAction(s, { type: 'CONFIRM_PLAN' });
+		if (!s.card) break;
+		const affordable = s.card.choices.find((c) => {
+			const hours = c.freeTime ?? 0;
+			return !(hours < 0 && Math.abs(hours) > s.freeTime);
+		});
+		s = applyAction(s, { type: 'CHOOSE', choiceId: (affordable ?? s.card.choices[0]).id });
+		s = applyAction(s, { type: 'CONTINUE' });
+		s = applyAction(s, { type: 'NEXT_MONTH' });
+	}
+
+	return { run: s, stageUps };
+}
+
+describe('the stage-up at every Stage (fun-pass ticket 02)', () => {
+	it('opens stages 2–5 with a Stage-up carrying the year just closed', () => {
+		// The design's fix for the missing interstitials: the Year in Review
+		// fires every year, not only at the Fork, because stages 2–4 now have
+		// their own Stage-up cards — content only, dealt by the shipped reducer.
+		const { run, stageUps } = playWholeRun(20260926);
+		expect(stageUps.map((up) => ({ stage: up.stage, card: up.card, year: up.year }))).toEqual([
+			{ stage: 2, card: 'the_second_year', year: 1 },
+			{ stage: 3, card: 'the_third_year', year: 2 },
+			{ stage: 4, card: 'the_fourth_year', year: 3 },
+			{ stage: 5, card: 'the_fork', year: 4 }
+		]);
+		// Every review reads a real closed year from the stored record.
+		for (const up of stageUps) expect(up.netWorth, `stage ${up.stage}`).not.toBeNull();
+		expect(run.phase).toBe('done');
+	});
+});
 
 describe('the Stage-5 stage-up (ticket 18)', () => {
 	it('deals the Fork before the Stage’s first Plan, on the natural transition', () => {

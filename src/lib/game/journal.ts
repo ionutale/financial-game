@@ -46,6 +46,20 @@ for (const stage of STAGE_NUMBERS) {
 
 export type ConceptCoverageState = 'experienced' | 'introduced' | 'locked';
 
+/**
+ * The coverage display map (fun-pass ticket 02, design §6): the catalogue key
+ * for a state's player-facing word. The internal states keep their names
+ * (Introduce/Experience are the model's vocabulary); only the words the player
+ * reads change — Introduced → “coming up”, Experienced → “met”, locked → “later”.
+ */
+export function coverageStateKey(
+	state: ConceptCoverageState
+): 'coverage_coming_up' | 'coverage_met' | 'coverage_later' {
+	if (state === 'experienced') return 'coverage_met';
+	if (state === 'introduced') return 'coverage_coming_up';
+	return 'coverage_later';
+}
+
 /** One Concept and what the current Run has done with it. */
 export interface ConceptCoverageEntry {
 	concept: ConceptId;
