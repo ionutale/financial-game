@@ -125,7 +125,8 @@ export interface CopyAllowance {
 /**
  * The curated allow-list. Not a place to put new copy: each entry pins one
  * offending word on one key, and the test fails the moment the word is gone
- * (a stale allowance) or another banned word arrives on that key.
+ * (a stale allowance) or another banned word arrives on that key. The pilot
+ * copy wave (ticket 03) paid every Stage 1–2 row; the rest belong to ticket 12.
  */
 export const COPY_ALLOW_LIST: readonly CopyAllowance[] = [
 	// --- The fiction's own word -------------------------------------------------
@@ -160,7 +161,7 @@ export const COPY_ALLOW_LIST: readonly CopyAllowance[] = [
 		reason: 'fiction’s own word: the Credit Score, seen for free'
 	},
 
-	// --- Sweep debt: the copy waves (03/12) rewrite these -----------------------
+	// --- Sweep debt: the copy wave (ticket 12) rewrites these -------------------
 	{
 		key: 'card_the_crash_choice_hold_feedback',
 		rule: 'classroom',
@@ -198,34 +199,10 @@ export const COPY_ALLOW_LIST: readonly CopyAllowance[] = [
 		reason: 'sweep debt: ‘most of what this stage teaches’'
 	},
 	{
-		key: 'card_savings_milestone_choice_celebrate_feedback',
-		rule: 'classroom',
-		match: 'streak',
-		reason: 'sweep debt: ‘how the streak survives’'
-	},
-	{
-		key: 'card_subscription_creep_choice_cut_feedback',
-		rule: 'frame',
-		match: 'this game',
-		reason: 'sweep debt: the narrator stepping out of the fiction'
-	},
-	{
 		key: 'card_interest_first_choice_more_feedback',
 		rule: 'frame',
 		match: 'this game',
 		reason: 'sweep debt: the narrator stepping out of the fiction'
-	},
-	{
-		key: 'card_odd_job_choice_take_feedback',
-		rule: 'frame',
-		match: 'the point',
-		reason: 'sweep debt: ‘which is exactly the point’'
-	},
-	{
-		key: 'card_savings_milestone_choice_add_feedback',
-		rule: 'frame',
-		match: 'the point',
-		reason: 'sweep debt: ‘The number is not the point’'
 	},
 	{
 		key: 'card_the_fork_choice_study_feedback',

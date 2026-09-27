@@ -126,8 +126,9 @@ export const STAGE_2_UP_RUN: RunState = (() => {
  * review. Same policy as `playedToFork`, carried through all sixty months.
  *
  * The fixture stops at month 60's `resolve`: the gate finishes the Run with a
- * "Next month" click, because a done state posted to `/api/run` is archived
- * and frees the active slot — the Money Story is the last client-side screen.
+ * "Next" click (fun-pass ticket 03's chrome), because a done state posted to
+ * `/api/run` is archived and frees the active slot — the Money Story is the
+ * last client-side screen.
  *
  * `fork` resolves the Stage-5 Fork by hand (ticket 05 needs both paths lived);
  * without it, the policy takes the first affordable Choice, which is Study.
@@ -153,7 +154,7 @@ function playedToTheLastClose(seed: number, fork?: PathId): RunState {
 	return state;
 }
 
-/** One "Next month" from the Money Story: sixty closed months behind it. */
+/** One "Next" from the Money Story: sixty closed months behind it. */
 export const FINAL_MONTH_RUN = playedToTheLastClose(GATE_SEED);
 
 /**

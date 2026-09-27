@@ -26,7 +26,7 @@ test.describe('zoom and reflow (proxy checks)', () => {
 			async (page) => {
 				await seedRun(page, PLAN_RUN);
 			},
-			'Plan the month'
+			'The month ahead'
 		],
 		[
 			'the month close',
@@ -34,7 +34,7 @@ test.describe('zoom and reflow (proxy checks)', () => {
 				await seedRun(page, FEEDBACK_RUN);
 				await page.getByRole('button', { name: 'Continue' }).click();
 			},
-			'Month 1 closes'
+			'Month 1, done'
 		],
 		[
 			'the Stage-up and its Year in Review',
@@ -47,7 +47,7 @@ test.describe('zoom and reflow (proxy checks)', () => {
 			'the Money Story and its additions',
 			async (page) => {
 				await seedRun(page, FINAL_MONTH_RUN);
-				await page.getByRole('button', { name: 'Next month' }).click();
+				await page.getByRole('button', { name: 'Next' }).click();
 			},
 			'Five years, in one page.'
 		],
@@ -115,9 +115,9 @@ test.describe('keyboard-only (smoke)', () => {
 		await expect(hours).toHaveValue('1');
 
 		/* The plan can be started with Enter, and the card screen follows. */
-		await tabUntil(page, `document.activeElement?.textContent?.includes('Start the month') ?? false`);
+		await tabUntil(page, `document.activeElement?.textContent?.trim() === 'Go'`);
 		await page.keyboard.press('Enter');
-		await expect(page.getByRole('heading', { name: 'Plan the month' })).toHaveCount(0);
+		await expect(page.getByRole('heading', { name: 'The month ahead' })).toHaveCount(0);
 
 		/* At least one Choice is reachable, and it is the focused element. */
 		await tabUntil(page, `document.activeElement?.matches('section button') ?? false`);

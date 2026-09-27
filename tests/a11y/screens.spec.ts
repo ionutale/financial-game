@@ -45,7 +45,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 
 	test('month screen: plan', async ({ page }) => {
 		await seedRun(page, PLAN_RUN);
-		await expect(page.getByRole('heading', { name: 'Plan the month' })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'The month ahead' })).toBeVisible();
 		/* Gamification ticket 02: the Year in Review is a Stage-up thing, never
 		   part of the month loop (ADR-0003). */
 		await expect(page.getByRole('region', { name: /in review$/ })).toHaveCount(0);
@@ -54,7 +54,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 
 	test('month screen: the goal ticks are decoration and the value stays text', async ({ page }) => {
 		await seedRun(page, PLAN_RUN);
-		await expect(page.getByRole('heading', { name: 'Plan the month' })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'The month ahead' })).toBeVisible();
 
 		/* Gamification ticket 06: four quarter ticks at 25 / 50 / 75 / 100 %,
 		   hidden from assistive tech. The bar's accessible reading is unchanged:
@@ -75,7 +75,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 
 	test('month screen: month one suggests a plan — one tap, never automatic', async ({ page }) => {
 		await seedRun(page, PLAN_RUN);
-		await expect(page.getByRole('heading', { name: 'Plan the month' })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'The month ahead' })).toBeVisible();
 
 		/* Fun-pass ticket 02: “how a month works” is just-in-time, on the first
 		   Plan step, and retires itself once the first plan is confirmed. */
@@ -101,7 +101,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		page
 	}) => {
 		await seedRun(page, REPEAT_PLAN_RUN);
-		await expect(page.getByRole('heading', { name: 'Plan the month' })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'The month ahead' })).toBeVisible();
 
 		/* The last plan is shown as a receipt, Repeat is the one action, and
 		   nothing is planned until the player chooses to change it. */
@@ -109,11 +109,11 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await expect(page.getByRole('button', { name: 'Keep last month' })).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Change the plan' })).toBeVisible();
 		await expect(page.locator('input[type="range"]')).toHaveCount(0);
-		await expect(page.getByRole('button', { name: 'Start the month' })).toHaveCount(0);
+		await expect(page.getByRole('button', { name: 'Go' })).toHaveCount(0);
 
 		await page.getByRole('button', { name: 'Change the plan' }).click();
 		await expect(page.locator('#work-hours')).toBeVisible();
-		await expect(page.getByRole('button', { name: 'Start the month' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Go' })).toBeVisible();
 
 		await expectNoAxeViolations(page, 'the Plan step with a last plan');
 	});
@@ -124,18 +124,18 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 
 		/* The two shipped actions — REPEAT_PLAN then CONFIRM_PLAN — composed by
 		   the UI: the Plan step is done and the month's card follows. */
-		await expect(page.getByRole('heading', { name: 'Plan the month' })).toHaveCount(0);
+		await expect(page.getByRole('heading', { name: 'The month ahead' })).toHaveCount(0);
 		await expect(page.locator('section button').first()).toBeVisible();
 		await expectNoAxeViolations(page, 'the month after one-tap repeat');
 	});
 
 	test('month screen: event and feedback', async ({ page }) => {
 		await seedRun(page, EVENT_RUN);
-		await expect(page.locator('h2')).not.toHaveText('Plan the month');
+		await expect(page.locator('h2')).not.toHaveText('The month ahead');
 		await expectNoAxeViolations(page, 'the event step');
 
 		await page.locator('section button').first().click();
-		await expect(page.getByText('What happened')).toBeVisible();
+		await expect(page.getByText('How it went')).toBeVisible();
 		await expectNoAxeViolations(page, 'the feedback');
 	});
 
@@ -143,16 +143,19 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await seedRun(page, WHY_OPEN_RUN);
 
 		/* Fun-pass ticket 02: the Reaction shows what the world did… */
-		await expect(page.getByText('What happened')).toBeVisible();
+		await expect(page.getByText('How it went')).toBeVisible();
 		await expect(page.getByText('The thing is yours. ◈40 is already gone.')).toBeVisible();
 
 		/* …and “Why it happened” is a disclosure, open at the Concept's first
-		   encounter (ADR-0004: taught once, trusted after). */
+		   encounter (ADR-0004: taught once, trusted after). The first encounter
+		   is also the Concept's Teachable Moment, so its Why carries the one
+		   Rule of Thumb (fun-pass ticket 03). */
 		const why = page.locator('details');
 		await expect(why).toHaveCount(1);
 		expect(await why.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(true);
 		await expect(why.getByText('Why it happened')).toBeVisible();
-		await expect(why.getByText(/The first money you ever control/)).toBeVisible();
+		await expect(why.getByText(/Nothing is asking for it yet/)).toBeVisible();
+		await expect(why.getByText(/Every hour you sell is an hour you cannot buy back/)).toBeVisible();
 
 		await expectNoAxeViolations(page, 'the Feedback with the Why open');
 	});
@@ -166,11 +169,11 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		const why = page.locator('details');
 		await expect(why).toHaveCount(1);
 		expect(await why.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(false);
-		await expect(why.getByText(/The first money you ever control/)).toBeHidden();
+		await expect(why.getByText(/Nothing is asking for it yet/)).toBeHidden();
 
 		/* The disclosure still opens by hand, natively. */
 		await why.getByText('Why it happened').click();
-		await expect(why.getByText(/The first money you ever control/)).toBeVisible();
+		await expect(why.getByText(/Nothing is asking for it yet/)).toBeVisible();
 
 		await expectNoAxeViolations(page, 'the Feedback with the Why collapsed');
 	});
@@ -194,21 +197,21 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		 * heading, and the heading takes focus when the close replaces the
 		 * Feedback, so a screen reader reads it without navigation.
 		 */
-		const heading = page.getByRole('heading', { name: 'Month 1 closes' });
-		await expect(page.getByRole('region', { name: 'Month 1 closes' })).toBeVisible();
+		const heading = page.getByRole('heading', { name: 'Month 1, done' });
+		await expect(page.getByRole('region', { name: 'Month 1, done' })).toBeVisible();
 		await expect(heading).toBeFocused();
 		await expect(heading).toHaveAttribute('tabindex', '-1');
 
 		/* The heading is not a tab stop: Tab moves on to the close's action. */
 		await page.keyboard.press('Tab');
-		await expect(page.getByRole('button', { name: 'Next month' })).toBeFocused();
+		await expect(page.getByRole('button', { name: 'Next' })).toBeFocused();
 
 		await expectNoAxeViolations(page, 'the month close');
 	});
 
 	test('month screen: the Milestone line rides the close’s labelled region', async ({ page }) => {
 		await seedRun(page, MILESTONE_RUN);
-		const close = page.getByRole('region', { name: 'Month 1 closes' });
+		const close = page.getByRole('region', { name: 'Month 1, done' });
 		await expect(close).toBeVisible();
 		/* Gamification ticket 01: plain text inside the existing region — no new
 		   live region, nothing to dismiss, and the meaning is in the words, not a
@@ -351,7 +354,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		/* The interstitial still resolves: one tap, then the month's Plan. */
 		await page.getByRole('button', { name: 'Start the year' }).click();
 		await page.getByRole('button', { name: 'Continue' }).click();
-		await expect(page.getByRole('heading', { name: 'Plan the month' })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'The month ahead' })).toBeVisible();
 
 		await expectNoAxeViolations(page, 'the Stage-2 Stage-up with its Year in Review');
 	});
@@ -360,7 +363,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		page
 	}) => {
 		await seedRun(page, FINAL_MONTH_RUN);
-		await page.getByRole('button', { name: 'Next month' }).click();
+		await page.getByRole('button', { name: 'Next' }).click();
 		await expect(page.getByRole('heading', { name: 'Five years, in one page.' })).toBeVisible();
 
 		/* Gamification ticket 04: the Run's Milestones as names — never a count,
@@ -444,7 +447,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		page
 	}) => {
 		await seedRun(page, NO_BUDGET_RUN);
-		await page.getByRole('button', { name: 'Next month' }).click();
+		await page.getByRole('button', { name: 'Next' }).click();
 		await expect(page.getByRole('heading', { name: 'Five years, in one page.' })).toBeVisible();
 
 		/* Gamification ticket 04: zero is an answer the copy must own — no
@@ -700,7 +703,7 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		   Run finished in English, read in Italian, links into Italian. */
 		await seedRun(page, FINAL_MONTH_RUN);
 		await page.goto('/it');
-		await page.getByRole('button', { name: 'Mese prossimo' }).click();
+		await page.getByRole('button', { name: 'Avanti' }).click();
 		await expect(page.getByRole('heading', { name: 'Cinque anni, in una pagina.' })).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Apri il tuo diario' })).toHaveAttribute(
 			'href',

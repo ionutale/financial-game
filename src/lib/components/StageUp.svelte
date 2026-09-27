@@ -26,9 +26,9 @@
 	const art = $derived(run.card ? beatArtFor(run.card.id) : null);
 	const review = $derived(stageUpReview(run));
 
-	// Each Stage's one authored in-fiction line (CONTEXT: Year Beat).
+	// Each Stage's one authored in-fiction line (CONTEXT: Year Beat). Stage 1
+	// never opens a Stage-up card, so it has no beat (pruned, ticket 03).
 	const BEAT: Record<number, () => string> = {
-		1: () => m.stage_1_beat(),
 		2: () => m.stage_2_beat(),
 		3: () => m.stage_3_beat(),
 		4: () => m.stage_4_beat(),

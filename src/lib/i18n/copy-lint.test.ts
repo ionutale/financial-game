@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { CARDS } from '../game/cards';
+import { choiceReactionKey } from './card-keys';
 import {
 	COPY_ALLOW_LIST,
 	catalogueViolations,
@@ -8,6 +10,7 @@ import {
 	type CopyRuleId,
 	type CopyScope
 } from './copy-lint';
+import { hasMessage } from './messages';
 
 /**
  * The copy lint (ADR-0004, spec § "Copy lint"; ticket 01): the mechanical half
@@ -119,5 +122,43 @@ describe('the copy lint over the en catalogue', () => {
 				`allowance ${allowance.key} is not a moment key`
 			).toBe(true);
 		}
+	});
+});
+
+/**
+ * The pilot copy wave (fun-pass ticket 03): every Stage 1–2 Choice is answered
+ * with a Reaction beside its Why. This is the wave's ratchet — a Stage 1–2
+ * Choice that loses its Reaction fails here — while a later Stage's Choice
+ * still exercises the unauthored fallback.
+ */
+describe('the pilot copy wave (fun-pass ticket 03)', () => {
+	it('answers every Stage 1–2 Choice with a Reaction', () => {
+		for (const card of CARDS.filter((c) => c.stages.some((stage) => stage <= 2))) {
+			for (const choice of card.choices) {
+				expect(
+					hasMessage(choiceReactionKey(card.id, choice.id)),
+					`${card.id}/${choice.id} has no Reaction`
+				).toBe(true);
+			}
+		}
+	});
+
+	it('leaves the fallback alive outside the wave — a Stage 3–5 Choice with no Reaction', () => {
+		const unanswered = CARDS.some(
+			(card) =>
+				card.stages.every((stage) => stage >= 3) &&
+				card.choices.some((choice) => !hasMessage(choiceReactionKey(card.id, choice.id)))
+		);
+		expect(unanswered).toBe(true);
+	});
+
+	it('holds every Stage 1–2 moment string clean without the allow-list — the debt is paid, not excused', () => {
+		const wave = new Set(
+			CARDS.filter((card) => card.stages.some((stage) => stage <= 2)).map((card) => card.id)
+		);
+		const violations = catalogueViolations(en).filter((violation) =>
+			[...wave].some((id) => violation.key.startsWith(`card_${id}_`))
+		);
+		expect(violations).toEqual([]);
 	});
 });

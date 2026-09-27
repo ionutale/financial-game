@@ -23,18 +23,20 @@ describe('the Reaction/Why seam (ADR-0004, ticket 01)', () => {
 	});
 
 	it('resolves an unauthored card to today’s single paragraph: no Reaction, the Why alone', () => {
-		const card = cardById('two_wants');
-		const choice = card?.choices.find((c) => c.id === 'game');
-		if (!card || !choice) throw new Error('fixture card two_wants/game moved');
+		// A Stage-5 Choice the pilot wave did not reach (ticket 03 authors every
+		// Stage 1–2 Reaction; the fallback is what remains).
+		const card = cardById('scam_opportunity');
+		const choice = card?.choices.find((c) => c.id === 'in');
+		if (!card || !choice) throw new Error('fixture card scam_opportunity/in moved');
 
 		expect(feedbackParts(card, choice)).toEqual({
 			reaction: null,
 			why: choiceFeedback(card, choice)
 		});
 		expect(choiceReaction(card, choice)).toBeNull();
-		expect(chosenFeedbackParts(card, 'game')).toEqual({
+		expect(chosenFeedbackParts(card, 'in')).toEqual({
 			reaction: null,
-			why: chosenFeedback(card, 'game')
+			why: chosenFeedback(card, 'in')
 		});
 	});
 
