@@ -7,9 +7,10 @@
 	 */
 	import { formatMoney, formatMoneyExact } from '$lib/game/economy';
 	import { computeMetrics } from '$lib/game/metrics';
+	import { earnedMilestones } from '$lib/game/milestones';
 	import { statsSheet, type StatsRow, type StatsTone } from '$lib/game/stats';
 	import type { RunState } from '$lib/game/types';
-	import { threadChipText, threadLabel } from '$lib/i18n/game-text';
+	import { milestoneLabel, threadChipText, threadLabel } from '$lib/i18n/game-text';
 	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -23,6 +24,14 @@
 
 	const sheet = $derived(statsSheet(run));
 	const metrics = $derived(computeMetrics(run));
+	/*
+	 * Earned Milestones (gamification ticket 01) as a list of names, oldest
+	 * first — never a count, never a checklist: a Milestone is a thing that
+	 * happened, not a box to tick.
+	 */
+	const milestones = $derived(
+		earnedMilestones(run).map((milestone) => milestoneLabel(milestone.id))
+	);
 	const trajectory = $derived(metrics.trajectory);
 	const latest = $derived(trajectory[trajectory.length - 1] ?? 0);
 
@@ -206,6 +215,22 @@
 
 			{#if !sheet.liveThread && !sheet.history.length}
 				<p class="mt-2 text-sm text-[var(--muted)]">{m.stats_no_threads()}</p>
+			{/if}
+		</section>
+
+		<section aria-labelledby="stats-milestones">
+			<p class="kicker" id="stats-milestones">{m.stats_milestones()}</p>
+
+			{#if milestones.length}
+				<ul class="mt-2 flex flex-col">
+					{#each milestones as label (label)}
+						<li class="border-b border-dashed border-[var(--line)] py-2.5 text-sm last:border-0">
+							{label}
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="mt-2 text-sm text-[var(--muted)]">{m.stats_no_milestones()}</p>
 			{/if}
 		</section>
 

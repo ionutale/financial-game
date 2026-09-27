@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CARDS } from '../game/cards';
+import { MILESTONE_IDS } from '../game/milestones';
 import {
 	CARD_KEY_PREFIX,
 	cardOddsKey,
@@ -11,12 +12,13 @@ import {
 } from './card-keys';
 
 /**
- * Gate 3 of ticket 07/26: the keys Paraglide cannot type-check because they are
- * derived from domain ids at runtime. Enumerates the deck, asserts every card
- * and choice key exists in all three locales, that interpolation parameters
- * agree across locales, and that no orphan `card_*` key exists. Also asserts
- * the three catalogues carry exactly the same key set, so a missing UI string
- * in `it`/`ro` fails here as well.
+ * Gate 3 of ticket 07/26, extended by ticket 01: the keys Paraglide cannot
+ * type-check because they are derived from domain ids at runtime. Enumerates
+ * the deck and the Milestone catalogue, asserts every card, choice and
+ * Milestone key exists in all three locales, that interpolation parameters
+ * agree across locales, and that no orphan `card_*` or `milestone_*` key
+ * exists. Also asserts the three catalogues carry exactly the same key set, so
+ * a missing UI string in `it`/`ro` fails here as well.
  */
 
 const LOCALES = ['en', 'it', 'ro'] as const;
@@ -73,6 +75,31 @@ function params(value: MessageValue): string[] {
 	);
 	return [...new Set(inputs)].sort();
 }
+
+const MILESTONE_KEY_PREFIX = 'milestone_';
+
+describe('the milestone catalogue’s message keys (ticket 01)', () => {
+	it('has every milestone key in all three locales', () => {
+		for (const id of MILESTONE_IDS) {
+			for (const locale of LOCALES) {
+				expect(
+					typeof catalogues[locale][`${MILESTONE_KEY_PREFIX}${id}`],
+					`${locale} is missing ${MILESTONE_KEY_PREFIX}${id}`
+				).toBe('string');
+			}
+		}
+	});
+
+	it('has no orphan milestone_* key in any locale', () => {
+		const allowed = new Set(MILESTONE_IDS.map((id) => `${MILESTONE_KEY_PREFIX}${id}`));
+		for (const locale of LOCALES) {
+			for (const key of Object.keys(catalogues[locale])) {
+				if (!key.startsWith(MILESTONE_KEY_PREFIX)) continue;
+				expect(allowed.has(key), `orphan key in ${locale}: ${key}`).toBe(true);
+			}
+		}
+	});
+});
 
 describe('the deck’s message keys (ticket 07, gate 3)', () => {
 	it('derives unique keys: card and choice ids never collide', () => {

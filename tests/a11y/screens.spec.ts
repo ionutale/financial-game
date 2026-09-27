@@ -1,5 +1,5 @@
 import { expect, expectNoAxeViolations, seedRun, test, waitForHydration } from './helpers';
-import { CHIP_RUN, EVENT_RUN, FEEDBACK_RUN, PLAN_RUN, STAGE_UP_RUN } from './seed';
+import { CHIP_RUN, EVENT_RUN, FEEDBACK_RUN, MILESTONE_RUN, PLAN_RUN, STAGE_UP_RUN } from './seed';
 
 /**
  * The screens ticket 14 commits to, audited against the WCAG 2.2 AA tag set.
@@ -60,11 +60,36 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await expectNoAxeViolations(page, 'the month close');
 	});
 
+	test('month screen: the Milestone line rides the close’s labelled region', async ({ page }) => {
+		await seedRun(page, MILESTONE_RUN);
+		const close = page.getByRole('region', { name: 'Month 1 closes' });
+		await expect(close).toBeVisible();
+		/* Gamification ticket 01: plain text inside the existing region — no new
+		   live region, nothing to dismiss, and the meaning is in the words, not a
+		   colour. */
+		await expect(close).toContainText('Milestone: First month inside budget');
+		await expectNoAxeViolations(page, 'the month close with a Milestone line');
+	});
+
 	test('month screen: stats sheet', async ({ page }) => {
 		await seedRun(page, PLAN_RUN);
 		await page.getByRole('button', { name: 'Stats' }).click();
 		await expect(page.getByRole('dialog', { name: 'Where the money is' })).toBeVisible();
+		// No month closed yet, so the Milestone list is honestly empty.
+		await expect(page.getByText('No milestones yet.')).toBeVisible();
 		await expectNoAxeViolations(page, 'the Stats Sheet');
+	});
+
+	test('month screen: stats sheet lists earned Milestones in text', async ({ page }) => {
+		await seedRun(page, MILESTONE_RUN);
+		await page.getByRole('button', { name: 'Stats' }).click();
+		const sheet = page.getByRole('dialog', { name: 'Where the money is' });
+		await expect(sheet).toBeVisible();
+		await expect(sheet.getByText('Milestones', { exact: true })).toBeVisible();
+		// Names, never a count and never a checklist.
+		await expect(sheet.getByText('First month inside budget')).toBeVisible();
+		await expect(sheet.getByText('First money into Save')).toBeVisible();
+		await expectNoAxeViolations(page, 'the Stats Sheet with Milestones');
 	});
 
 	test('month screen: state chips', async ({ page }) => {

@@ -26,6 +26,19 @@ export const FEEDBACK_RUN = applyAction(EVENT_RUN, {
 	choiceId: availableChoice(EVENT_RUN).id
 });
 
+/**
+ * A Run with one clean month behind it (gamification ticket 01): month 1
+ * closes inside both envelopes, funds Save and credits interest, so the Month
+ * Close carries its first Milestones and the Stats Sheet lists them.
+ */
+export const MILESTONE_RUN: RunState = seededRun(
+	{ type: 'DISMISS_INTRO' },
+	{ type: 'FORCE_CARD', id: 'birthday_gift' },
+	{ type: 'CONFIRM_PLAN' },
+	{ type: 'CHOOSE', choiceId: 'skip' },
+	{ type: 'CONTINUE' }
+);
+
 /** Stage 5 opens with the Fork's Stage-up card (ticket 18). */
 export const STAGE_UP_RUN = seededRun(
 	{ type: 'DISMISS_INTRO' },

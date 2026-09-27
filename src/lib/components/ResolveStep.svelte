@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { formatMoney, formatMoneyExact } from '$lib/game/economy';
+	import { milestonesNewThisMonth } from '$lib/game/milestones';
 	import type { Action, RunState } from '$lib/game/types';
+	import { milestoneLabel } from '$lib/i18n/game-text';
 	import { m } from '$lib/i18n/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import Money from './Money.svelte';
@@ -11,6 +13,13 @@
 	const close = $derived(run.close);
 	const change = $derived(close ? close.monthChange : 0);
 	const over = $derived(close ? (!close.adherence.need || !close.adherence.want) : false);
+	/*
+	 * The Milestones whose condition first held this month (gamification
+	 * ticket 01). Quiet plain text inside the close's labelled region: no live
+	 * region, no timer, no colour-only meaning, and the source of truth is the
+	 * record, so the line cannot repeat in a later month.
+	 */
+	const milestones = $derived(milestonesNewThisMonth(run).map(milestoneLabel));
 
 	/*
 	 * The close appears only after CONTINUE, so nothing is still being read
@@ -30,6 +39,12 @@
 		<h2 id="month-close-title" class="kicker" tabindex="-1" bind:this={heading}>
 			{m.resolve_title({ month: run.month })}
 		</h2>
+
+		{#if milestones.length}
+			<p class="mt-2 text-sm text-[var(--money)]">
+				{m.resolve_milestone({ names: milestones.join(', ') })}
+			</p>
+		{/if}
 
 		<div class="mt-3">
 			<p class="kicker">{m.resolve_net_worth()}</p>
