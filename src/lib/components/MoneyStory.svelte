@@ -1,8 +1,24 @@
 <script lang="ts">
+	/**
+	 * The end-of-Run report (ticket 05) and the Gamification additions on it
+	 * (ticket 04): this Run's Milestones, its Concept Coverage, the year-5 Year
+	 * in Review that no Stage-up carries, and a retrospective inside-budget
+	 * line — prose, never a live counter. Everything is derived from the stored
+	 * record (ADR-0002) and purely retrospective (ADR-0003).
+	 */
 	import { formatMoney, formatMoneyExact } from '$lib/game/economy';
+	import { conceptCoverage, type ConceptCoverageState } from '$lib/game/journal';
 	import { computeMetrics, outcomeBand, turningPoints } from '$lib/game/metrics';
+	import { earnedMilestones, longestInsideBudgetMonths, yearInReview } from '$lib/game/milestones';
 	import type { RunState } from '$lib/game/types';
-	import { bandLabel, comparisonLabel, flagText, goalName } from '$lib/i18n/game-text';
+	import {
+		bandLabel,
+		comparisonLabel,
+		conceptLabel,
+		flagText,
+		goalName,
+		milestoneLabel
+	} from '$lib/i18n/game-text';
 	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -28,6 +44,29 @@
 			.map((moment) => ({ ...moment, text: flagText(moment.kind, moment.month) }))
 			.filter((moment): moment is { month: number; kind: string; text: string } => moment.text !== null)
 	);
+
+	/*
+	 * This Run's Milestones, oldest first — names, never a count and never a
+	 * checklist; the same derivation the Stats Sheet lists (ticket 01).
+	 */
+	const milestones = $derived(earnedMilestones(run));
+	/*
+	 * Concept Coverage for the Run (ticket 03): Introduced by the Stage ladder,
+	 * Experienced by a played card, or locked — exposure, never performance.
+	 */
+	const coverage = $derived(conceptCoverage(run));
+	const STATE_LABEL: Record<ConceptCoverageState, () => string> = {
+		experienced: () => m.coverage_experienced(),
+		introduced: () => m.coverage_introduced(),
+		locked: () => m.coverage_not_yet()
+	};
+	/*
+	 * Year 5's review — the recap no Stage-up carries (the Fork takes year 4→5),
+	 * in the same shape and from the same derivation as the Stage-up block.
+	 */
+	const finalReview = $derived(yearInReview(run, 5));
+	/** The longest run of consecutive months inside budget, as prose. */
+	const longestInside = $derived(longestInsideBudgetMonths(run));
 
 	const asMonths = (v: number) => m.story_months_of_12({ months: Math.round(v) });
 	const asPct = (v: number) => m.story_percent({ percent: Math.round(v * 100) });
@@ -74,9 +113,9 @@
 			<span
 				class="rounded-full px-3 py-1 text-xs font-semibold"
 				style="background: {band === 'behind'
-					? 'rgb(173 79 28 / 0.12)'
+					? 'var(--down-wash)'
 					: band === 'ahead'
-						? 'rgb(22 121 74 / 0.12)'
+						? 'var(--up-wash)'
 						: 'var(--money-wash)'};
 					color: {band === 'behind' ? 'var(--down)' : band === 'ahead' ? 'var(--up)' : 'var(--money)'}"
 			>
@@ -172,6 +211,95 @@
 			{/each}
 		</dl>
 	</section>
+
+	<!--
+		Ticket 04's additions: this Run's Milestones, its Concept Coverage, the
+		year-5 review no Stage-up carries, and the retrospective inside-budget
+		line. Story-first, derived from the record, and never a live metric.
+	-->
+	{#if milestones.length}
+		<section aria-labelledby="story-milestones-title">
+			<p class="kicker" id="story-milestones-title">{m.stats_milestones()}</p>
+			<ul class="mt-2 flex flex-col">
+				{#each milestones as milestone (milestone.id)}
+					<li class="border-b border-dashed border-[var(--line)] py-2.5 text-sm last:border-0">
+						{milestoneLabel(milestone.id)}
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
+
+	<section aria-labelledby="story-coverage-title">
+		<p class="kicker" id="story-coverage-title">{m.stats_coverage()}</p>
+		<ul class="mt-2 flex flex-col">
+			{#each coverage as entry (entry.concept)}
+				<li
+					class="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-dashed border-[var(--line)] py-2.5 last:border-0"
+				>
+					{#if entry.state === 'locked'}
+						<!-- A locked Concept names nothing the Stage-up banner has not announced. -->
+						<span class="ml-auto text-xs text-[var(--muted)]">{STATE_LABEL.locked()}</span>
+					{:else}
+						<span class="text-sm">{conceptLabel(entry.concept)}</span>
+						<span class="text-xs text-[var(--muted)]">{STATE_LABEL[entry.state]()}</span>
+					{/if}
+				</li>
+			{/each}
+		</ul>
+	</section>
+
+	<!-- Year 5 in review: the same shape as every Stage-up's recap (ticket 02). -->
+	<section class="surface px-4 py-3" aria-labelledby="story-final-review-title">
+		<p class="kicker text-[var(--money)]" id="story-final-review-title">
+			{m.stage_up_review_title({ year: finalReview.year })}
+		</p>
+
+		<div class="mt-2 flex flex-col">
+			{#if finalReview.netWorth !== null}
+				<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-1">
+					<span class="text-sm text-[var(--muted)]">{m.story_row_net_worth()}</span>
+					<Money amount={finalReview.netWorth} size="md" />
+				</div>
+			{/if}
+			{#if finalReview.change !== null}
+				<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-1">
+					<span class="text-sm text-[var(--muted)]">{m.stage_up_review_change()}</span>
+					<Money
+						amount={finalReview.change}
+						size="sm"
+						tone={finalReview.change >= 0 ? 'up' : 'down'}
+						sign
+					/>
+				</div>
+			{/if}
+			<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-1">
+				<span class="text-sm text-[var(--muted)]">{m.story_row_adherence()}</span>
+				<span class="figure text-sm">
+					{m.story_months_of_12({ months: finalReview.monthsInsideBudget })}
+				</span>
+			</div>
+		</div>
+
+		{#if finalReview.milestones.length}
+			<div class="mt-1 border-t border-dashed border-[var(--line)] pt-2">
+				<p class="kicker">{m.stage_up_review_milestones()}</p>
+				<ul class="mt-1 flex flex-col">
+					{#each finalReview.milestones as id (id)}
+						<li class="py-0.5 text-sm">{milestoneLabel(id)}</li>
+					{/each}
+				</ul>
+			</div>
+		{/if}
+	</section>
+
+	<p class="text-sm leading-relaxed">
+		{#if longestInside > 0}
+			{m.story_inside_budget_longest({ months: longestInside })}
+		{:else}
+			{m.story_inside_budget_none()}
+		{/if}
+	</p>
 
 	<section>
 		<p class="kicker">{m.story_what_next()}</p>

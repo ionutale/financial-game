@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { expect, horizontalOverflow, seedRun, test } from './helpers';
-import { FEEDBACK_RUN, PLAN_RUN, STAGE_UP_RUN } from './seed';
+import { FEEDBACK_RUN, FINAL_MONTH_RUN, PLAN_RUN, STAGE_UP_RUN } from './seed';
 
 /**
  * Automated proxies for two of ticket 14's four manual passes.
@@ -42,6 +42,14 @@ test.describe('zoom and reflow (proxy checks)', () => {
 				await seedRun(page, STAGE_UP_RUN);
 			},
 			'A new stage'
+		],
+		[
+			'the Money Story and its additions',
+			async (page) => {
+				await seedRun(page, FINAL_MONTH_RUN);
+				await page.getByRole('button', { name: 'Next month' }).click();
+			},
+			'Five years, in one page.'
 		],
 		[
 			'the privacy policy',

@@ -134,6 +134,17 @@
 	"story_score_none": "mai avuto una carta",
 	"story_months_of_12": "{months} / 12",
 	"story_percent": "{percent}%",
+	"story_inside_budget_longest": [
+		{
+			"declarations": ["input months", "local monthsPlural = months: plural"],
+			"selectors": ["monthsPlural"],
+			"match": {
+				"monthsPlural=one": "Il periodo più lungo passato dentro il tuo budget è durato 1 mese.",
+				"monthsPlural=other": "Il periodo più lungo passato dentro il tuo budget è durato {months} mesi."
+			}
+		}
+	],
+	"story_inside_budget_none": "Questa volta nessun mese si è chiuso dentro il tuo budget — il piano e il mese non sono mai andati del tutto d’accordo.",
 	"story_what_next": "E adesso",
 	"story_what_next_body": "Il bivio torna nel mese 49. Studiare e lavorare finiscono in modi molto diversi.",
 	"story_saved": "Questa partita è salvata nel tuo profilo — se rigiochi si riparte dal mese 1.",

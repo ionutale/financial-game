@@ -135,6 +135,18 @@
 	"story_score_none": "niciodată card",
 	"story_months_of_12": "{months} / 12",
 	"story_percent": "{percent}%",
+	"story_inside_budget_longest": [
+		{
+			"declarations": ["input months", "local monthsPlural = months: plural"],
+			"selectors": ["monthsPlural"],
+			"match": {
+				"monthsPlural=one": "Cea mai lungă perioadă la rând în bugetul tău a durat 1 lună.",
+				"monthsPlural=few": "Cea mai lungă perioadă la rând în bugetul tău a durat {months} luni.",
+				"monthsPlural=other": "Cea mai lungă perioadă la rând în bugetul tău a durat {months} de luni."
+			}
+		}
+	],
+	"story_inside_budget_none": "De data asta nicio lună nu s-a închis în bugetul tău — planul și luna nu s-au potrivit până la urmă.",
 	"story_what_next": "Ce urmează",
 	"story_what_next_body": "Răscrucea revine în luna 49. Studiul și munca se termină foarte diferit.",
 	"story_saved": "Această partidă e salvată în profilul tău — dacă joci din nou, începi de la luna 1.",

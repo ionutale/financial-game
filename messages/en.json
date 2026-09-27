@@ -134,6 +134,17 @@
 	"story_score_none": "never had a card",
 	"story_months_of_12": "{months} / 12",
 	"story_percent": "{percent}%",
+	"story_inside_budget_longest": [
+		{
+			"declarations": ["input months", "local monthsPlural = months: plural"],
+			"selectors": ["monthsPlural"],
+			"match": {
+				"monthsPlural=one": "Your longest run inside your own budget was 1 month.",
+				"monthsPlural=other": "Your longest run inside your own budget was {months} months."
+			}
+		}
+	],
+	"story_inside_budget_none": "No month closed inside your own budget this time — the plan and the month never quite agreed.",
 	"story_what_next": "What next",
 	"story_what_next_body": "The Fork comes round again in month 49. Studying and working end very differently.",
 	"story_saved": "This Run is saved to your profile — playing again starts from month 1.",

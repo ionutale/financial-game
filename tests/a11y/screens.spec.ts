@@ -1,7 +1,18 @@
 import { formatMoney } from '$lib/game/economy';
-import { yearInReview } from '$lib/game/milestones';
+import { conceptCoverage } from '$lib/game/journal';
+import { earnedMilestones, longestInsideBudgetMonths, yearInReview } from '$lib/game/milestones';
+import { conceptLabel, milestoneLabel } from '$lib/i18n/game-text';
 import { expect, expectNoAxeViolations, seedRun, test, waitForHydration } from './helpers';
-import { CHIP_RUN, EVENT_RUN, FEEDBACK_RUN, MILESTONE_RUN, PLAN_RUN, STAGE_UP_RUN } from './seed';
+import {
+	CHIP_RUN,
+	EVENT_RUN,
+	FEEDBACK_RUN,
+	FINAL_MONTH_RUN,
+	MILESTONE_RUN,
+	NO_BUDGET_RUN,
+	PLAN_RUN,
+	STAGE_UP_RUN
+} from './seed';
 
 /**
  * The screens ticket 14 commits to, audited against the WCAG 2.2 AA tag set.
@@ -172,6 +183,99 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await expect(recap.getByText(formatMoney(review.netWorth as number, 'en'))).toBeVisible();
 
 		await expectNoAxeViolations(page, 'the Stage-up screen with its Year in Review');
+	});
+
+	test('the Money Story: milestones, coverage, the final year and the inside-budget line', async ({
+		page
+	}) => {
+		await seedRun(page, FINAL_MONTH_RUN);
+		await page.getByRole('button', { name: 'Next month' }).click();
+		await expect(page.getByRole('heading', { name: 'Five years, in one page.' })).toBeVisible();
+
+		/* Gamification ticket 04: the Run's Milestones as names — never a count,
+		   never a checklist; the same derivation the Stats Sheet lists. */
+		const milestones = earnedMilestones(FINAL_MONTH_RUN);
+		expect(milestones.length).toBeGreaterThan(0);
+		const milestoneList = page.getByRole('region', { name: 'Milestones', exact: true });
+		await expect(milestoneList).toBeVisible();
+		await expect(milestoneList.getByRole('listitem')).toHaveCount(milestones.length);
+		for (const { id } of milestones) {
+			await expect(milestoneList.getByText(milestoneLabel(id))).toBeVisible();
+		}
+
+		/* Concept Coverage: all eight Concepts, the same states the Stats Sheet
+		   shows, with no locked Concept naming itself. */
+		const coverage = conceptCoverage(FINAL_MONTH_RUN);
+		const coverageList = page.getByRole('region', { name: 'Concept coverage' });
+		await expect(coverageList).toBeVisible();
+		await expect(coverageList.getByRole('listitem')).toHaveCount(coverage.length);
+		for (const entry of coverage) {
+			await expect(coverageList.getByText(conceptLabel(entry.concept))).toBeVisible();
+		}
+
+		/* The year-5 review, the recap no Stage-up carries, in the Stage-up's
+		   own shape: money headline, behavioural line, the year's Milestones. */
+		const review = yearInReview(FINAL_MONTH_RUN, 5);
+		const recap = page.getByRole('region', { name: 'Year 5 in review' });
+		await expect(recap).toBeVisible();
+		await expect(recap.getByText('Net worth')).toBeVisible();
+		await expect(recap.getByText(formatMoney(review.netWorth as number, 'en'))).toBeVisible();
+		await expect(recap.getByText('The year’s change')).toBeVisible();
+		const change = review.change as number;
+		await expect(
+			recap.getByText(
+				change < 0
+					? `\u2212${formatMoney(Math.abs(change), 'en')}`
+					: `+${formatMoney(change, 'en')}`
+			)
+		).toBeVisible();
+		await expect(recap.getByText('Months inside budget')).toBeVisible();
+		await expect(recap.getByText(`${review.monthsInsideBudget} / 12`, { exact: true })).toBeVisible();
+		for (const id of review.milestones) {
+			await expect(recap.getByText(milestoneLabel(id))).toBeVisible();
+		}
+
+		/* The retrospective line: prose from the month history, not a meter. */
+		const longest = longestInsideBudgetMonths(FINAL_MONTH_RUN);
+		expect(longest).toBeGreaterThan(1);
+		await expect(
+			page.getByText(`Your longest run inside your own budget was ${longest} months.`)
+		).toBeVisible();
+
+		/* Story-first order: the numbers, then the Run's record, then what next.
+		   Kickers are uppercased by CSS, and innerText reports what is rendered. */
+		const order = await page.evaluate(() => {
+			const text = document.body.innerText;
+			return [
+				'THE NUMBERS',
+				'MILESTONES',
+				'CONCEPT COVERAGE',
+				'YEAR 5 IN REVIEW',
+				'Your longest run',
+				'WHAT NEXT'
+			].map((needle) => text.indexOf(needle));
+		});
+		expect(order.every((at) => at >= 0), `missing a block: ${order.join(', ')}`).toBe(true);
+		expect(order).toEqual([...order].sort((a, b) => a - b));
+
+		await expectNoAxeViolations(page, 'the Money Story with its additions');
+	});
+
+	test('the Money Story: the inside-budget line reads sensibly with no clean month', async ({
+		page
+	}) => {
+		await seedRun(page, NO_BUDGET_RUN);
+		await page.getByRole('button', { name: 'Next month' }).click();
+		await expect(page.getByRole('heading', { name: 'Five years, in one page.' })).toBeVisible();
+
+		/* Gamification ticket 04: zero is an answer the copy must own — no
+		   "0 months", no blame, no counter. */
+		await expect(
+			page.getByText(
+				'No month closed inside your own budget this time — the plan and the month never quite agreed.'
+			)
+		).toBeVisible();
+		await expectNoAxeViolations(page, 'the Money Story with no inside-budget month');
 	});
 
 	test('privacy policy', async ({ page }) => {

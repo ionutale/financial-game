@@ -63,6 +63,50 @@ function playedToFork(seed: number): RunState {
 /** Stage 5 opens with the Fork's Stage-up card (ticket 18). */
 export const STAGE_UP_RUN = playedToFork(GATE_SEED);
 
+/**
+ * A Run played to the last close through the real reducer (gamification ticket
+ * 04), so the Money Story renders its additions over a record the game actually
+ * wrote: closed months behind the milestones, the coverage and the year-5
+ * review. Same policy as `playedToFork`, carried through all sixty months.
+ *
+ * The fixture stops at month 60's `resolve`: the gate finishes the Run with a
+ * "Next month" click, because a done state posted to `/api/run` is archived
+ * and frees the active slot — the Money Story is the last client-side screen.
+ */
+function playedToTheLastClose(seed: number): RunState {
+	let state = applyAction(createRun(seed), { type: 'DISMISS_INTRO' });
+	for (let month = 1; month <= 60; month++) {
+		// A Stage-up card is resolved before its month can be planned (ticket 18).
+		if (state.phase === 'stage_up' && state.card) {
+			state = applyAction(state, { type: 'CHOOSE', choiceId: availableChoice(state).id });
+			state = applyAction(state, { type: 'CONTINUE' });
+		}
+		const hours = state.stage === 3 || state.stage === 4 ? 35 : 0;
+		state = applyAction(state, { type: 'SET_HOURS', hours });
+		state = applyAction(state, { type: 'SET_NEED', amount: Math.round(state.income * 0.5) });
+		state = applyAction(state, { type: 'SET_WANT', amount: Math.round(state.income * 0.3) });
+		state = applyAction(state, { type: 'CONFIRM_PLAN' });
+		state = applyAction(state, { type: 'CHOOSE', choiceId: availableChoice(state).id });
+		state = applyAction(state, { type: 'CONTINUE' });
+		// The sixtieth close is where the gate takes over, one click from the Story.
+		if (month < 60) state = applyAction(state, { type: 'NEXT_MONTH' });
+	}
+	return state;
+}
+
+/** One "Next month" from the Money Story: sixty closed months behind it. */
+export const FINAL_MONTH_RUN = playedToTheLastClose(GATE_SEED);
+
+/**
+ * The retrospective line's zero case: the same last close with no month inside
+ * budget in the record, so the copy must read sensibly when the answer is
+ * "none".
+ */
+export const NO_BUDGET_RUN: RunState = {
+	...FINAL_MONTH_RUN,
+	history: FINAL_MONTH_RUN.history.map((row) => ({ ...row, insideBudget: false }))
+};
+
 /** A run carrying state chips (the BNPL pill), so their contrast is gated. */
 export const CHIP_RUN: RunState = { ...PLAN_RUN, bnpl: { amount: 30, monthsLeft: 2 } };
 

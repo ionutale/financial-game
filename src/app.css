@@ -29,13 +29,18 @@
 	   small text. #1f6feb was 4.18:1 on paper (and 4.00:1 on its own wash), so
 	   the token is this darker blue; white-on-money improves with it. */
 	--money: #1a5ec7;
-	--up: #16794a;
-	--down: #ad4f1c;
+	/* --up and --down carry small text on their own 12% band-chip wash, where
+	   the older #16794a / #ad4f1c measured 4.17:1 and 4.11:1 — under AA's 4.5:1.
+	   Darkened by the same reasoning as --money above. */
+	--up: #126b41;
+	--down: #9c4413;
 	--wash: rgb(25 23 20 / 0.055);
 	--money-wash: rgb(26 94 199 / 0.1);
 	/* Explicit tints: opacity modifiers on var() colours are not reliable. */
 	--money-35: rgb(26 94 199 / 0.35);
 	--money-60: rgb(26 94 199 / 0.6);
+	--up-wash: rgb(18 107 65 / 0.12);
+	--down-wash: rgb(156 68 19 / 0.12);
 	--ink-25: rgb(25 23 20 / 0.25);
 	--ink-40: rgb(25 23 20 / 0.4);
 	--shadow: 0 1px 2px rgb(25 23 20 / 0.04), 0 10px 28px -12px rgb(25 23 20 / 0.14);
