@@ -57,7 +57,11 @@
 
 		<div class="mt-3">
 			<p class="kicker">{m.resolve_net_worth()}</p>
-			<Money amount={change} size="hero" tone={change >= 0 ? 'up' : 'down'} sign />
+			<!-- The Tally's figure: one flash as the month's money lands (fun-pass
+			     ticket 04). Never a count-up — the final value is the only value. -->
+			<span class="money-flash inline-block rounded-md">
+				<Money amount={change} size="hero" tone={change >= 0 ? 'up' : 'down'} sign />
+			</span>
 		</div>
 
 		<!--

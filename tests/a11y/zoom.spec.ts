@@ -1,6 +1,14 @@
 import type { Page } from '@playwright/test';
 import { expect, horizontalOverflow, seedRun, test } from './helpers';
-import { DONE_STUDY_RUN, FEEDBACK_RUN, FINAL_MONTH_RUN, PLAN_RUN, STAGE_UP_RUN } from './seed';
+import {
+	CLOSE_DEBT_FUND_RUN,
+	DONE_STUDY_RUN,
+	FEEDBACK_RUN,
+	FINAL_MONTH_RUN,
+	LEDGER_RUN,
+	PLAN_RUN,
+	STAGE_UP_RUN
+} from './seed';
 
 /**
  * Automated proxies for two of ticket 14's four manual passes.
@@ -35,6 +43,21 @@ test.describe('zoom and reflow (proxy checks)', () => {
 				await page.getByRole('button', { name: 'Continue' }).click();
 			},
 			'Month 1, done'
+		],
+		[
+			'the month close with a Debt line and a Fund row',
+			async (page) => {
+				await seedRun(page, CLOSE_DEBT_FUND_RUN);
+			},
+			'Month 1, done'
+		],
+		[
+			'the Feedback with the Ledger Line',
+			async (page) => {
+				await seedRun(page, LEDGER_RUN);
+				await page.locator('section button').first().click();
+			},
+			'Want −◈40'
 		],
 		[
 			'the Stage-up and its Year in Review',

@@ -32,8 +32,11 @@ export function cueFor(before: RunState, after: RunState, action: Action): SfxCu
 			return milestonesNewThisMonth(after).length ? 'milestone' : 'month_close';
 
 		case 'CONFIRM_PLAN':
-			// A dealt card arrives — the crash keeps its own, bigger sound.
-			if (!after.card) return null;
+			// A dealt card arrives — but only from the Plan step (the reducer
+			// clones the state, so identity cannot answer this). A confirm
+			// that lands nothing — a double tap on Go — deals no card and
+			// earns no cue. The crash keeps its own, bigger sound.
+			if (before.phase !== 'plan' || !after.card) return null;
 			return after.card.id === 'the_crash' ? 'crash' : 'deal';
 
 		case 'NEXT_MONTH':

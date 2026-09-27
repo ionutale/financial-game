@@ -104,5 +104,9 @@ describe('the cue mapping (fun-pass ticket 04)', () => {
 		s = applyAction(s, { type: 'CONFIRM_PLAN' });
 		expect(cueOf(s, { type: 'CHOOSE', choiceId: 'a_choice_the_deck_never_had' })).toBeNull();
 		expect(cueOf(s, { type: 'SET_HOURS', hours: 3 })).toBeNull();
+
+		// A confirm that lands nothing (a double tap on Go) deals no second
+		// card, so it earns no second deal cue.
+		expect(cueOf(s, { type: 'CONFIRM_PLAN' })).toBeNull();
 	});
 });

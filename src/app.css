@@ -104,12 +104,17 @@ body {
  * The motion vocabulary (fun-pass ticket 04, design §3.3): one-shot only,
  * ≤ 600 ms, one easing, and five legal meanings — nothing else moves.
  *
- *   money moves           .money-flash      a changed figure flashes
+ *   money moves           .money-flash      a changed figure flashes: the HUD's
+ *                                          net-worth hero, the Ledger Line's
+ *                                          entries, the close's net-worth hero
  *   consequence travels   .cascade-travel   the cascade sentence, once
  *   the world arrives     .rise             a screen replaces another
  *   time turns            .time-turn        the date line as the month changes
  *   the record is read    .milestone-land / .goal-pulse (shipped, ticket 06)
  *
+ * At most two emphases run on a screen at once (the phase container's `.rise`
+ * is the screen's arrival, not an emphasis): the HUD hero stays quiet while a
+ * Feedback is showing, and the close's hero and Milestone line are its two.
  * No count-ups anywhere: a changed figure flashes and the final value is in
  * the DOM at all times. Nothing depends on motion — the text says what
  * happened — and the reduced-motion block below removes every one of them.

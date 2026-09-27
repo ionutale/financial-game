@@ -58,30 +58,27 @@
 	});
 
 	/*
-	 * A changed figure flashes once (fun-pass ticket 04, “money moves”): the
-	 * effect compares each rendered figure with the previous render and bumps a
-	 * counter the markup keys on, so the one-shot animation replays. UI state
-	 * only, never part of RunState, and the final value is in the DOM at all
-	 * times — nothing counts up.
+	 * The money moving (fun-pass ticket 04): one changed figure flashes — the
+	 * net-worth hero. The effect compares the hero with the previous render and
+	 * bumps a counter the markup keys on, so the one-shot animation replays.
+	 * UI state only, never RunState; the final value is in the DOM at all times
+	 * and nothing counts up.
+	 *
+	 * It stays quiet while an answer is on screen: the Feedback owns that
+	 * moment (its Ledger Line flashes the changed entries), and the close
+	 * flashes its own hero — so no screen runs more than two emphases.
 	 */
-	let previous: { netWorth: number | null; cash: number | null; freeTime: number | null } = {
-		netWorth: null,
-		cash: null,
-		freeTime: null
-	};
+	let previousNetWorth: number | null = null;
 	let netFlash = $state(0);
-	let cashFlash = $state(0);
-	let freeFlash = $state(0);
 
 	$effect(() => {
-		const now = { netWorth: netWorth(run), cash: spendable(run), freeTime: free };
-		const before = previous;
+		const current = netWorth(run);
+		const answered = run.chosen !== null;
+		const before = previousNetWorth;
 		untrack(() => {
-			if (before.netWorth !== null && now.netWorth !== before.netWorth) netFlash += 1;
-			if (before.cash !== null && now.cash !== before.cash) cashFlash += 1;
-			if (before.freeTime !== null && now.freeTime !== before.freeTime) freeFlash += 1;
+			if (before !== null && current !== before && !answered) netFlash += 1;
 		});
-		previous = now;
+		previousNetWorth = current;
 	});
 </script>
 
@@ -169,21 +166,13 @@
 		<div class="flex flex-wrap gap-8">
 			<div>
 				<p class="kicker">{m.hud_cash()}</p>
-				{#key cashFlash}
-					<span class="rounded-md {cashFlash > 0 ? 'money-flash' : ''}">
-						<Money amount={spendable(run)} size="lg" />
-					</span>
-				{/key}
+				<Money amount={spendable(run)} size="lg" />
 			</div>
 			<div>
 				<p class="kicker">{m.hud_free_time()}</p>
-				{#key freeFlash}
-					<span class="rounded-md {freeFlash > 0 ? 'money-flash' : ''}">
-						<span class="figure text-2xl font-medium">
-							{free}<span class="text-base text-[var(--muted)]">h</span>
-						</span>
-					</span>
-				{/key}
+				<p class="figure text-2xl font-medium">
+					{free}<span class="text-base text-[var(--muted)]">h</span>
+				</p>
 			</div>
 		</div>
 	</div>
