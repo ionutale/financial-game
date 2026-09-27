@@ -28,6 +28,7 @@ import {
 	SHOCK_RUN,
 	STAGE_2_UP_RUN,
 	STAGE_UP_RUN,
+	VILLAIN_REFERRAL_RUN,
 	VILLAIN_SHIFT_RUN,
 	WHY_COLLAPSED_RUN,
 	WHY_OPEN_RUN
@@ -1092,5 +1093,26 @@ test.describe('fun-pass ticket 08: the villain cards', () => {
 		await expect(page.getByText('The phone you sold — the third payment in 3 months')).toBeVisible();
 
 		await expectNoAxeViolations(page, 'the phone-shop villain card with a live Thread');
+	});
+
+	test('month screen: the referral page pays for friends, and the Thread follows', async ({
+		page
+	}) => {
+		await seedRun(page, VILLAIN_REFERRAL_RUN);
+		await expect(page.getByRole('heading', { name: 'The referral page' })).toBeVisible();
+		await expect(
+			page.getByText(
+				'The sign-up bonus cleared overnight: ◈25 paid for a friend who joined off your link. The referral page is one tap from the group chat, and two people there are asking what the app is.'
+			)
+		).toBeVisible();
+
+		/* The player is the seller of the link, and the game flags nothing. */
+		await expect(page.getByRole('button', { name: 'Post the link in the chat' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Leave it at the one' })).toBeVisible();
+
+		await page.getByRole('button', { name: 'Post the link in the chat' }).click();
+		await expect(page.getByText('The friend who joined — the check-in in 3 months')).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the referral villain card with a live Thread');
 	});
 });

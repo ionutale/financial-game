@@ -247,6 +247,7 @@ export const CAST_RUN: RunState = forcedCard('mum_late_pay');
  * forced at month 1 through the reducer, the way the other screens do it.
  */
 export const VILLAIN_SHIFT_RUN: RunState = forcedCard('phone_shop_shift');
+export const VILLAIN_REFERRAL_RUN: RunState = forcedCard('app_referral');
 
 function availableChoice(state: RunState) {
 	const choice = state.card?.choices.find(

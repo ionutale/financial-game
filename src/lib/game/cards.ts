@@ -1862,6 +1862,57 @@ export const CARDS: Card[] = [
 			}
 		]
 	},
+	// Fun-pass ticket 08 (ADR-0007): the Stage-5 villain card. The app pays for
+	// brought-in friends; the first bonus has already cleared, so the Choice is
+	// whether to push the link — and the Thread carries the friend's consequence
+	// back. The gain is the app's, not a reward; the game flags nothing.
+	{
+		id: 'app_referral',
+		kind: 'decision',
+		stages: [5],
+		branch: 'shared',
+		// No Concept: the villain mechanic is learned from the inside, and an
+		// `investing` concept at this weight tipped one seed's Stage-5 scam
+		// coverage below the deck floor (ticket-08 report).
+		weight: 3,
+		teaches: 'a referral bonus is paid out of the deposits that arrive after you',
+		choices: [
+			{
+				id: 'post',
+				gain: 25,
+				freeTime: -1,
+				category: null,
+				sets: { thread: 'referral_sold' }
+			},
+			{
+				id: 'stop',
+				gain: 25,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'referral_follow_up',
+		kind: 'decision',
+		stages: [5],
+		branch: 'shared',
+		weight: 5,
+		requires: ['thread:referral_sold'],
+		resolves: 'referral_sold',
+		teaches: 'the bonus clears and the friend who funded the account keeps the loss',
+		choices: [
+			{
+				id: 'square',
+				cost: 25,
+				category: 'want'
+			},
+			{
+				id: 'explain',
+				freeTime: -1,
+				category: null
+			}
+		]
+	},
 	{
 		id: 'the_limit_letter',
 		kind: 'decision',

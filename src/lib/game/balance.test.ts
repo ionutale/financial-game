@@ -36,7 +36,7 @@ import type { Card, Choice, RunState } from './types';
 /* -------------------------------------------------------------------------- */
 
 /** sha256 of the deck's structural content (`JSON.stringify(CARDS)`), first 12. */
-const RECORDED_DECK = 'c5d94ae807e5';
+const RECORDED_DECK = '64ddb787afe3';
 
 /** How far an accepted content change may drift a recorded value. */
 const DRIFT = {

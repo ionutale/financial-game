@@ -30,7 +30,17 @@ const VILLAIN_PAIRS = [
 		choice: 'split',
 		thread: 'split_sold',
 		resolve: 'split_comes_due',
-		stage: 4
+		stage: 4,
+		/** The world chip when the plant lands: label — payoff in 3 months. */
+		chip: 'The phone you sold — the third payment in 3 months'
+	},
+	{
+		plant: 'app_referral',
+		choice: 'post',
+		thread: 'referral_sold',
+		resolve: 'referral_follow_up',
+		stage: 5,
+		chip: 'The friend who joined — the check-in in 3 months'
 	}
 ] as const;
 
@@ -40,7 +50,7 @@ const MAX_VILLAIN_GAIN = 25;
 /** A fresh Run dropped into a Stage, its Stage-up resolved (the ticket-02 shape). */
 function atStage(stage: number): RunState {
 	let s = applyAction(createRun(), { type: 'JUMP_STAGE', stage });
-	if (s.phase === 'stage_up' && s.card && s.card.id !== 'the_fork') {
+	if (s.phase === 'stage_up' && s.card) {
 		s = applyAction(s, { type: 'CHOOSE', choiceId: s.card.choices[0].id });
 		s = applyAction(s, { type: 'CONTINUE' });
 	}
@@ -133,23 +143,25 @@ describe('the villain pairs (fun-pass ticket 08, ADR-0007)', () => {
 
 describe('the villain Thread through the real reducer', () => {
 	it('plants the buyer’s consequence, counts it down, and resolves it', () => {
-		const pair = VILLAIN_PAIRS[0];
-		const planted = take(atStage(pair.stage), pair.plant, pair.choice);
+		for (const pair of VILLAIN_PAIRS) {
+			const month = (pair.stage - 1) * 12 + 1;
+			const planted = take(atStage(pair.stage), pair.plant, pair.choice);
 
-		expect(planted.thread).toEqual({ id: pair.thread, since: 37 });
-		expect(threadChip(planted)).toBe('The phone you sold — the third payment in 3 months');
+			expect(planted.thread, `${pair.plant} plants`).toEqual({ id: pair.thread, since: month });
+			expect(threadChip(planted), `${pair.plant} chip`).toBe(pair.chip);
 
-		// Three months on, the resolve card is dealt, and playing it ends the Thread.
-		let s = applyAction(planted, { type: 'CONTINUE' });
-		for (let i = 0; i < 3; i++) s = applyAction(s, { type: 'NEXT_MONTH' });
-		expect(s.month).toBe(40);
-		expect(threadDue(s.thread!)).toBe(s.month);
+			// Three months on, the resolve card is dealt, and playing it ends the Thread.
+			let s = applyAction(planted, { type: 'CONTINUE' });
+			for (let i = 0; i < 3; i++) s = applyAction(s, { type: 'NEXT_MONTH' });
+			expect(s.month, `${pair.plant} due month`).toBe(month + 3);
+			expect(threadDue(s.thread!)).toBe(s.month);
 
-		s = applyAction(s, { type: 'CONFIRM_PLAN' });
-		expect(s.card?.id).toBe(pair.resolve);
-		s = applyAction(s, { type: 'CHOOSE', choiceId: s.card!.choices[0].id });
-		expect(s.thread).toBeNull();
-		expect(threadChip(s)).toBeNull();
+			s = applyAction(s, { type: 'CONFIRM_PLAN' });
+			expect(s.card?.id, `${pair.plant} resolve`).toBe(pair.resolve);
+			s = applyAction(s, { type: 'CHOOSE', choiceId: s.card!.choices[0].id });
+			expect(s.thread, `${pair.plant} resolves`).toBeNull();
+			expect(threadChip(s)).toBeNull();
+		}
 	});
 
 	it('records no wrong-choice flag — a villain Choice logs like any other', () => {
