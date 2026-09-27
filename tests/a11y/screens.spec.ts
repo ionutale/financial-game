@@ -13,10 +13,16 @@ import {
 	FEEDBACK_RUN,
 	FINAL_MONTH_RUN,
 	LEDGER_RUN,
+	MESSAGE_RUN,
 	MILESTONE_RUN,
 	NO_BUDGET_RUN,
+	PAPER_RUN,
 	PLAN_RUN,
+	RECEIPT_RUN,
 	REPEAT_PLAN_RUN,
+	RISK_RUN,
+	SCAM_RUN,
+	SHOCK_RUN,
 	STAGE_2_UP_RUN,
 	STAGE_UP_RUN,
 	WHY_COLLAPSED_RUN,
@@ -412,6 +418,28 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		   closed year's headline must not budge. */
 		await page.getByRole('button', { name: /Work — full time/ }).click();
 		await expect(recap.getByText(formatMoney(review.netWorth as number, 'en'))).toBeVisible();
+
+		/* Fun-pass ticket 05 (design §3.6): the Stage-up card is a poster — the
+		   title is display type — and the avatar gains presence, larger, beside
+		   the Year in Review. Decoration only: the words carry the review. */
+		const poster = page.getByRole('heading', { name: 'School is over' });
+		expect(
+			parseFloat(await poster.evaluate((el) => getComputedStyle(el).fontSize)),
+			'the stage-up title is not display type'
+		).toBeGreaterThanOrEqual(28);
+
+		const hudAvatar = page.locator('header svg').first();
+		const stageAvatar = recap.locator('svg');
+		await expect(stageAvatar).toHaveCount(1);
+		await expect(stageAvatar).toHaveAttribute('aria-hidden', 'true');
+		const [hudBox, stageBox] = await Promise.all([
+			hudAvatar.boundingBox(),
+			stageAvatar.boundingBox()
+		]);
+		if (!hudBox || !stageBox) throw new Error('an avatar is missing');
+		expect(stageBox.height, 'the Stage-up avatar is no larger than the HUD’s').toBeGreaterThan(
+			hudBox.height
+		);
 
 		await expectNoAxeViolations(page, 'the Stage-up screen with its Year in Review');
 	});
@@ -837,5 +865,142 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		expect(new URL(page.url()).pathname).toBe('/it');
 		await expect(page.locator('html')).toHaveAttribute('lang', 'it');
 		await expectNoAxeViolations(page, 'the Italian intro');
+	});
+});
+
+/**
+ * Fun-pass ticket 05: Card kind identity is typography only (shock top rule and
+ * tight leading; scam message framing with a weighted sender line; risk-moment
+ * odds promoted; decision plain; stage-up poster) and the Card Formats set a
+ * card's own words into a diegetic shape (message / paper / receipt). One
+ * screen per format family and per kind, with no axe excludes added.
+ */
+test.describe('fun-pass ticket 05: kind identity and Card Formats', () => {
+	test('decision + message: a chat thread, with the card’s own words and choices', async ({
+		page
+	}) => {
+		await seedRun(page, MESSAGE_RUN);
+
+		/* The card's own words are the catalogue's words — the format adds the
+		   thread, it never rewrites the card. */
+		await expect(page.getByRole('heading', { name: 'Danny has an app' })).toBeVisible();
+		await expect(
+			page.getByText(
+				'Danny has an app. His cousin turned ◈40 into ◈52 last month and has screenshots.'
+			)
+		).toBeVisible();
+		await expect(
+			page.getByText('Danny: Cousin sent the screenshots. I put in ◈40 on Tuesday.')
+		).toBeVisible();
+
+		/* Same choices as ever: the arrangement changed, not the decision. */
+		await expect(page.getByRole('button', { name: /Put in ◈50/ })).toBeVisible();
+		await expect(
+			page.getByRole('button', { name: /Ask where the returns come from/ })
+		).toBeVisible();
+
+		/* The framing is typographic: the situation is a bubble in the thread. */
+		await expect(
+			page.getByText('Danny has an app. His cousin turned ◈40 into ◈52 last month')
+		).toHaveClass(/rounded-2xl/);
+
+		await expectNoAxeViolations(page, 'the message-format card');
+	});
+
+	test('scam: message framing with a weighted sender line', async ({ page }) => {
+		await seedRun(page, SCAM_RUN);
+
+		const sender = page.getByRole('heading', { name: 'We owe you' });
+		await expect(sender).toBeVisible();
+		await expect(page.getByText('Your call')).toBeVisible();
+		await expect(
+			page.getByText(
+				'A text says the tax office owes you ◈240. The link asks for your bank details, and the deadline is today.'
+			)
+		).toBeVisible();
+		await expect(
+			page.getByText('You have ◈240 waiting. Confirm the bank details before the file closes today.')
+		).toBeVisible();
+
+		/* The sender line is weighted where a decision's title is not. */
+		expect(await sender.evaluate((el) => getComputedStyle(el).fontWeight)).toBe('700');
+
+		await expectNoAxeViolations(page, 'the scam card');
+	});
+
+	test('shock: a top rule in the ink, and tight leading', async ({ page }) => {
+		await seedRun(page, SHOCK_RUN);
+		await expect(page.getByRole('heading', { name: 'The phone goes down' })).toBeVisible();
+		await expect(page.getByText('Out of nowhere')).toBeVisible();
+
+		const rule = page.locator('section > div[aria-hidden="true"]').first();
+		await expect(rule).toBeVisible();
+		const box = await rule.boundingBox();
+		expect(box?.height ?? 0, 'the shock rule is not a rule').toBeGreaterThanOrEqual(3);
+
+		/* The rule is the same ink as the words: typography, not colour. */
+		const [ruleColour, ink] = await Promise.all([
+			rule.evaluate((el) => getComputedStyle(el).backgroundColor),
+			page.locator('h2').evaluate((el) => getComputedStyle(el).color)
+		]);
+		expect(ruleColour).toBe(ink);
+
+		await expect(
+			page.getByText('It slipped out of your hand on the stairs. The screen is a spiderweb.')
+		).toHaveClass(/leading-snug/);
+
+		await expectNoAxeViolations(page, 'the shock card');
+	});
+
+	test('risk-moment: the odds are promoted above the prose', async ({ page }) => {
+		await seedRun(page, RISK_RUN);
+		await expect(page.getByRole('heading', { name: 'Cover, or risk it' })).toBeVisible();
+
+		const odds = page.getByText('About 1 in 3 of phones this age take a knock this year.');
+		await expect(odds).toBeVisible();
+		await expect(odds).toHaveClass(/figure/);
+
+		/* Promoted, not appended: the odds read before the situation. */
+		const order = await page.evaluate(() => {
+			const text = document.body.innerText;
+			return [
+				text.indexOf('About 1 in 3 of phones this age take a knock this year.'),
+				text.indexOf('Your phone is still in one piece')
+			];
+		});
+		expect(order[0], 'the odds are missing').toBeGreaterThanOrEqual(0);
+		expect(order[0], 'the odds are not promoted').toBeLessThan(order[1]);
+
+		await expectNoAxeViolations(page, 'the risk-moment card');
+	});
+
+	test('paper: the card’s lines read as a document', async ({ page }) => {
+		await seedRun(page, PAPER_RUN);
+		await expect(page.getByRole('heading', { name: 'What is this line' })).toBeVisible();
+		await expect(
+			page.getByText('Your first full payslip shows a number you agreed to and a smaller number arriving.')
+		).toBeVisible();
+
+		const line = page.getByText('Withholding: the line between the two numbers.');
+		await expect(line).toBeVisible();
+		await expect(line).toHaveClass(/border-t/);
+		await expect(page.getByText('Hours: every hour you agreed to.')).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the paper-format card');
+	});
+
+	test('receipt: the card’s lines are itemised', async ({ page }) => {
+		await seedRun(page, RECEIPT_RUN);
+		await expect(page.getByRole('heading', { name: 'The meal deal' })).toBeVisible();
+		await expect(
+			page.getByText('The meal deal is six: sandwich, drink, snack.', { exact: false })
+		).toBeVisible();
+
+		for (const item of ['Sandwich — ◈4', 'Drink — ◈1', 'Snack — ◈1']) {
+			await expect(page.getByText(item)).toBeVisible();
+		}
+		await expect(page.getByText('Drink — ◈1')).toHaveClass(/border-dashed/);
+
+		await expectNoAxeViolations(page, 'the receipt-format card');
 	});
 });

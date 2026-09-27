@@ -1,10 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CARDS } from '../game/cards';
+import { cardFormFor } from '../game/forms';
 import { CROSS_RUN_MILESTONE_IDS } from '../game/journal';
 import { MILESTONE_IDS } from '../game/milestones';
 import {
 	CARD_KEY_PREFIX,
+	cardLineKey,
 	cardOddsKey,
 	cardSituationKey,
 	cardTitleKey,
@@ -64,6 +66,12 @@ function allowedCardKeys(): Set<string> {
 		// A Reaction is optional (ADR-0004); the orphan gate allows it wherever
 		// a real Choice exists, and the key-set parity test covers it ×3.
 		for (const choice of card.choices) allowed.add(choiceReactionKey(card.id, choice.id));
+		// A Card Format's extra lines (fun-pass ticket 05) are allowed exactly
+		// where the forms map counts them; `forms.test.ts` holds the rest.
+		const form = cardFormFor(card.id);
+		if (form) {
+			for (let n = 1; n <= form.lines; n++) allowed.add(cardLineKey(card.id, n));
+		}
 	}
 	return allowed;
 }

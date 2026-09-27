@@ -15,6 +15,7 @@
 	import type { Action, RunState } from '$lib/game/types';
 	import { conceptLabel, milestoneLabel, stageName } from '$lib/i18n/game-text';
 	import { m } from '$lib/i18n/messages';
+	import Avatar from './Avatar.svelte';
 	import BeatArt from './BeatArt.svelte';
 	import EventStep from './EventStep.svelte';
 	import Money from './Money.svelte';
@@ -59,46 +60,57 @@
 {#if review}
 	<div class="mt-5">
 		<section class="surface px-4 py-3" aria-labelledby="stage-up-review-title">
-			<p class="kicker text-[var(--money)]" id="stage-up-review-title">
-				{m.stage_up_review_title({ year: review.year })}
-			</p>
+			<div class="flex flex-wrap items-start gap-4">
+				<!-- Fun-pass ticket 05 (design §3.6): the avatar gains presence on
+				     the Stage-up — larger, beside the Year in Review. Decoration
+				     only; the record below carries every word. -->
+				<div class="h-24 w-24 shrink-0 rounded-full bg-[var(--wash)] p-2.5 text-[var(--ink-40)]">
+					<Avatar stage={run.stage} />
+				</div>
 
-			<div class="mt-2 flex flex-col">
-				{#if review.netWorth !== null}
-					<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-1">
-						<span class="text-sm text-[var(--muted)]">{m.story_row_net_worth()}</span>
-						<Money amount={review.netWorth} size="md" />
+				<div class="min-w-0 flex-1">
+					<p class="kicker text-[var(--money)]" id="stage-up-review-title">
+						{m.stage_up_review_title({ year: review.year })}
+					</p>
+
+					<div class="mt-2 flex flex-col">
+						{#if review.netWorth !== null}
+							<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-1">
+								<span class="text-sm text-[var(--muted)]">{m.story_row_net_worth()}</span>
+								<Money amount={review.netWorth} size="md" />
+							</div>
+						{/if}
+						{#if review.change !== null}
+							<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-1">
+								<span class="text-sm text-[var(--muted)]">{m.stage_up_review_change()}</span>
+								<Money
+									amount={review.change}
+									size="sm"
+									tone={review.change >= 0 ? 'up' : 'down'}
+									sign
+								/>
+							</div>
+						{/if}
+						<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-1">
+							<span class="text-sm text-[var(--muted)]">{m.story_row_adherence()}</span>
+							<span class="figure text-sm">
+								{m.story_months_of_12({ months: review.monthsInsideBudget })}
+							</span>
+						</div>
 					</div>
-				{/if}
-				{#if review.change !== null}
-					<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-1">
-						<span class="text-sm text-[var(--muted)]">{m.stage_up_review_change()}</span>
-						<Money
-							amount={review.change}
-							size="sm"
-							tone={review.change >= 0 ? 'up' : 'down'}
-							sign
-						/>
-					</div>
-				{/if}
-				<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-1">
-					<span class="text-sm text-[var(--muted)]">{m.story_row_adherence()}</span>
-					<span class="figure text-sm">
-						{m.story_months_of_12({ months: review.monthsInsideBudget })}
-					</span>
+
+					{#if review.milestones.length}
+						<div class="mt-1 border-t border-dashed border-[var(--line)] pt-2">
+							<p class="kicker">{m.stage_up_review_milestones()}</p>
+							<ul class="mt-1 flex flex-col">
+								{#each review.milestones as id (id)}
+									<li class="py-0.5 text-sm">{milestoneLabel(id)}</li>
+								{/each}
+							</ul>
+						</div>
+					{/if}
 				</div>
 			</div>
-
-			{#if review.milestones.length}
-				<div class="mt-1 border-t border-dashed border-[var(--line)] pt-2">
-					<p class="kicker">{m.stage_up_review_milestones()}</p>
-					<ul class="mt-1 flex flex-col">
-						{#each review.milestones as id (id)}
-							<li class="py-0.5 text-sm">{milestoneLabel(id)}</li>
-						{/each}
-					</ul>
-				</div>
-			{/if}
 		</section>
 	</div>
 {/if}

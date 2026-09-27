@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { CARDS, cardById } from '$lib/game/cards';
-import { choiceReactionKey } from './card-keys';
-import { hasMessage } from './messages';
+import { cardLineKey, choiceReactionKey } from './card-keys';
+import { hasMessage, message } from './messages';
 import {
+	cardLines,
 	chosenFeedback,
 	chosenFeedbackParts,
 	choiceFeedback,
@@ -75,5 +76,18 @@ describe('the Reaction/Why seam (ADR-0004, ticket 01)', () => {
 		expect(chosenFeedbackParts(null, 'spend')).toBeNull();
 		expect(chosenFeedbackParts(card, null)).toBeNull();
 		expect(chosenFeedbackParts(card, 'not_a_choice')).toBeNull();
+	});
+
+	it('resolves a formatted card’s lines in reading order, and none for a plain card (ticket 05)', () => {
+		const formatted = cardById('meal_deal');
+		const plain = cardById('two_wants');
+		if (!formatted || !plain) throw new Error('fixture cards moved');
+
+		expect(cardLines(formatted)).toEqual([
+			message(cardLineKey('meal_deal', 1)),
+			message(cardLineKey('meal_deal', 2)),
+			message(cardLineKey('meal_deal', 3))
+		]);
+		expect(cardLines(plain)).toEqual([]);
 	});
 });

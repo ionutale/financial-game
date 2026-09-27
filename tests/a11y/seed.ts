@@ -205,6 +205,29 @@ export const NO_BUDGET_RUN: RunState = {
 /** A run carrying state chips (the BNPL pill), so their contrast is gated. */
 export const CHIP_RUN: RunState = { ...PLAN_RUN, bnpl: { amount: 30, monthsLeft: 2 } };
 
+/**
+ * Fun-pass ticket 05: one card per format family (message / paper / receipt)
+ * and per kind the shipped screens do not already carry (shock / risk-moment /
+ * scam; decision and stage-up are everywhere). Each is a real deck card forced
+ * at month 1 through the reducer, the way LEDGER_RUN forces two_wants.
+ */
+function forcedCard(id: string): RunState {
+	return seededRun({ type: 'DISMISS_INTRO' }, { type: 'FORCE_CARD', id }, { type: 'CONFIRM_PLAN' });
+}
+
+/** decision + message: Danny's app, with the thread line. */
+export const MESSAGE_RUN = forcedCard('app_tip');
+/** scam + message: the refund text, framed as the sender's own message. */
+export const SCAM_RUN = forcedCard('refund_text');
+/** decision + paper: the first taxed payslip, as a document. */
+export const PAPER_RUN = forcedCard('first_taxed_payslip');
+/** decision + receipt: the meal deal, itemised. */
+export const RECEIPT_RUN = forcedCard('meal_deal');
+/** shock: the cracked phone — no beat art, so the top rule is the only mark. */
+export const SHOCK_RUN = forcedCard('phone_cracked');
+/** risk-moment: the phone cover, with the odds promoted. */
+export const RISK_RUN = forcedCard('insurance_offer');
+
 function availableChoice(state: RunState) {
 	const choice = state.card?.choices.find(
 		(c) => (c.freeTime ?? 0) >= 0 || Math.abs(c.freeTime ?? 0) <= state.freeTime

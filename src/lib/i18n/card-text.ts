@@ -4,7 +4,9 @@
  * prose lives in TypeScript.
  */
 import type { Card, Choice } from '$lib/game/types';
+import { cardFormFor } from '$lib/game/forms';
 import {
+	cardLineKey,
 	cardOddsKey,
 	cardSituationKey,
 	cardTitleKey,
@@ -26,6 +28,20 @@ export function cardSituation(card: Card): string {
 export function cardOdds(card: Card): string | null {
 	const key = cardOddsKey(card.id);
 	return hasMessage(key) ? message(key) : null;
+}
+
+/**
+ * The extra prose a Card Format adds (fun-pass ticket 05, design §3.6), in
+ * reading order; empty for a card with no format. The words are the
+ * catalogue's `card_<id>_line_<n>` keys, resolved like every other card word —
+ * the format decides how they are arranged, never what they say.
+ */
+export function cardLines(card: Card): string[] {
+	const form = cardFormFor(card.id);
+	if (!form) return [];
+	return Array.from({ length: form.lines }, (_, index) =>
+		message(cardLineKey(card.id, index + 1))
+	);
 }
 
 export function choiceLabel(card: Card, choice: Choice): string {

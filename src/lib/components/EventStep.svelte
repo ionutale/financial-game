@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { beatArtFor } from '$lib/game/beats';
 	import { formatMoney } from '$lib/game/economy';
+	import { cardFormFor } from '$lib/game/forms';
 	import type { LedgerEntry } from '$lib/game/ledger';
 	import { isFirstEncounter } from '$lib/game/presentation';
 	import type { Action, Choice, RunState } from '$lib/game/types';
 	import {
+		cardLines,
 		cardOdds,
 		cardSituation,
 		cardTitle,
@@ -26,6 +28,11 @@
 
 	const locale = getLocale();
 	const card = $derived(run.card);
+	const title = $derived(card ? cardTitle(card) : '');
+	const situation = $derived(card ? cardSituation(card) : '');
+	const odds = $derived(card ? cardOdds(card) : null);
+	const form = $derived(card ? cardFormFor(card.id) : null);
+	const lines = $derived(card ? cardLines(card) : []);
 	/*
 	 * The two parts of the Feedback (ADR-0004, ticket 02): the Reaction first,
 	 * then the Why under "Why it happened". The Why opens by itself at the
@@ -35,6 +42,17 @@
 	 */
 	const feedback = $derived(chosenFeedbackParts(card, run.chosen));
 	const whyOpen = $derived(isFirstEncounter(run));
+
+	/*
+	 * Kind identity is typography only (design §3.6, fun-pass ticket 05): the
+	 * shock opens under a heavy ink rule and sets its prose tight; the scam
+	 * reads as a message, its own title the weighted sender line; the
+	 * risk-moment promotes its odds above the prose; the stage-up is a poster;
+	 * the decision stays plain. Colour never carries the kind — the kicker
+	 * always names it in words.
+	 */
+	const tight = $derived(card?.kind === 'shock');
+	const proseLeading = $derived(tight ? 'leading-snug' : 'leading-relaxed');
 
 	function blocked(c: Choice): boolean {
 		const hours = c.freeTime ?? 0;
@@ -51,8 +69,75 @@
 	}
 </script>
 
+<!--
+	The Card Formats (design §3.6, fun-pass ticket 05): the diegetic shape the
+	card's own words are set into — a chat thread, a document sheet, an itemised
+	block. The arrangement only rearranges: `situation` is the card's shipped
+	catalogue line, `lines` are its `card_<id>_line_<n>` extras, and the heading
+	and choices below are untouched. Reading order stays linear.
+-->
+{#snippet messageThread()}
+	<div class="mt-3 flex flex-col items-start gap-2">
+		<p
+			class="w-fit max-w-full rounded-2xl rounded-bl-sm border border-[var(--line)] bg-[var(--surface)] px-3.5 py-2.5 text-[15px] {proseLeading}"
+		>
+			{situation}
+		</p>
+		{#each lines as line, index (index)}
+			<p
+				class="w-fit max-w-full rounded-2xl rounded-bl-sm border border-[var(--line)] bg-[var(--surface)] px-3.5 py-2.5 text-[15px] {proseLeading}"
+			>
+				{line}
+			</p>
+		{/each}
+	</div>
+{/snippet}
+
+{#snippet paperSheet()}
+	<div class="mt-3 border-y border-[var(--line)]">
+		<p class="py-3 text-[15px] {proseLeading}">{situation}</p>
+		{#each lines as line, index (index)}
+			<p class="border-t border-[var(--line)] py-3 text-[15px] {proseLeading}">{line}</p>
+		{/each}
+	</div>
+{/snippet}
+
+{#snippet receiptBlock()}
+	<div class="mt-3">
+		<p class="text-[15px] {proseLeading}">{situation}</p>
+		<div class="mt-3 border-t border-dashed border-[var(--line)]">
+			{#each lines as line, index (index)}
+				<p class="border-b border-dashed border-[var(--line)] py-2 text-sm leading-snug">
+					{line}
+				</p>
+			{/each}
+		</div>
+	</div>
+{/snippet}
+
+{#snippet cardBody()}
+	{#if form?.format === 'message'}
+		{@render messageThread()}
+	{:else if form?.format === 'paper'}
+		{@render paperSheet()}
+	{:else if form?.format === 'receipt'}
+		{@render receiptBlock()}
+	{:else}
+		<p class="mt-3 text-[15px] {proseLeading}">{situation}</p>
+	{/if}
+{/snippet}
+
+{#snippet oddsPromoted()}
+	<p class="figure mt-3 rounded-lg border border-[var(--line)] px-3 py-2 text-sm leading-snug">
+		{odds}
+	</p>
+{/snippet}
+
+{#snippet oddsTail()}
+	<p class="mt-3 border-l-2 border-[var(--line)] pl-3 text-xs text-[var(--muted)]">{odds}</p>
+{/snippet}
+
 {#if card}
-	{@const odds = cardOdds(card)}
 	<!-- Art only at the beats (ticket 30), never on every card; the Fork's own
 	     illustration belongs to StageUp, which renders this component too. -->
 	{@const art = card.kind === 'stage_up' ? null : beatArtFor(card.id)}
@@ -63,14 +148,34 @@
 			</div>
 		{/if}
 
-		<p class="kicker">{kindLabel(card.kind)}</p>
-		<h2 class="mt-2 text-xl leading-snug font-semibold tracking-tight">{cardTitle(card)}</h2>
-		<p class="mt-3 text-[15px] leading-relaxed">{cardSituation(card)}</p>
+		{#if card.kind === 'shock'}
+			<!-- The shock's top rule is ink, like its words: a typographic mark,
+			     nothing for assistive tech to announce. -->
+			<div class="mb-4 h-[3px] w-full bg-[var(--ink)]" aria-hidden="true"></div>
+		{/if}
 
-		{#if odds}
-			<p class="mt-3 border-l-2 border-[var(--line)] pl-3 text-xs text-[var(--muted)]">
-				{odds}
-			</p>
+		<p class="kicker">{kindLabel(card.kind)}</p>
+
+		{#if card.kind === 'scam'}
+			<!-- The scam reads as a message: a neutral frame, and the card's own
+			     title as the weighted sender line inside it. -->
+			<div class="mt-2 rounded-xl bg-[var(--wash)] px-4 py-3.5">
+				<h2 class="text-lg leading-snug font-bold tracking-tight">{title}</h2>
+				{@render cardBody()}
+				{#if odds}{@render oddsTail()}{/if}
+			</div>
+		{:else}
+			<h2
+				class={card.kind === 'stage_up'
+					? 'mt-2 text-3xl leading-[1.08] font-extrabold tracking-tight text-balance'
+					: 'mt-2 text-xl leading-snug font-semibold tracking-tight'}
+			>
+				{title}
+			</h2>
+
+			{#if odds && card.kind === 'risk_moment'}{@render oddsPromoted()}{/if}
+			{@render cardBody()}
+			{#if odds && card.kind !== 'risk_moment'}{@render oddsTail()}{/if}
 		{/if}
 
 		{#if !run.chosen}

@@ -16,3 +16,10 @@ export const choiceFeedbackKey = (cardId: string, choiceId: string): string =>
 /** The optional Reaction (ADR-0004); absent means today's single-paragraph Feedback. */
 export const choiceReactionKey = (cardId: string, choiceId: string): string =>
 	`${CARD_KEY_PREFIX}${cardId}_choice_${choiceId}_reaction`;
+
+/**
+ * The optional extra line a Card Format arranges around the card (fun-pass
+ * ticket 05); a card's arrangement and its line count live in `game/forms.ts`.
+ */
+export const cardLineKey = (cardId: string, line: number): string =>
+	`${CARD_KEY_PREFIX}${cardId}_line_${line}`;

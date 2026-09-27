@@ -6,6 +6,7 @@ import {
 	FEEDBACK_RUN,
 	FINAL_MONTH_RUN,
 	LEDGER_RUN,
+	MESSAGE_RUN,
 	PLAN_RUN,
 	STAGE_UP_RUN
 } from './seed';
@@ -58,6 +59,13 @@ test.describe('zoom and reflow (proxy checks)', () => {
 				await page.locator('section button').first().click();
 			},
 			'Want −◈40'
+		],
+		[
+			'the message-format card',
+			async (page) => {
+				await seedRun(page, MESSAGE_RUN);
+			},
+			'Danny has an app'
 		],
 		[
 			'the Stage-up and its Year in Review',
