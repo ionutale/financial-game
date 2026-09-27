@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { playCue } from '$lib/audio/sfx';
 	import { beatArtFor } from '$lib/game/beats';
 	import { formatMoney } from '$lib/game/economy';
+	import type { LedgerEntry } from '$lib/game/ledger';
 	import { isFirstEncounter } from '$lib/game/presentation';
 	import type { Action, Choice, RunState } from '$lib/game/types';
 	import {
@@ -12,12 +12,17 @@
 		choiceLabel
 	} from '$lib/i18n/card-text';
 	import { chipsFor } from '$lib/i18n/chips';
-	import { kindLabel } from '$lib/i18n/game-text';
+	import { kindLabel, ledgerAccountLabel } from '$lib/i18n/game-text';
 	import { m } from '$lib/i18n/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import BeatArt from './BeatArt.svelte';
+	import Money from './Money.svelte';
 
-	let { run, dispatch }: { run: RunState; dispatch: (a: Action) => void } = $props();
+	let {
+		run,
+		dispatch,
+		ledger = null
+	}: { run: RunState; dispatch: (a: Action) => void; ledger?: LedgerEntry[] | null } = $props();
 
 	const locale = getLocale();
 	const card = $derived(run.card);
@@ -36,9 +41,13 @@
 		return hours < 0 && Math.abs(hours) > run.freeTime;
 	}
 
-	function choose(choiceId: string) {
-		playCue('choice');
-		dispatch({ type: 'CHOOSE', choiceId });
+	/*
+	 * Colour supports the sign, never carries it: money in reads up, money out
+	 * reads down, and Debt runs the other way — growing is down, repaid is up.
+	 */
+	function ledgerTone(entry: LedgerEntry): 'up' | 'down' {
+		if (entry.key === 'debt') return entry.amount > 0 ? 'down' : 'up';
+		return entry.amount > 0 ? 'up' : 'down';
 	}
 </script>
 
@@ -73,7 +82,7 @@
 						class="group w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3.5 text-left transition
 							{off ? 'opacity-40' : 'hover:border-[var(--ink-25)] active:scale-[0.995]'}"
 						disabled={off}
-						onclick={() => choose(c.id)}
+						onclick={() => dispatch({ type: 'CHOOSE', choiceId: c.id })}
 					>
 						<span class="block text-[15px] font-medium">{choiceLabel(card, c)}</span>
 						<span class="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -104,7 +113,49 @@
 				{#if feedback.reaction}
 					<p class="kicker">{m.event_what_happened()}</p>
 					<p class="mt-2 text-[15px] leading-relaxed">{feedback.reaction}</p>
+				{:else}
+					<!-- No Reaction authored: today's exact rendering, byte for byte. -->
+					<p class="kicker">{m.event_what_happened()}</p>
+					<p class="mt-2 text-[15px] leading-relaxed">{feedback.why}</p>
+				{/if}
 
+				{#if ledger && ledger.length}
+					<!--
+						The Ledger Line (fun-pass ticket 04, design §3.3): what the
+						Choice actually moved — the changed entries only, diffed at the
+						Month Screen edge from the reducer's before/after. Signs and
+						words carry the meaning; the changed figure flashes once
+						(app.css) and the final values are always in this DOM. It sits
+						in the existing polite region, so it is announced once, with
+						the Reaction.
+					-->
+					<p
+						id="ledger-line"
+						class="money-flash mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-md px-1 py-0.5 text-sm"
+					>
+						{#each ledger as entry, i (entry.key)}
+							{#if i > 0}
+								<span class="text-[var(--muted)]" aria-hidden="true">·</span>
+							{/if}
+							<span class="whitespace-nowrap">
+								{ledgerAccountLabel(entry.key)}
+								{#if entry.key === 'freeTime'}
+									<span
+										class="figure {ledgerTone(entry) === 'up'
+											? 'text-[var(--up)]'
+											: 'text-[var(--down)]'}"
+									>
+										{entry.amount > 0 ? '+' : '\u2212'}{Math.abs(entry.amount)}h
+									</span>
+								{:else}
+									<Money amount={entry.amount} size="sm" tone={ledgerTone(entry)} sign />
+								{/if}
+							</span>
+						{/each}
+					</p>
+				{/if}
+
+				{#if feedback.reaction}
 					<!--
 						The Why is a disclosure, not a hidden lesson (ADR-0004):
 						open at the Concept's first encounter, collapsed after. The
@@ -117,21 +168,17 @@
 						</summary>
 						<p class="mt-2 text-sm leading-relaxed text-[var(--muted)]">{feedback.why}</p>
 					</details>
-				{:else}
-					<!-- No Reaction authored: today's exact rendering, byte for byte. -->
-					<p class="kicker">{m.event_what_happened()}</p>
-					<p class="mt-2 text-[15px] leading-relaxed">{feedback.why}</p>
 				{/if}
 
 				{#if run.cascade && run.cascade.toDebt > 0}
-					<p class="mt-3 text-[13px] text-[var(--down)]">
+					<p class="cascade-travel mt-3 text-[13px] text-[var(--down)]">
 						{m.event_cascade_debt({
 							from: formatMoney(run.cascade.fromSave, locale),
 							to: formatMoney(run.cascade.toDebt, locale)
 						})}
 					</p>
 				{:else if run.cascade && run.cascade.fromSave > 0}
-					<p class="mt-3 text-[13px] text-[var(--down)]">
+					<p class="cascade-travel mt-3 text-[13px] text-[var(--down)]">
 						{m.event_cascade_save({ from: formatMoney(run.cascade.fromSave, locale) })}
 					</p>
 				{/if}

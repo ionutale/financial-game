@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+	cueAudible,
 	playCue,
+	previewCue,
 	readSfxEnabled,
 	scheduleCue,
 	setSfxEnabled,
+	sfxEnabled,
 	SFX_CUES,
 	SFX_STORAGE_KEY,
 	writeSfxEnabled,
@@ -124,13 +127,15 @@ function fakeContext() {
 	return { ctx, oscillators, gains };
 }
 
-describe('the cue bank (ticket 30)', () => {
-	it('is five cues, every note quiet, tonal and time-ordered', () => {
+describe('the cue bank (ticket 30, fun-pass ticket 04)', () => {
+	it('is seven cues, every note quiet, tonal and time-ordered', () => {
 		expect(Object.keys(SFX_CUES).sort()).toEqual([
 			'choice',
 			'crash',
+			'deal',
 			'milestone',
 			'month_close',
+			'payoff',
 			'stage_up'
 		]);
 		for (const [cue, notes] of Object.entries(SFX_CUES)) {
@@ -208,6 +213,22 @@ describe('the cue bank (ticket 30)', () => {
 		expect(events[1]).toEqual({ kind: 'exponential', value: note.glide, at: note.duration });
 	});
 
+	it('rises to close a payoff (fun-pass ticket 04)', () => {
+		// Anticipation then closure: the last note is the highest and the
+		// longest, and the whole cue is still a breath, not a fanfare.
+		const notes = SFX_CUES.payoff;
+		expect(notes.length).toBeGreaterThanOrEqual(2);
+		const last = notes[notes.length - 1];
+		for (const note of notes) expect(last.freq).toBeGreaterThanOrEqual(note.freq);
+		expect(last.duration).toBeGreaterThanOrEqual(notes[0].duration);
+	});
+
+	it('announces a dealt card with two soft notes (fun-pass ticket 04)', () => {
+		const notes = SFX_CUES.deal;
+		expect(notes).toHaveLength(2);
+		expect(notes[1].freq).toBeGreaterThan(notes[0].freq);
+	});
+
 	it('stays silent when sound is off, or when Web Audio is unavailable', () => {
 		setSfxEnabled(false);
 		expect(() => playCue('choice')).not.toThrow();
@@ -216,5 +237,18 @@ describe('the cue bank (ticket 30)', () => {
 		setSfxEnabled(true);
 		expect(() => playCue('choice')).not.toThrow();
 		setSfxEnabled(false);
+	});
+
+	it('lets a preview sound while the game is muted, without un-muting it', () => {
+		// The Settings previews are the one deliberate ask that bypasses the
+		// stored preference; the preference itself is never written by a preview.
+		expect(cueAudible(false, false)).toBe(false);
+		expect(cueAudible(false, true)).toBe(true);
+		expect(cueAudible(true, false)).toBe(true);
+
+		setSfxEnabled(false);
+		expect(() => previewCue('deal')).not.toThrow();
+		expect(() => previewCue('payoff')).not.toThrow();
+		expect(sfxEnabled()).toBe(false);
 	});
 });

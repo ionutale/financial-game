@@ -72,6 +72,26 @@ export const MILESTONE_RUN: RunState = seededRun(
 );
 
 /**
+ * The receipt's conditional tail (fun-pass ticket 04): the same real close,
+ * carrying a Debt line and a Fund row. Old saves can hold both fields (the
+ * Fund has always existed; Debt is any cascade month), so the gate must see
+ * the rows they render.
+ */
+export const CLOSE_DEBT_FUND_RUN: RunState = { ...MILESTONE_RUN, debt: 45, fund: 250 };
+
+/**
+ * A month whose Choice spends a planned envelope (fun-pass ticket 04): the
+ * Ledger Line is computed live at the Month Screen edge, so the gate has to
+ * take the Choice itself — one tap that moves ◈40 out of Want and nothing else.
+ */
+export const LEDGER_RUN: RunState = seededRun(
+	{ type: 'DISMISS_INTRO' },
+	{ type: 'SET_WANT', amount: 40 },
+	{ type: 'FORCE_CARD', id: 'two_wants' },
+	{ type: 'CONFIRM_PLAN' }
+);
+
+/**
  * A Run played to the Stage-5 Fork through the real reducer (gamification
  * ticket 02), resolving every Stage-up on the way (fun-pass ticket 02), so the
  * Fork carries the year 4→5 Year in Review with real months behind it. The

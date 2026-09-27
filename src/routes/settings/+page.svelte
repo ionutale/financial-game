@@ -4,8 +4,11 @@
 	 * Download hits the export route; Delete removes the stored Run and expires the
 	 * cookie behind a typed confirmation, then returns the player to a fresh Run.
 	 * Ticket 30 adds the sound toggle: a preference, off by default, never run data.
+	 * Fun-pass ticket 04 puts the bank's previews beside it — a deliberate ask may
+	 * sound while the game is muted, and the preference is never written by one.
 	 */
 	import { goto } from '$app/navigation';
+	import CuePreviews from '$lib/components/CuePreviews.svelte';
 	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 	import SoundToggle from '$lib/components/SoundToggle.svelte';
 	import { localizedHref } from '$lib/i18n/href';
@@ -93,6 +96,16 @@
 			     the state is carried by aria-checked and the On/Off word, never by
 			     colour alone (ticket 13/14). -->
 			<SoundToggle labelledBy="settings-sound-label" />
+		</div>
+
+		<!-- The bank's previews (fun-pass ticket 04): a deliberate ask may play
+		     while the game is muted; the toggle above stays the source of truth. -->
+		<div class="mt-5 border-t border-dashed border-[var(--line)] pt-4">
+			<p class="kicker" id="settings-preview">{m.settings_preview_kicker()}</p>
+			<p class="mt-1 text-xs leading-relaxed text-[var(--muted)]">{m.settings_preview_note()}</p>
+			<div class="mt-3">
+				<CuePreviews labelledBy="settings-preview" />
+			</div>
 		</div>
 	</section>
 

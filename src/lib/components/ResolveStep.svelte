@@ -20,11 +20,18 @@
 	 * record, so the line cannot repeat in a later month.
 	 */
 	const milestones = $derived(milestonesNewThisMonth(run).map(milestoneLabel));
+	/*
+	 * The receipt's tail (fun-pass ticket 04, design §3.3): a Debt line
+	 * whenever Debt is non-zero, and the Fund row only when the Fund holds
+	 * money — with `fund: 0` it must not render (ticket 09 grows the Fund).
+	 */
+	const debt = $derived(run.debt);
+	const fund = $derived(run.fund);
 
 	/*
 	 * The close appears only after CONTINUE, so nothing is still being read
 	 * when it arrives. Focus the heading rather than live-announcing the whole
-	 * sheet: the heading names the screen, and Tab from it lands on Next month
+	 * sheet: the heading names the screen, and Tab from it lands on Next
 	 * (ticket 14: a labelled region that receives focus, no focus trap).
 	 */
 	let heading = $state<HTMLHeadingElement | null>(null);
@@ -53,11 +60,26 @@
 			<Money amount={change} size="hero" tone={change >= 0 ? 'up' : 'down'} sign />
 		</div>
 
+		<!--
+			The receipt (fun-pass ticket 04): the same rows, no figures removed
+			and nothing folded, grouped In / Out / Next month so the month reads
+			like a receipt. The Debt and Fund rows report the balances the Run
+			carries into next month, and only when they are real.
+		-->
 		<div class="mt-6 flex flex-col">
+			<p class="kicker">{m.resolve_group_in()}</p>
 			<div class="flex items-baseline justify-between border-b border-dashed border-[var(--line)] py-2">
 				<span class="text-sm text-[var(--muted)]">{m.resolve_income()}</span>
 				<span class="figure text-sm">{formatMoney(close.income, locale)}</span>
 			</div>
+			<div class="flex items-baseline justify-between py-2">
+				<span class="text-sm text-[var(--muted)]">{m.resolve_interest()}</span>
+				<span class="figure text-sm {close.interest > 0 ? 'text-[var(--up)]' : ''}">
+					{formatMoneyExact(close.interest, locale)}
+				</span>
+			</div>
+
+			<p class="kicker mt-5">{m.resolve_group_out()}</p>
 			<div class="flex items-baseline justify-between border-b border-dashed border-[var(--line)] py-2">
 				<span class="text-sm text-[var(--muted)]">{m.resolve_needs()}</span>
 				<span class="figure text-sm {close.adherence.need ? '' : 'text-[var(--down)]'}">
@@ -70,28 +92,44 @@
 					{formatMoney(close.spentWant, locale)}{close.adherence.want ? '' : m.resolve_over()}
 				</span>
 			</div>
-			<div class="flex items-baseline justify-between border-b border-dashed border-[var(--line)] py-2">
+			<div
+				class="flex items-baseline justify-between border-b border-dashed border-[var(--line)] py-2"
+			>
 				<span class="text-sm text-[var(--muted)]">{m.resolve_obligations()}</span>
 				<span class="figure text-sm">{formatMoney(close.obligations, locale)}</span>
 			</div>
 			{#if close.bnpl}
-				<div class="flex items-baseline justify-between border-b border-dashed border-[var(--line)] py-2">
+				<div class="flex items-baseline justify-between py-2">
 					<span class="text-sm text-[var(--muted)]">{m.resolve_bnpl()}</span>
 					<span class="figure text-sm">
 						{formatMoney(close.bnpl.fromCash + close.bnpl.fromSavings + close.bnpl.toDebt, locale)}
 					</span>
 				</div>
 			{/if}
-			<div class="flex items-baseline justify-between border-b border-dashed border-[var(--line)] py-2">
-				<span class="text-sm text-[var(--muted)]">{m.resolve_interest()}</span>
-				<span class="figure text-sm {close.interest > 0 ? 'text-[var(--up)]' : ''}">
-					{formatMoneyExact(close.interest, locale)}
-				</span>
-			</div>
-			<div class="flex items-baseline justify-between py-2">
+
+			<p class="kicker mt-5">{m.resolve_group_next()}</p>
+			<div
+				class="flex items-baseline justify-between py-2
+					{debt > 0 || fund > 0 ? 'border-b border-dashed border-[var(--line)]' : ''}"
+			>
 				<span class="text-sm text-[var(--muted)]">{m.resolve_next_obligations()}</span>
 				<span class="figure text-sm">{formatMoney(close.nextObligations, locale)}</span>
 			</div>
+			{#if debt > 0}
+				<div
+					class="flex items-baseline justify-between py-2
+						{fund > 0 ? 'border-b border-dashed border-[var(--line)]' : ''}"
+				>
+					<span class="text-sm text-[var(--muted)]">{m.stats_row_debt()}</span>
+					<span class="figure text-sm text-[var(--down)]">{formatMoney(debt, locale)}</span>
+				</div>
+			{/if}
+			{#if fund > 0}
+				<div class="flex items-baseline justify-between py-2">
+					<span class="text-sm text-[var(--muted)]">{m.stats_row_fund()}</span>
+					<span class="figure text-sm">{formatMoneyExact(fund, locale)}</span>
+				</div>
+			{/if}
 		</div>
 
 		{#if over}

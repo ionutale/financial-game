@@ -10,6 +10,7 @@
 	 */
 	import { beatArtFor } from '$lib/game/beats';
 	import { STAGES } from '$lib/game/economy';
+	import type { LedgerEntry } from '$lib/game/ledger';
 	import { stageUpReview } from '$lib/game/milestones';
 	import type { Action, RunState } from '$lib/game/types';
 	import { conceptLabel, milestoneLabel, stageName } from '$lib/i18n/game-text';
@@ -18,7 +19,11 @@
 	import EventStep from './EventStep.svelte';
 	import Money from './Money.svelte';
 
-	let { run, dispatch }: { run: RunState; dispatch: (a: Action) => void } = $props();
+	let {
+		run,
+		dispatch,
+		ledger = null
+	}: { run: RunState; dispatch: (a: Action) => void; ledger?: LedgerEntry[] | null } = $props();
 
 	const stage = $derived(STAGES[run.stage]);
 	const name = $derived(stageName(run.stage));
@@ -98,7 +103,7 @@
 	</div>
 {/if}
 
-<EventStep {run} {dispatch} />
+<EventStep {run} {dispatch} {ledger} />
 
 <style>
 	/* The banner sits above the card with the month screen's rhythm. */

@@ -10,6 +10,7 @@ import {
 	type ConceptCoverageState,
 	type CrossRunMilestoneId
 } from '$lib/game/journal';
+import type { LedgerEntryKey } from '$lib/game/ledger';
 import type { MilestoneId } from '$lib/game/milestones';
 import type { CardKind, ConceptId, PathId, RunState } from '$lib/game/types';
 import type { ComparisonId, OutcomeBand } from '$lib/game/metrics';
@@ -77,6 +78,30 @@ export function threadChipText(id: string, months: number): string {
 		payoff: threadPayoff(id),
 		when
 	});
+}
+
+/**
+ * The Ledger Line's account name (fun-pass ticket 04). The accounts the game
+ * already names keep their shipped words — Cash, Savings, Fund, Debt, Free
+ * time — so the line and the rest of the screen agree.
+ */
+const LEDGER_KEYS: Record<LedgerEntryKey, string> = {
+	cash: 'hud_cash',
+	need: 'ledger_need',
+	want: 'ledger_want',
+	save: 'stats_row_savings',
+	fund: 'stats_row_fund',
+	debt: 'stats_row_debt',
+	freeTime: 'hud_free_time'
+};
+
+export function ledgerAccountLabel(key: LedgerEntryKey): string {
+	return message(LEDGER_KEYS[key]);
+}
+
+/** The HUD's one authored Life Line for a Stage (fun-pass ticket 04). */
+export function lifeLine(stage: number): string {
+	return message(`hud_life_stage_${stage}`);
 }
 
 /** The chip for the Run's live Thread, or null when none is live. */

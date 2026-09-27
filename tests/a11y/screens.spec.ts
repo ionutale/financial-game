@@ -6,11 +6,13 @@ import { bandLabel, conceptLabel, flagText, milestoneLabel } from '$lib/i18n/gam
 import { expect, expectNoAxeViolations, seedRun, test, waitForHydration } from './helpers';
 import {
 	CHIP_RUN,
+	CLOSE_DEBT_FUND_RUN,
 	DONE_STUDY_RUN,
 	DONE_WORK_RUN,
 	EVENT_RUN,
 	FEEDBACK_RUN,
 	FINAL_MONTH_RUN,
+	LEDGER_RUN,
 	MILESTONE_RUN,
 	NO_BUDGET_RUN,
 	PLAN_RUN,
@@ -50,6 +52,34 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		   part of the month loop (ADR-0003). */
 		await expect(page.getByRole('region', { name: /in review$/ })).toHaveCount(0);
 		await expectNoAxeViolations(page, 'the Plan step');
+	});
+
+	test('month screen: the HUD is You / The money / The world, with a date line', async ({
+		page
+	}) => {
+		await seedRun(page, PLAN_RUN);
+		await expect(page.getByRole('heading', { name: 'The month ahead' })).toBeVisible();
+
+		/* Fun-pass ticket 04: bands, not a dashboard — and one authored Life
+		   Line for the Stage, text only. */
+		const you = page.getByRole('group', { name: 'You' });
+		await expect(you).toBeVisible();
+		await expect(you.getByText('Age 14 · Year 1 · September')).toBeVisible();
+		await expect(you.getByText('Pocket Money')).toBeVisible();
+		await expect(
+			you.getByText('School, the bus pass, and evenings nobody has claimed yet.')
+		).toBeVisible();
+		await expect(page.getByRole('group', { name: 'The money' })).toBeVisible();
+		await expect(page.getByRole('group', { name: 'The world' })).toBeVisible();
+
+		/* The plain month counter is gone from the month screen: the date line
+		   replaced it, and nothing was removed with it. */
+		await expect(page.getByText('Month 1 of 60')).toHaveCount(0);
+		await expect(page.getByText('Net worth', { exact: true })).toBeVisible();
+		await expect(page.getByText('Cash', { exact: true })).toBeVisible();
+		await expect(page.getByText('Free time', { exact: true })).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the HUD with its bands and date line');
 	});
 
 	test('month screen: the goal ticks are decoration and the value stays text', async ({ page }) => {
@@ -178,6 +208,25 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await expectNoAxeViolations(page, 'the Feedback with the Why collapsed');
 	});
 
+	test('month screen: the Ledger Line names what the Choice actually moved', async ({ page }) => {
+		await seedRun(page, LEDGER_RUN);
+
+		/* Fun-pass ticket 04: one tap spends the planned Want envelope. */
+		await page.locator('section button').first().click();
+
+		/* The changed entries only, with the sign and the word: ◈40 left the
+		   Want envelope, and nothing else moved — so nothing else is listed. */
+		const ledger = page.locator('#ledger-line');
+		await expect(ledger).toBeVisible();
+		await expect(ledger).toHaveText('Want −◈40');
+		/* Decoration only: the flash is a class, the meaning is the text. */
+		await expect(ledger).toHaveClass(/money-flash/);
+		/* It rides the Feedback's existing polite region. */
+		await expect(page.locator('[aria-live="polite"] #ledger-line')).toHaveCount(1);
+
+		await expectNoAxeViolations(page, 'the Feedback with the Ledger Line');
+	});
+
 	test('month screen: a spine beat carries its illustration and alt text', async ({ page }) => {
 		await seedRun(page, EVENT_RUN);
 		// Month 1's spine beat is the allowance; its alt text comes from the catalogue.
@@ -218,6 +267,44 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		   colour. */
 		await expect(close).toContainText('Milestone: First month inside budget');
 		await expectNoAxeViolations(page, 'the month close with a Milestone line');
+	});
+
+	test('month screen: the close is a receipt, grouped In / Out / Next month', async ({ page }) => {
+		await seedRun(page, MILESTONE_RUN);
+		const close = page.getByRole('region', { name: 'Month 1, done' });
+		await expect(close).toBeVisible();
+
+		/* Fun-pass ticket 04: the same rows, no figures removed, grouped. */
+		await expect(close.getByText('In', { exact: true })).toBeVisible();
+		await expect(close.getByText('Income landed')).toBeVisible();
+		await expect(close.getByText('Interest credited', { exact: true })).toBeVisible();
+		await expect(close.getByText('Out', { exact: true })).toBeVisible();
+		await expect(close.getByText('Spent on needs')).toBeVisible();
+		await expect(close.getByText('Spent on wants')).toBeVisible();
+		await expect(close.getByText('Obligations paid')).toBeVisible();
+		await expect(close.getByText('Next month', { exact: true })).toBeVisible();
+		await expect(close.getByText('Next month’s obligations')).toBeVisible();
+
+		/* A Run with no Debt and no Fund shows neither row — absent, not zeroed. */
+		await expect(close.getByText('Debt', { exact: true })).toHaveCount(0);
+		await expect(close.getByText('Fund', { exact: true })).toHaveCount(0);
+
+		await expectNoAxeViolations(page, 'the receipt close without Debt or Fund');
+	});
+
+	test('month screen: the receipt carries a Debt line and a Fund row when they exist', async ({
+		page
+	}) => {
+		await seedRun(page, CLOSE_DEBT_FUND_RUN);
+		const close = page.getByRole('region', { name: 'Month 1, done' });
+		await expect(close).toBeVisible();
+
+		await expect(close.getByText('Debt', { exact: true })).toBeVisible();
+		await expect(close.getByText(formatMoney(CLOSE_DEBT_FUND_RUN.debt, 'en'))).toBeVisible();
+		await expect(close.getByText('Fund', { exact: true })).toBeVisible();
+		await expect(close.getByText(formatMoneyExact(CLOSE_DEBT_FUND_RUN.fund, 'en'))).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the receipt close with a Debt line and a Fund row');
 	});
 
 	test('month screen: stats sheet', async ({ page }) => {
@@ -505,6 +592,32 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		const reloaded = page.getByRole('switch', { name: 'Sound effects' });
 		await reloaded.click();
 		await expect(reloaded).toHaveAttribute('aria-checked', 'false');
+	});
+
+	test('settings: the cue bank is previewable while sound is off', async ({ page }) => {
+		await page.goto('/settings');
+		const toggle = page.getByRole('switch', { name: 'Sound effects' });
+		await expect(toggle).toHaveAttribute('aria-checked', 'false');
+
+		/* Fun-pass ticket 04: seven small previews, one per cue, each a 44px
+		   target. */
+		const previews = page.getByRole('group', { name: 'Hear the cues' });
+		await expect(previews.getByRole('button')).toHaveCount(7);
+		for (const button of await previews.getByRole('button').all()) {
+			const box = await button.boundingBox();
+			if (!box) throw new Error('a cue preview is not rendered');
+			expect(box.height, 'a cue preview is under 44px tall').toBeGreaterThanOrEqual(44);
+		}
+
+		/* Previews play while the game is muted, and never un-mute it: the
+		   toggle above stays the source of truth. */
+		for (const name of ['A choice', 'A card arrives', 'A thread pays off', 'The crash']) {
+			await previews.getByRole('button', { name }).click();
+		}
+		await expect(toggle).toHaveAttribute('aria-checked', 'false');
+		await expect(toggle).toContainText('Off');
+
+		await expectNoAxeViolations(page, 'Settings with the cue previews');
 	});
 
 	test('settings: the language switcher, and hreflang for every locale', async ({ page }) => {

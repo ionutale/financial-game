@@ -12,7 +12,7 @@ colour never load-bearing, light theme only, SFX only and off by default.
 | The beat map | `src/lib/game/beats.ts` | Card id → art id, plus the Money Story panel |
 | Alt text | `messages/{en,it,ro}.json`, keys `beat_art_<id>_alt` | Every piece, every locale; `beats.test.ts` enforces it |
 | The abstract silhouette | `src/lib/components/Avatar.svelte` | Pre-existing (ticket 13); ages by proportion and posture |
-| The five-cue SFX bank | `src/lib/audio/sfx.ts` | `choice`, `month_close`, `stage_up`, `crash`, `milestone`; Web Audio synthesis |
+| The seven-cue SFX bank | `src/lib/audio/sfx.ts` | `choice`, `deal`, `month_close`, `milestone`, `stage_up`, `payoff`, `crash`; Web Audio synthesis; `audio/moments.ts` maps a dispatch to its cue |
 | The sound toggle | `src/routes/settings/+page.svelte` | `role="switch"`; off by default; a `localStorage` preference |
 | Rights | `ATTRIBUTION.md` | Self-authored, dedicated CC0-1.0 |
 
@@ -49,21 +49,31 @@ piece is missing its alt text in any locale, or if two pieces share an id.
 
 ## Sound
 
-`src/lib/audio/sfx.ts` synthesises all five cues with oscillators and gain envelopes — no files, no
+`src/lib/audio/sfx.ts` synthesises all seven cues with oscillators and gain envelopes — no files, no
 licences, nothing to download.
 
 | Cue | Fires when | Sound |
 | --- | --- | --- |
 | `choice` | a Choice is tapped; also the confirmation when sound is switched on | two short triangle notes, a fifth apart |
+| `deal` | a month's card is dealt (`CONFIRM_PLAN`; fun-pass ticket 04) | two soft sine notes, a major third up |
 | `month_close` | the month close replaces the Feedback (`CONTINUE`) | two rising sine ticks |
-| `stage_up` | a Stage-up opens (`NEXT_MONTH`) | a C–E–G triangle arpeggio |
-| `crash` | the crash card is dealt (`CONFIRM_PLAN`) | one low sine sliding down |
 | `milestone` | a Month Close carries a Milestone line (`CONTINUE`); it replaces the close's ticks that month | one sine gliding up a fifth |
+| `stage_up` | a Stage-up opens (`NEXT_MONTH`) | a C–E–G triangle arpeggio |
+| `payoff` | a Thread comes back with money (fun-pass ticket 04) | a rising B–E–B triangle arpeggio, closing long |
+| `crash` | the crash card is dealt (`CONFIRM_PLAN`) | one low sine sliding down |
 
 The `milestone` cue is gamification ticket 06's one addition to the bank: the close's two ticks
 fused into a single rising note, on the same off-by-default, never-load-bearing terms. Nothing
 links it to money or progress — only a Milestone plays it — so a missed Milestone is simply silent
 and no cue ever answers a mistake.
+
+Fun-pass ticket 04 adds the two remaining cues. `deal` announces the card arriving, and the crash
+keeps its own bigger sound instead; `payoff` answers a Thread that comes back with money and
+**replaces** the tap's own `choice` cue rather than joining it. The `payoff` is positive-only by
+construction: when the ending is a scam survived, the Choice is answered in silence (`cueFor` in
+`src/lib/audio/moments.ts`). Settings also gains small preview buttons, one per cue: a preview is an
+explicit ask that sounds while the game is muted and never writes the preference, so the toggle
+stays the only thing that turns sound on.
 
 Design rules, all deliberate:
 

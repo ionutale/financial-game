@@ -1,8 +1,9 @@
 /**
- * The sound effects bank (ticket 30): five synthesised cues, off by default,
- * never load-bearing. Every cue has a visual counterpart, the bank is quiet
- * and tonal, and nothing here imports a file — Web Audio makes the sound, so
- * there is no asset to license.
+ * The sound effects bank (ticket 30; fun-pass ticket 04 adds `deal` and
+ * `payoff`): seven synthesised cues, off by default, never load-bearing.
+ * Every cue has a visual counterpart, the bank is quiet and tonal, and
+ * nothing here imports a file — Web Audio makes the sound, so there is no
+ * asset to license.
  *
  * Autoplay rules: the AudioContext is created and resumed inside a user
  * gesture, which is where every cue is played from (a choice tap, the month
@@ -45,7 +46,7 @@ export function writeSfxEnabled(
 	}
 }
 
-export type SfxCue = 'choice' | 'month_close' | 'stage_up' | 'crash' | 'milestone';
+export type SfxCue = 'choice' | 'month_close' | 'stage_up' | 'crash' | 'milestone' | 'deal' | 'payoff';
 
 export interface SfxNote {
 	freq: number;
@@ -63,9 +64,15 @@ export interface SfxNote {
 /**
  * The cue table. Frequencies are real notes so the bank stays tonal: the
  * choice is a short fifth, the month close two rising ticks, the Stage-up a
- * C–E–G arpeggio, the crash one low sine sliding down, and the milestone
+ * C–E–G arpeggio, the crash one low sine sliding down, the milestone
  * (gamification ticket 06) the close's two ticks fused into one rising note —
  * positive-only by construction, because only a Milestone plays it.
+ *
+ * Fun-pass ticket 04 adds two: the deal (a card arriving: two soft notes a
+ * major third apart) and the payoff (a Thread coming back with money: a
+ * rising B–E–B arpeggio that closes on its longest note). The payoff is
+ * positive-only by the mapping that plays it — a scam survived is answered in
+ * silence — and it replaces the tap's own cue rather than joining it.
  */
 export const SFX_CUES: Record<SfxCue, SfxNote[]> = {
 	choice: [
@@ -84,6 +91,15 @@ export const SFX_CUES: Record<SfxCue, SfxNote[]> = {
 	crash: [{ freq: 138.59, at: 0, duration: 0.5, gain: 0.035, type: 'sine', glide: 55 }],
 	milestone: [
 		{ freq: 659.25, at: 0, duration: 0.2, gain: 0.022, type: 'sine', glide: 987.77 }
+	],
+	deal: [
+		{ freq: 440, at: 0, duration: 0.07, gain: 0.018, type: 'sine' },
+		{ freq: 554.37, at: 0.06, duration: 0.1, gain: 0.016, type: 'sine' }
+	],
+	payoff: [
+		{ freq: 493.88, at: 0, duration: 0.1, gain: 0.018, type: 'triangle' },
+		{ freq: 659.25, at: 0.1, duration: 0.12, gain: 0.018, type: 'triangle' },
+		{ freq: 987.77, at: 0.2, duration: 0.24, gain: 0.02, type: 'triangle' }
 	]
 };
 
@@ -185,11 +201,34 @@ function audioContext(): SfxContextLike | null {
 }
 
 /**
+ * Whether a cue may sound: the stored preference rules the game, and a
+ * preview is an explicit ask that may sound while the game is muted — without
+ * ever writing the preference (fun-pass ticket 04).
+ */
+export function cueAudible(enabled: boolean, preview: boolean): boolean {
+	return preview || enabled;
+}
+
+/**
  * Play one cue. A no-op when sound is off, when Web Audio is missing, or when
  * anything at all goes wrong — never thrown, never awaited, never required.
  */
 export function playCue(cue: SfxCue): void {
-	if (!sfxEnabled()) return;
+	if (!cueAudible(sfxEnabled(), false)) return;
+	schedule(cue);
+}
+
+/**
+ * The Settings previews (fun-pass ticket 04): the one path that may sound
+ * while the toggle is off, so the bank is discoverable before it is enabled.
+ * Still a gesture, still best-effort, and it never changes the preference.
+ */
+export function previewCue(cue: SfxCue): void {
+	if (!cueAudible(sfxEnabled(), true)) return;
+	schedule(cue);
+}
+
+function schedule(cue: SfxCue): void {
 	try {
 		const ctx = audioContext();
 		if (ctx) scheduleCue(ctx, cue);
