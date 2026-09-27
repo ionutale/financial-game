@@ -85,6 +85,17 @@ describe('the copy lint’s ban list (ADR-0004)', () => {
 			['card_the_allowance_choice_spend_reaction', 'maxim']
 		]);
 	});
+
+	it('scans the Callback lines, where nothing general is ever said', () => {
+		const violations = lintCatalogue({
+			callback_first_spent: 'Remember how the first allowance went.',
+			callback_first_kept: 'A lesson on keeping money.'
+		});
+		expect(violations.map((v) => [v.key, v.rule])).toEqual([
+			['callback_first_spent', 'maxim'],
+			['callback_first_kept', 'classroom']
+		]);
+	});
 });
 
 describe('the copy lint over the en catalogue', () => {

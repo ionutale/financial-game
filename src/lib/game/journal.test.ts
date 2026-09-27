@@ -261,10 +261,39 @@ describe('the Journal over the archive (ticket 05)', () => {
 					{ id: 'first_saved', month: 1 },
 					{ id: 'first_interest', month: 1 },
 					{ id: 'first_pay', month: 3 }
-				]
+				],
+				// Nobody the deck casts appears in this log (fun-pass ticket 07).
+				cast: []
 			}
 		]);
 		expect(journal.summary).toEqual({ runsFinished: 1, conceptsMet: 2, conceptsTotal: 8 });
+	});
+
+	it('carries the people who appeared, in the order the Run met them', () => {
+		const state = withState({
+			log: [
+				{ month: 14, card: 'mum_late_pay', choice: 'cover' },
+				{ month: 16, card: 'mum_pays_back', choice: 'take' },
+				{ month: 50, card: 'app_tip', choice: 'out' }
+			]
+		});
+		const journal = buildJournal(null, [chapter(state, 9, '2026-04-01T00:00:00.000Z')]);
+		expect(journal.chapters[0].cast).toEqual(['mum', 'danny']);
+	});
+
+	it('reads a legacy Chapter with no log as nobody met', () => {
+		const bare: RunState = {
+			...createRun(),
+			log: undefined as unknown as RunState['log']
+		};
+		const journal = buildJournal(null, [chapter(bare, 10, '2026-04-02T00:00:00.000Z')]);
+		expect(journal.chapters[0].cast).toEqual([]);
+	});
+
+	it('does not cast a Run still in progress — the Cast is a Chapter’s', () => {
+		const active = withState({ log: [{ month: 14, card: 'mum_late_pay', choice: 'cover' }] });
+		const journal = buildJournal(active, []);
+		expect(journal.chapters).toEqual([]);
 	});
 
 	it('orders Chapters the way they were lived: oldest first, whatever the archive order', () => {

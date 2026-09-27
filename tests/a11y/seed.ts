@@ -228,6 +228,19 @@ export const SHOCK_RUN = forcedCard('phone_cracked');
 /** risk-moment: the phone cover, with the odds promoted. */
 export const RISK_RUN = forcedCard('insurance_offer');
 
+/**
+ * Fun-pass ticket 07: a Callback. The month-1 spine beat spent the first
+ * allowance, so the dealt card carries the derived memory line — the run is
+ * patched the same way WHY_COLLAPSED_RUN patches its log.
+ */
+export const CALLBACK_RUN: RunState = {
+	...forcedCard('two_wants'),
+	log: [{ month: 1, card: 'the_allowance', choice: 'spend' }]
+};
+
+/** The same memory on a cast card: Mum's week, with her message line. */
+export const CAST_RUN: RunState = forcedCard('mum_late_pay');
+
 function availableChoice(state: RunState) {
 	const choice = state.card?.choices.find(
 		(c) => (c.freeTime ?? 0) >= 0 || Math.abs(c.freeTime ?? 0) <= state.freeTime

@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { expect, horizontalOverflow, seedRun, test } from './helpers';
 import {
+	CALLBACK_RUN,
 	CLOSE_DEBT_FUND_RUN,
 	DONE_STUDY_RUN,
 	FEEDBACK_RUN,
@@ -66,6 +67,13 @@ test.describe('zoom and reflow (proxy checks)', () => {
 				await seedRun(page, MESSAGE_RUN);
 			},
 			'Danny has an app'
+		],
+		[
+			'the card with a Callback',
+			async (page) => {
+				await seedRun(page, CALLBACK_RUN);
+			},
+			'Both, obviously'
 		],
 		[
 			'the Stage-up and its Year in Review',

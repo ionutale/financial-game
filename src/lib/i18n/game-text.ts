@@ -5,6 +5,8 @@
  * message catalogue, so only ids stay in TypeScript.
  */
 import { threadDue, THREADS } from '$lib/game/threads';
+import type { CallbackId } from '$lib/game/callbacks';
+import type { CastId } from '$lib/game/cast';
 import {
 	coverageStateKey,
 	type ConceptCoverageState,
@@ -14,6 +16,7 @@ import type { LedgerEntryKey } from '$lib/game/ledger';
 import type { MilestoneId } from '$lib/game/milestones';
 import type { CardKind, ConceptId, PathId, RunState } from '$lib/game/types';
 import type { ComparisonId, OutcomeBand } from '$lib/game/metrics';
+import { callbackKey } from './card-keys';
 import { message } from './messages';
 
 export function conceptLabel(id: ConceptId): string {
@@ -102,6 +105,16 @@ export function ledgerAccountLabel(key: LedgerEntryKey): string {
 /** The HUD's one authored Life Line for a Stage (fun-pass ticket 04). */
 export function lifeLine(stage: number): string {
 	return message(`hud_life_stage_${stage}`);
+}
+
+/** A Callback's derived line (fun-pass ticket 07): the world's memory. */
+export function callbackText(id: CallbackId): string {
+	return message(callbackKey(id));
+}
+
+/** A Cast member's name — identical in every locale (fun-pass ticket 07). */
+export function castName(id: CastId): string {
+	return message(`cast_${id}`);
 }
 
 /** The chip for the Run's live Thread, or null when none is live. */

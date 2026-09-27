@@ -1,12 +1,13 @@
 /**
- * The Journal (gamification tickets 03 and 05). Ticket 03's half is Concept
- * Coverage: which of the eight Concepts a Run has **Introduced** (the Stage
- * that unlocks it has opened) and **Experienced** (an Event Card carrying it
- * has been played). Ticket 05's half is the cross-Run record: the Chapters —
- * every finished Run in the order lived, with its Outcome Band, Turning
- * Points, Milestones, seed and finish date — the across-Run Concept Coverage,
- * the collected Milestones (including the cross-Run `both_paths`), and the
- * header summary. Exposure and memory, never performance or ranking.
+ * The Journal (gamification tickets 03 and 05, fun-pass ticket 07). Ticket 03's
+ * half is Concept Coverage: which of the eight Concepts a Run has **Introduced**
+ * (the Stage that unlocks it has opened) and **Experienced** (an Event Card
+ * carrying it has been played). Ticket 05's half is the cross-Run record: the
+ * Chapters — every finished Run in the order lived, with its Outcome Band,
+ * Turning Points, Milestones, seed, finish date and **Cast** (the people its log
+ * names, fun-pass ticket 07) — the across-Run Concept Coverage, the collected
+ * Milestones (including the cross-Run `both_paths`), and the header summary.
+ * Exposure and memory, never performance or ranking.
  *
  * Derived from the stored record only — the Stage ladder, the play log with
  * the deck's tags, and the profile archive — and never persisted (ADR-0002),
@@ -16,6 +17,7 @@
  */
 
 import { cardById } from './cards';
+import { castFor, type CastId } from './cast';
 import { STAGES } from './economy';
 import { outcomeBand, turningPoints, type OutcomeBand, type TurningPoint } from './metrics';
 import {
@@ -167,6 +169,11 @@ export interface JournalChapter {
 	turningPoints: TurningPoint[];
 	/** The Run's earned Milestones, oldest first. */
 	milestones: EarnedMilestone[];
+	/**
+	 * The people the Run met, in the order the log first names them (fun-pass
+	 * ticket 07). Derived from the log alone; a legacy Chapter has met nobody.
+	 */
+	cast: CastId[];
 }
 
 /** The Journal's header: how much of the story there is, and how much met. */
@@ -214,7 +221,8 @@ function toChapter(entry: ArchivedRunLike): JournalChapter {
 		finishedAt: entry.finishedAt,
 		band: outcomeBand(run),
 		turningPoints: turningPoints(run),
-		milestones: earnedMilestones(run)
+		milestones: earnedMilestones(run),
+		cast: castFor(run)
 	};
 }
 

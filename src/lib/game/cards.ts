@@ -590,6 +590,142 @@ export const CARDS: Card[] = [
 		]
 	},
 
+	// Fun-pass ticket 07: Mum's week — the cast's first consequence, and two
+	// Stage-2 moments (the group's money, the envelope nobody planned for).
+	{
+		id: 'mum_late_pay',
+		kind: 'decision',
+		stages: [2],
+		concept: 'budgeting',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'family money runs on favours until a payday lands',
+		choices: [
+			{
+				id: 'cover',
+				cost: 25,
+				category: 'need',
+				sets: { thread: 'mum_shop' }
+			},
+			{
+				id: 'wait',
+				cost: 0,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'mum_pays_back',
+		kind: 'decision',
+		stages: [2, 3],
+		branch: 'shared',
+		weight: 5,
+		requires: ['thread:mum_shop'],
+		resolves: 'mum_shop',
+		teaches: 'a favour between family is real money, returned in its own time',
+		choices: [
+			{
+				id: 'take',
+				gain: 30,
+				category: null
+			},
+			{
+				id: 'leave',
+				gain: 0,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'trip_everyone_pays',
+		kind: 'decision',
+		stages: [2],
+		concept: 'saving_goals',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'the deposit is the cheapest thing about a group trip',
+		choices: [
+			{
+				id: 'deposit',
+				cost: 30,
+				category: 'save',
+				sets: { thread: 'trip_tally' }
+			},
+			{
+				id: 'later',
+				cost: 0,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'trip_final_call',
+		kind: 'decision',
+		stages: [2, 3, 4],
+		concept: 'saving_goals',
+		branch: 'shared',
+		weight: 5,
+		requires: ['thread:trip_tally'],
+		resolves: 'trip_tally',
+		teaches: 'the balance of a trip arrives in a month that already had plans',
+		choices: [
+			{
+				id: 'pay',
+				cost: 60,
+				category: 'save'
+			},
+			{
+				id: 'sell_spot',
+				gain: 20,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'birthday_money',
+		kind: 'decision',
+		stages: [2],
+		concept: 'saving_goals',
+		branch: 'shared',
+		weight: 2,
+		teaches: 'money nobody planned for is the easiest money to keep',
+		choices: [
+			{
+				id: 'bank',
+				gain: 50,
+				category: null
+			},
+			{
+				id: 'treat',
+				gain: 50,
+				cost: 20,
+				category: 'want'
+			}
+		]
+	},
+	{
+		id: 'laptop_cover',
+		kind: 'risk_moment',
+		stages: [2, 3],
+		concept: 'tax_insurance_scams',
+		branch: 'shared',
+		weight: 2,
+		teaches: 'cover is priced before the repair exists',
+		choices: [
+			{
+				id: 'add_cover',
+				cost: 8,
+				category: 'need',
+				sets: { insurance: true }
+			},
+			{
+				id: 'run_it',
+				cost: 0,
+				category: null
+			}
+		]
+	},
+
 	// ---------------------------------------------------------------- Stage 3
 	{
 		id: 'the_third_year',
@@ -991,6 +1127,144 @@ export const CARDS: Card[] = [
 		]
 	},
 
+	// Fun-pass ticket 07: the Stage-3 cast — Priya's shift, Grandma's boxes,
+	// Mum's lates, and the bank's own mistake.
+	{
+		id: 'mum_late_week',
+		kind: 'decision',
+		stages: [3],
+		concept: 'budgeting',
+		branch: 'shared',
+		weight: 2,
+		teaches: 'the evening meal is either hours or money',
+		choices: [
+			{
+				id: 'cook',
+				cost: 0,
+				freeTime: -3,
+				category: null
+			},
+			{
+				id: 'takeaway',
+				cost: 12,
+				category: 'need'
+			}
+		]
+	},
+	{
+		id: 'priya_shift_swap',
+		kind: 'decision',
+		stages: [3],
+		concept: 'earning_work',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'a favour between friends is a debt with no paperwork',
+		choices: [
+			{
+				id: 'take',
+				gain: 40,
+				freeTime: -10,
+				category: null,
+				sets: { thread: 'priya_swap' }
+			},
+			{
+				id: 'cant',
+				cost: 0,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'priya_swap_back',
+		kind: 'decision',
+		stages: [3, 4],
+		concept: 'earning_work',
+		branch: 'shared',
+		weight: 5,
+		requires: ['thread:priya_swap'],
+		resolves: 'priya_swap',
+		teaches: 'the favour comes back as time, not as money',
+		choices: [
+			{
+				id: 'call_it_in',
+				gain: 0,
+				freeTime: 8,
+				category: null
+			},
+			{
+				id: 'let_it_go',
+				cost: 0,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'grandma_asks_help',
+		kind: 'decision',
+		stages: [3],
+		branch: 'shared',
+		weight: 3,
+		teaches: 'helping family costs a weekend or it costs money',
+		choices: [
+			{
+				id: 'go',
+				cost: 0,
+				freeTime: -6,
+				category: null,
+				sets: { thread: 'grandma_visit' }
+			},
+			{
+				id: 'send_money',
+				cost: 15,
+				category: 'need'
+			}
+		]
+	},
+	{
+		id: 'grandma_sends_thanks',
+		kind: 'decision',
+		stages: [3, 4],
+		branch: 'shared',
+		weight: 5,
+		requires: ['thread:grandma_visit'],
+		resolves: 'grandma_visit',
+		teaches: 'family thanks arrives whether or not it was asked for',
+		choices: [
+			{
+				id: 'take',
+				gain: 40,
+				category: null
+			},
+			{
+				id: 'send_it_back',
+				gain: 0,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'cashback_error',
+		kind: 'decision',
+		stages: [3],
+		concept: 'budgeting',
+		branch: 'shared',
+		weight: 2,
+		teaches: 'a bank’s mistake is still somebody’s money',
+		choices: [
+			{
+				id: 'say_so',
+				cost: 0,
+				freeTime: -1,
+				category: null
+			},
+			{
+				id: 'say_nothing',
+				gain: 30,
+				category: null
+			}
+		]
+	},
+
 	// ---------------------------------------------------------------- Stage 4
 	{
 		id: 'the_fourth_year',
@@ -1291,6 +1565,80 @@ export const CARDS: Card[] = [
 				id: 'wait',
 				cost: 20,
 				category: 'want'
+			}
+		]
+	},
+
+	// Fun-pass ticket 07: Stage 4's cast consequence (Ravi's weekend) and the
+	// pipe that makes the cover real.
+	{
+		id: 'ravi_needs_cover',
+		kind: 'decision',
+		stages: [4],
+		concept: 'earning_work',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'covering a sick colleague is hours now and a door later',
+		choices: [
+			{
+				id: 'cover',
+				gain: 55,
+				freeTime: -12,
+				category: null,
+				sets: { thread: 'ravi_cover' }
+			},
+			{
+				id: 'cant',
+				cost: 0,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'ravi_returns_favour',
+		kind: 'decision',
+		stages: [4, 5],
+		concept: 'earning_work',
+		branch: 'shared',
+		weight: 5,
+		requires: ['thread:ravi_cover'],
+		resolves: 'ravi_cover',
+		teaches: 'a favour can be returned as money or as a door',
+		choices: [
+			{
+				id: 'take_shift',
+				gain: 50,
+				freeTime: -6,
+				category: null
+			},
+			{
+				id: 'take_lead',
+				gain: 30,
+				freeTime: -1,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'burst_pipe',
+		kind: 'shock',
+		stages: [4],
+		concept: 'tax_insurance_scams',
+		branch: 'shared',
+		weight: 1,
+		teaches: 'the emergency rate is what cover is priced against',
+		choices: [
+			{
+				id: 'call_now',
+				cost: 140,
+				category: 'need',
+				insuredCost: 0
+			},
+			{
+				id: 'tape_it',
+				cost: 30,
+				category: 'need',
+				freeTime: -8
 			}
 		]
 	},
@@ -1917,6 +2265,30 @@ export const CARDS: Card[] = [
 				id: 'host',
 				cost: 0,
 				freeTime: -3,
+				category: null
+			}
+		]
+	},
+
+	// Fun-pass ticket 07: Danny's night — the social pressure the Want
+	// envelope meets in Stage 5.
+	{
+		id: 'danny_flat_night',
+		kind: 'decision',
+		stages: [5],
+		concept: 'needs_wants',
+		branch: 'shared',
+		weight: 3,
+		teaches: 'the group night costs more than the envelope set aside for it',
+		choices: [
+			{
+				id: 'chip_in',
+				cost: 45,
+				category: 'want'
+			},
+			{
+				id: 'stay_in',
+				cost: 0,
 				category: null
 			}
 		]

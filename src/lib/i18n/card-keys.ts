@@ -23,3 +23,10 @@ export const choiceReactionKey = (cardId: string, choiceId: string): string =>
  */
 export const cardLineKey = (cardId: string, line: number): string =>
 	`${CARD_KEY_PREFIX}${cardId}_line_${line}`;
+
+/**
+ * A Callback's line (fun-pass ticket 07): the derived memory keyed by its
+ * callback id; the ids live in `game/callbacks.ts`.
+ */
+export const CALLBACK_KEY_PREFIX = 'callback_';
+export const callbackKey = (id: string): string => `${CALLBACK_KEY_PREFIX}${id}`;

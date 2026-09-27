@@ -33,6 +33,11 @@ export const CARD_FORMS = {
 	scam_opportunity: { format: 'message', lines: 1 },
 	app_tip: { format: 'message', lines: 1 },
 	app_vanishes: { format: 'message', lines: 1 },
+	// fun-pass ticket 07: the cast's own lines arrive as messages
+	mum_late_pay: { format: 'message', lines: 1 },
+	priya_shift_swap: { format: 'message', lines: 1 },
+	ravi_needs_cover: { format: 'message', lines: 1 },
+	danny_flat_night: { format: 'message', lines: 1 },
 
 	// paper — the card's fiction is a document: a payslip, a statement
 	first_taxed_payslip: { format: 'paper', lines: 2 },

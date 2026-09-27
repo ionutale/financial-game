@@ -24,7 +24,7 @@
 
 import { createHash } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { CARDS } from './cards';
+import { CARDS, cardById } from './cards';
 import { expectedIncome, netWorth, obligationsFor } from './economy';
 import { RUN_MONTHS, applyAction, createRun } from './loop';
 import { outcomeBand, type OutcomeBand } from './metrics';
@@ -36,7 +36,7 @@ import type { Card, Choice, RunState } from './types';
 /* -------------------------------------------------------------------------- */
 
 /** sha256 of the deck's structural content (`JSON.stringify(CARDS)`), first 12. */
-const RECORDED_DECK = '49bdadb3bbaf';
+const RECORDED_DECK = 'ae8cb7cf9801';
 
 /** How far an accepted content change may drift a recorded value. */
 const DRIFT = {
@@ -57,6 +57,8 @@ interface RecordedPolicy {
 	netWorth: { p10: number; median: number; p90: number };
 	ratio5: number;
 	overlap: number;
+	/** Runs out of 100 that saw at least two Threads return a consequence. */
+	consequences: number;
 }
 
 const RECORDED: Record<PolicyId, RecordedPolicy> = {
@@ -64,13 +66,15 @@ const RECORDED: Record<PolicyId, RecordedPolicy> = {
 		bands: { ahead: 0, treading: 0, behind: 100 },
 		netWorth: { p10: -2501, median: -2267, p90: -1861 },
 		ratio5: 0.80421875,
-		overlap: 0.7369624601172884
+		overlap: 0.7369624601172884,
+		consequences: 100
 	},
 	steady: {
 		bands: { ahead: 100, treading: 0, behind: 0 },
 		netWorth: { p10: 14422.877732846704, median: 14592.592380537179, p90: 14762.293729277168 },
 		ratio5: 0.6779797979797968,
-		overlap: 0.778906469537268
+		overlap: 0.778906469537268,
+		consequences: 78
 	}
 };
 
@@ -216,9 +220,29 @@ interface RunResult {
 	ratio5: number;
 	/** Every card this Run drew, deduplicated. */
 	drawn: string[];
+	/** Threads planted, and Threads whose consequence actually returned. */
+	threads: { planted: number; resolved: number };
 }
 
 const SEEDS = Array.from({ length: 100 }, (_, i) => i + 1);
+
+/**
+ * The Threads a finished Run planted and saw return, from the real log: a
+ * Choice that carries `sets.thread` plants one; a played resolve card returns
+ * its consequence. Both are read from the stored record alone.
+ */
+function threadStats(state: RunState): { planted: number; resolved: number } {
+	const planted = new Set<string>();
+	const resolved = new Set<string>();
+	for (const entry of state.log) {
+		const card = cardById(entry.card);
+		if (!card) continue;
+		const choice = card.choices.find((c) => c.id === entry.choice);
+		if (choice?.sets?.thread) planted.add(choice.sets.thread);
+		if (card.resolves) resolved.add(card.resolves);
+	}
+	return { planted: planted.size, resolved: resolved.size };
+}
 
 function results(policy: Policy): RunResult[] {
 	return SEEDS.map((seed) => {
@@ -228,7 +252,8 @@ function results(policy: Policy): RunResult[] {
 			band: outcomeBand(state),
 			netWorth: netWorth(state),
 			ratio5: year5.income > 0 ? year5.obligations / year5.income : Number.NaN,
-			drawn: [...new Set(state.log.map((entry) => entry.card))]
+			drawn: [...new Set(state.log.map((entry) => entry.card))],
+			threads: threadStats(state)
 		};
 	});
 }
@@ -339,6 +364,26 @@ describe('the balance harness', () => {
 			expect(overlap, message).toBeLessThanOrEqual(ceiling);
 			// Overlap is a fraction of two card sets: it can never reach one.
 			expect(overlap, message).toBeLessThan(1);
+		}
+	});
+
+	it('sees consequences return: the median Run sees two or more Threads back', () => {
+		for (const policy of POLICIES) {
+			const runs = measured[policy.id];
+			const atLeastTwo = runs.filter((run) => run.threads.resolved >= 2).length;
+			const resolved = runs.map((run) => run.threads.resolved).sort((a, b) => a - b);
+			const recorded = RECORDED[policy.id].consequences;
+			const message = `${policy.id}: runs with two consequences back ${atLeastTwo}/100 — ${deckNote()}`;
+			expect(atLeastTwo, message).toBeGreaterThanOrEqual(recorded - DRIFT.bands);
+			expect(atLeastTwo, message).toBeLessThanOrEqual(recorded + DRIFT.bands);
+			// The ticket's rule, stated on the sample: a typical Run sees at
+			// least two consequences return (median), and the sample is not
+			// empty of returns.
+			expect(
+				resolved[Math.floor(resolved.length / 2)],
+				`${policy.id}: median consequences returned — ${deckNote()}`
+			).toBeGreaterThanOrEqual(2);
+			expect(atLeastTwo, message).toBeGreaterThan(0);
 		}
 	});
 });

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { beatArtFor } from '$lib/game/beats';
+	import { callbackFor } from '$lib/game/callbacks';
 	import { formatMoney } from '$lib/game/economy';
 	import { cardFormFor } from '$lib/game/forms';
 	import type { LedgerEntry } from '$lib/game/ledger';
@@ -14,7 +15,7 @@
 		choiceLabel
 	} from '$lib/i18n/card-text';
 	import { chipsFor } from '$lib/i18n/chips';
-	import { kindLabel, ledgerAccountLabel } from '$lib/i18n/game-text';
+	import { callbackText, kindLabel, ledgerAccountLabel } from '$lib/i18n/game-text';
 	import { m } from '$lib/i18n/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import BeatArt from './BeatArt.svelte';
@@ -33,6 +34,13 @@
 	const odds = $derived(card ? cardOdds(card) : null);
 	const form = $derived(card ? cardFormFor(card.id) : null);
 	const lines = $derived(card ? cardLines(card) : []);
+	/*
+	 * A Callback (fun-pass ticket 07, design §3.4): the one derived line the
+	 * world remembers about this card's moment, shown before the Choice is
+	 * taken. At most one; no numbers, never a maxim; nothing is stored.
+	 */
+	const callback = $derived(callbackFor(run, card));
+	const callbackLine = $derived(callback ? callbackText(callback) : null);
 	/*
 	 * The two parts of the Feedback (ADR-0004, ticket 02): the Reaction first,
 	 * then the Why under "Why it happened". The Why opens by itself at the
@@ -179,6 +187,17 @@
 		{/if}
 
 		{#if !run.chosen}
+			{#if callbackLine}
+				<!--
+					The Callback (fun-pass ticket 07): one derived memory line,
+					before the Choice. Plain text in reading order; nothing is
+					announced early and nothing is stored.
+				-->
+				<div class="mt-4 border-l-2 border-[var(--line)] pl-3">
+					<p class="kicker">{m.event_callback()}</p>
+					<p class="mt-1.5 text-sm leading-relaxed">{callbackLine}</p>
+				</div>
+			{/if}
 			<div class="mt-6 flex flex-col gap-2.5">
 				{#each card.choices as c (c.id)}
 					{@const chips = chipsFor(c, run.insurance)}

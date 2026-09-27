@@ -2,14 +2,16 @@
  * The copy lint (ADR-0004, ticket 01): the mechanical half of `docs/voice.md`.
  *
  * Player-facing moment strings — a card's situation, a Choice's Why
- * (`card_<id>_choice_<choice>_feedback`) and a Choice's Reaction
- * (`card_<id>_choice_<choice>_reaction`) — must not carry the classroom's
- * vocabulary. The Reaction is held to the whole ban list: it shows what the
- * world did and never states a general rule. The situation is held to the
- * whole list too — it sets a scene, it does not lecture. The Why is held to
- * the classroom lexemes and the narrator-stepping-out frames, because a Why is
- * exactly where a Rule of Thumb may legitimately be said at a Teachable
- * Moment; the review, which knows the Moment, judges those.
+ * (`card_<id>_choice_<choice>_feedback`), a Choice's Reaction
+ * (`card_<id>_choice_<choice>_reaction`) and a Callback's derived line
+ * (`callback_<id>`, fun-pass ticket 07: never a maxim) — must not carry the
+ * classroom's vocabulary. The Reaction is held to the whole ban list: it shows
+ * what the world did and never states a general rule. The situation and the
+ * Callback are held to the whole list too — one sets a scene, the other
+ * remembers one; neither lectures. The Why is held to the classroom lexemes
+ * and the narrator-stepping-out frames, because a Why is exactly where a Rule
+ * of Thumb may legitimately be said at a Teachable Moment; the review, which
+ * knows the Moment, judges those.
  *
  * A review gate, not a natural-language checker: it catches the ban list's
  * lexemes and frames, not every maxim an author could write. English only —
@@ -22,8 +24,14 @@
  * fails on a stale allowance, so the list can only shrink; a new banned word
  * on an already-allowed key still fails.
  */
+import { CALLBACK_IDS } from '../game/callbacks';
 import { CARDS } from '../game/cards';
-import { cardSituationKey, choiceFeedbackKey, choiceReactionKey } from './card-keys';
+import {
+	callbackKey,
+	cardSituationKey,
+	choiceFeedbackKey,
+	choiceReactionKey
+} from './card-keys';
 
 export type CopyScope = 'situation' | 'reaction' | 'why';
 
@@ -91,7 +99,8 @@ export function lintText(text: string, scope: CopyScope): CopyViolation[] {
 /**
  * Every violation the deck's own keys currently hold, before the allow-list.
  * Situations and Whys are mandatory, Reactions optional; a catalogue missing
- * a key is skipped, like every other gate.
+ * a key is skipped, like every other gate. The Callback lines are scanned with
+ * the moment's rules (fun-pass ticket 07).
  */
 export function catalogueViolations(messages: Record<string, unknown>): CatalogueViolation[] {
 	const violations: CatalogueViolation[] = [];
@@ -108,6 +117,12 @@ export function catalogueViolations(messages: Record<string, unknown>): Catalogu
 			if (typeof text !== 'string') continue;
 			for (const violation of lintText(text, scope)) violations.push({ key, ...violation });
 		}
+	}
+	for (const id of CALLBACK_IDS) {
+		const key = callbackKey(id);
+		const text = messages[key];
+		if (typeof text !== 'string') continue;
+		for (const violation of lintText(text, 'situation')) violations.push({ key, ...violation });
 	}
 	return violations;
 }

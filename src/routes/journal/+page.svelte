@@ -11,6 +11,7 @@
 	import type { OutcomeBand } from '$lib/game/metrics';
 	import {
 		bandLabel,
+		castName,
 		conceptLabel,
 		coverageStateLabel,
 		flagText,
@@ -111,6 +112,18 @@
 								<li class="py-0.5 text-sm">{milestoneLabel(milestone.id)}</li>
 							{/each}
 						</ul>
+					</div>
+				{/if}
+
+				{#if chapter.cast.length}
+					<!--
+						The Cast (fun-pass ticket 07): the people this Run's log
+						names, in the order it met them. Derived from the archive,
+						never stored; a Chapter that met nobody renders nothing.
+					-->
+					<div class="mt-4 border-t border-dashed border-[var(--line)] pt-3">
+						<p class="kicker">{m.journal_cast()}</p>
+						<p class="mt-2 text-sm">{chapter.cast.map(castName).join(' · ')}</p>
 					</div>
 				{/if}
 			</section>

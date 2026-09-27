@@ -1,12 +1,15 @@
 import { formatMoney, formatMoneyExact, goalTarget, savedTowardGoal } from '$lib/game/economy';
+import { castFor } from '$lib/game/cast';
 import { conceptCoverage, coverageAcross } from '$lib/game/journal';
 import { outcomeBand, turningPoints } from '$lib/game/metrics';
 import { earnedMilestones, longestInsideBudgetMonths, yearInReview } from '$lib/game/milestones';
-import { bandLabel, conceptLabel, flagText, milestoneLabel } from '$lib/i18n/game-text';
+import { bandLabel, castName, conceptLabel, flagText, milestoneLabel } from '$lib/i18n/game-text';
 import { expect, expectNoAxeViolations, seedRun, test, waitForHydration } from './helpers';
 import {
 	CHIP_RUN,
 	CLOSE_DEBT_FUND_RUN,
+	CALLBACK_RUN,
+	CAST_RUN,
 	DONE_STUDY_RUN,
 	DONE_WORK_RUN,
 	EVENT_RUN,
@@ -775,6 +778,12 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 				const text = flagText(moment.kind, moment.month);
 				if (text) await expect(chapter.getByText(text)).toBeVisible();
 			}
+
+			/* Fun-pass ticket 07: the Cast derives from the Chapter's own log —
+			   the people the Run met, in the order it met them, nothing stored. */
+			const cast = castFor(run);
+			expect(cast.length, 'the gate run met nobody').toBeGreaterThan(0);
+			await expect(chapter.getByText(cast.map(castName).join(' · '))).toBeVisible();
 		}
 
 		/* The header counts, the eight-Concept union, and the collected
@@ -1002,5 +1011,56 @@ test.describe('fun-pass ticket 05: kind identity and Card Formats', () => {
 		await expect(page.getByText('Drink — ◈1')).toHaveClass(/border-dashed/);
 
 		await expectNoAxeViolations(page, 'the receipt-format card');
+	});
+});
+
+/**
+ * Fun-pass ticket 07: the world's memory and its people. A Callback is one
+ * derived line about something the Run did (no numbers, never a maxim); a cast
+ * card carries the person's own line; a planted Thread shows up in the world
+ * chip; a finished Chapter carries its Cast in the Journal. No excludes added.
+ */
+test.describe('fun-pass ticket 07: Callbacks, the Cast and named Threads', () => {
+	test('month screen: a Callback remembers something the Run did', async ({ page }) => {
+		await seedRun(page, CALLBACK_RUN);
+		await expect(page.getByRole('heading', { name: 'Both, obviously' })).toBeVisible();
+
+		/* The derived memory, in reading order and in the fiction. */
+		await expect(page.getByText('Before now')).toBeVisible();
+		await expect(page.getByText('The first allowance went the same way.')).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the card with a Callback');
+	});
+
+	test('month screen: a cast card carries Mum’s line, and the Thread chip follows', async ({
+		page
+	}) => {
+		await seedRun(page, CAST_RUN);
+		await expect(page.getByRole('heading', { name: 'Mum’s week' })).toBeVisible();
+
+		/* The one line she gets, as a message (fun-pass ticket 07). */
+		await expect(
+			page.getByText('Mum: Can you get the shop this week? I’ll square it the moment it lands.')
+		).toBeVisible();
+
+		/* The Choice plants the Thread; the world chip counts it down. */
+		await page.getByRole('button', { name: 'Cover the shop' }).click();
+		await expect(page.getByText('Mum’s week — the square-up in 2 months')).toBeVisible();
+
+		await expectNoAxeViolations(page, 'a cast card with a live Thread');
+	});
+
+	test('the Journal: a Chapter carries the Cast its log names', async ({ page }) => {
+		await seedRun(page, DONE_STUDY_RUN);
+		await page.goto('/journal');
+		await expect(page.getByRole('heading', { name: 'The life so far, kept.' })).toBeVisible();
+
+		const chapter = page.getByRole('region', { name: 'Chapter 1' });
+		const cast = castFor(DONE_STUDY_RUN);
+		expect(cast.length, 'the gate run met nobody').toBeGreaterThan(0);
+		await expect(chapter.getByText('Who was there')).toBeVisible();
+		await expect(chapter.getByText(cast.map(castName).join(' · '))).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the Journal with a Chapter’s Cast');
 	});
 });
