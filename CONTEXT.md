@@ -14,7 +14,8 @@ Glossary for this project. Terms only — no implementation detail.
   unlocks specific Concepts and frames its Event Cards. Stages only ever add — the **Add-only
   rule**: nothing a player has learned is taken away.
 - **Stage-up Card** — the interstitial that announces a new Stage: its age, income tier, unlocked
-  Concept and that Concept's Teachable Moment. It is not one of a Stage's Event Cards.
+  Concept and that Concept's Teachable Moment. It also carries the **Year in Review** for the Stage
+  just ended. It is not one of a Stage's Event Cards.
 - **Wage Hint** — the one-time note at the start of Stage 3 that the allowance has stopped and
   hours are the money; it stays while the plan holds zero hours and never returns once hours are set.
 - **Teachable Moment** — the single first experience that introduces a Concept (the first payslip,
@@ -78,7 +79,8 @@ Glossary for this project. Terms only — no implementation detail.
 - **Anonymous Profile** — a player's identity and progress, keyed to a device and carrying no
   personal data.
 - **Money Story** — the end-of-Run report showing the player's decisions and their financial
-  trajectory across the Run.
+  trajectory across the Run. It also carries the Run's **Milestones**, its **Concept Coverage** and
+  the way into the **Journal**.
 - **Outcome Band** — the descriptive verdict at the end of a Run — Ahead / Treading water /
   Behind — computed from money, the path's goal and the Credit Score, never from behaviour.
 - **Turning Point** — a flagged moment in a Run (debt taken, a minimum-payment streak, a skipped
@@ -87,3 +89,56 @@ Glossary for this project. Terms only — no implementation detail.
   savings rate and want spend — and the only ones the you-vs-you comparison uses.
 - **Better-Choices Proof** — the MVP's success criterion: the player's money decisions measurably
   improve over the course of a Run.
+
+## Gamification
+
+**Gamification**:
+The game's layer of recognition and memory — the **Milestones**, the **Year in Review** and the
+**Journal** — built from the Run's own money and the player's own past. It adds no parallel currency,
+no score and no competition.
+_Avoid_: rewards, points system, achievements, meta-game
+
+**Reward Loop**:
+An extrinsic progression layer — XP, points, coins, lives, stars, gems, streak mechanics,
+leaderboards — that measures something other than the money. Excluded by design.
+_Avoid_: gamification (when the thing meant is a Reward Loop)
+
+**Milestone**:
+A one-time, event-shaped recognition of a moment the player lived — a month held inside budget, a
+debt cleared, a scam declined, the Named Goal reached. It grants nothing, is never a checklist and is
+never shown as an ongoing meter.
+_Avoid_: badge, achievement, trophy, medal, sticker, reward, bonus
+
+**Year in Review**:
+The retrospective carried by every **Stage-up Card** for the year just ended: the money headline, one
+behavioural line and the year's Milestones. It reports a closed year and cannot be acted on.
+_Avoid_: scorecard, report card, grade, dashboard
+
+**Concept Coverage**:
+The record of which of the eight **Concepts** the player has met — within a Run as **Introduced**
+then **Experienced**, and across Runs in the **Journal**. It records exposure, never performance.
+_Avoid_: skill tree, mastery, progress bar, completion
+
+**Introduced**:
+A **Concept** state: the Stage that unlocks it has opened.
+_Avoid_: unlocked, available
+
+**Experienced**:
+A **Concept** state: an **Event Card** carrying the Concept has been played at least once in the Run.
+_Avoid_: learned, mastered, completed, passed
+
+**Journal**:
+The player's private, cross-Run record kept on the **Anonymous Profile**: every finished Run as a
+**Chapter**, the Milestones earned and the Concepts met. Derived from the stored Runs, never
+collected separately.
+_Avoid_: record book, archive wall, trophy case, profile page, leaderboard
+
+**Chapter**:
+One finished Run as it appears in the **Journal** — its **Outcome Band**, its **Turning Points**, its
+Milestones, its seed and when it ended. A Run is the play; a Chapter is its record.
+_Avoid_: save, replay, record
+
+**Honest-reveal rule**:
+A thing may be shown live during a Run only if it is already legible in the fiction and does not
+invite the player to optimise a number; anything competence-derived and numeric is held for the
+**Year in Review** or the **Money Story**.
