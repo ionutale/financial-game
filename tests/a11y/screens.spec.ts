@@ -1,4 +1,4 @@
-import { formatMoney } from '$lib/game/economy';
+import { formatMoney, formatMoneyExact, goalTarget, savedTowardGoal } from '$lib/game/economy';
 import { conceptCoverage, coverageAcross } from '$lib/game/journal';
 import { outcomeBand, turningPoints } from '$lib/game/metrics';
 import { earnedMilestones, longestInsideBudgetMonths, yearInReview } from '$lib/game/milestones';
@@ -36,6 +36,27 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		   part of the month loop (ADR-0003). */
 		await expect(page.getByRole('region', { name: /in review$/ })).toHaveCount(0);
 		await expectNoAxeViolations(page, 'the Plan step');
+	});
+
+	test('month screen: the goal ticks are decoration and the value stays text', async ({ page }) => {
+		await seedRun(page, PLAN_RUN);
+		await expect(page.getByRole('heading', { name: 'Plan the month' })).toBeVisible();
+
+		/* Gamification ticket 06: four quarter ticks at 25 / 50 / 75 / 100 %,
+		   hidden from assistive tech. The bar's accessible reading is unchanged:
+		   it is still the money text the HUD already shows, and no progressbar
+		   role (or other new semantics) was introduced. */
+		const ticks = page.locator('#goal-ticks');
+		await expect(ticks).toHaveAttribute('aria-hidden', 'true');
+		await expect(ticks.locator('span')).toHaveCount(4);
+		await expect(page.getByRole('progressbar')).toHaveCount(0);
+		await expect(
+			page.getByText(
+				`${formatMoneyExact(savedTowardGoal(PLAN_RUN), 'en')} / ${formatMoney(goalTarget(PLAN_RUN), 'en')}`
+			)
+		).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the Plan step with the goal ticks');
 	});
 
 	test('month screen: event and feedback', async ({ page }) => {

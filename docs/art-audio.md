@@ -12,7 +12,7 @@ colour never load-bearing, light theme only, SFX only and off by default.
 | The beat map | `src/lib/game/beats.ts` | Card id → art id, plus the Money Story panel |
 | Alt text | `messages/{en,it,ro}.json`, keys `beat_art_<id>_alt` | Every piece, every locale; `beats.test.ts` enforces it |
 | The abstract silhouette | `src/lib/components/Avatar.svelte` | Pre-existing (ticket 13); ages by proportion and posture |
-| The four-cue SFX bank | `src/lib/audio/sfx.ts` | `choice`, `month_close`, `stage_up`, `crash`; Web Audio synthesis |
+| The five-cue SFX bank | `src/lib/audio/sfx.ts` | `choice`, `month_close`, `stage_up`, `crash`, `milestone`; Web Audio synthesis |
 | The sound toggle | `src/routes/settings/+page.svelte` | `role="switch"`; off by default; a `localStorage` preference |
 | Rights | `ATTRIBUTION.md` | Self-authored, dedicated CC0-1.0 |
 
@@ -49,7 +49,7 @@ piece is missing its alt text in any locale, or if two pieces share an id.
 
 ## Sound
 
-`src/lib/audio/sfx.ts` synthesises all four cues with oscillators and gain envelopes — no files, no
+`src/lib/audio/sfx.ts` synthesises all five cues with oscillators and gain envelopes — no files, no
 licences, nothing to download.
 
 | Cue | Fires when | Sound |
@@ -58,6 +58,12 @@ licences, nothing to download.
 | `month_close` | the month close replaces the Feedback (`CONTINUE`) | two rising sine ticks |
 | `stage_up` | a Stage-up opens (`NEXT_MONTH`) | a C–E–G triangle arpeggio |
 | `crash` | the crash card is dealt (`CONFIRM_PLAN`) | one low sine sliding down |
+| `milestone` | a Month Close carries a Milestone line (`CONTINUE`); it replaces the close's ticks that month | one sine gliding up a fifth |
+
+The `milestone` cue is gamification ticket 06's one addition to the bank: the close's two ticks
+fused into a single rising note, on the same off-by-default, never-load-bearing terms. Nothing
+links it to money or progress — only a Milestone plays it — so a missed Milestone is simply silent
+and no cue ever answers a mistake.
 
 Design rules, all deliberate:
 
@@ -90,8 +96,10 @@ not asserted, because "silent" is a correct outcome in CI.
 - **A CC0 sting pass.** Ticket 13 allowed a handful of CC0 stings for the biggest moments. None
   shipped: the synthesised crash carries the moment, and stings bring licences and downloads. If
   they are added, `ATTRIBUTION.md` gets their rows.
-- **Motion.** The illustrations are static, which is the current direction; motion is reserved for
-  choice feedback, bars and the close. If the art ever animates, it must respect
+- **Motion.** The illustrations are static; motion is reserved for choice feedback, bars and the
+  close, plus gamification ticket 06's two emphases — the Named-Goal bar's quarter ticks pulse when
+  a threshold lands, and the Month Close's Milestone line eases in — both `aria-hidden` or
+  text-backed decoration and both reduced-motion-gated. If the art ever animates, it must respect
   `prefers-reduced-motion` like the rest of the app.
 - **Dark mode (v2).** The tokens are read through CSS variables, so dark mode is a token change —
   but the accent must be contrast-checked against the dark surface first, exactly as ticket 14 did

@@ -1,14 +1,14 @@
 /**
- * The sound effects bank (ticket 30): four synthesised cues, off by default,
+ * The sound effects bank (ticket 30): five synthesised cues, off by default,
  * never load-bearing. Every cue has a visual counterpart, the bank is quiet
  * and tonal, and nothing here imports a file — Web Audio makes the sound, so
  * there is no asset to license.
  *
  * Autoplay rules: the AudioContext is created and resumed inside a user
  * gesture, which is where every cue is played from (a choice tap, the month
- * close, a Stage-up, the crash). If the platform has no Web Audio, storage is
- * unavailable, or anything else fails, the game stays silent — sound must
- * never break play.
+ * close — or the milestone it carries — a Stage-up, the crash). If the
+ * platform has no Web Audio, storage is unavailable, or anything else fails,
+ * the game stays silent — sound must never break play.
  *
  * The preference lives in localStorage under `financial-game:sfx`; it is a
  * UI preference, never part of RunState, and it survives a Run being deleted.
@@ -45,7 +45,7 @@ export function writeSfxEnabled(
 	}
 }
 
-export type SfxCue = 'choice' | 'month_close' | 'stage_up' | 'crash';
+export type SfxCue = 'choice' | 'month_close' | 'stage_up' | 'crash' | 'milestone';
 
 export interface SfxNote {
 	freq: number;
@@ -63,7 +63,9 @@ export interface SfxNote {
 /**
  * The cue table. Frequencies are real notes so the bank stays tonal: the
  * choice is a short fifth, the month close two rising ticks, the Stage-up a
- * C–E–G arpeggio, and the crash one low sine sliding down.
+ * C–E–G arpeggio, the crash one low sine sliding down, and the milestone
+ * (gamification ticket 06) the close's two ticks fused into one rising note —
+ * positive-only by construction, because only a Milestone plays it.
  */
 export const SFX_CUES: Record<SfxCue, SfxNote[]> = {
 	choice: [
@@ -79,7 +81,10 @@ export const SFX_CUES: Record<SfxCue, SfxNote[]> = {
 		{ freq: 659.25, at: 0.09, duration: 0.12, gain: 0.02, type: 'triangle' },
 		{ freq: 783.99, at: 0.18, duration: 0.18, gain: 0.022, type: 'triangle' }
 	],
-	crash: [{ freq: 138.59, at: 0, duration: 0.5, gain: 0.035, type: 'sine', glide: 55 }]
+	crash: [{ freq: 138.59, at: 0, duration: 0.5, gain: 0.035, type: 'sine', glide: 55 }],
+	milestone: [
+		{ freq: 659.25, at: 0, duration: 0.2, gain: 0.022, type: 'sine', glide: 987.77 }
+	]
 };
 
 /** The slice of the Web Audio API the bank uses — fake-able in tests. */

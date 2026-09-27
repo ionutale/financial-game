@@ -115,11 +115,52 @@ body {
 	animation: rise 280ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
+/* Juice (gamification ticket 06): one-shot emphases when a Named-Goal quarter
+   tick lands (the pulse overlay in the HUD) or a Milestone lands (the Month
+   Close line). Both are decoration — the text always carries the event, the
+   pulse leaves no colour behind, and reduced motion removes the movement. */
+@keyframes goal_land {
+	from {
+		opacity: 0.5;
+		transform: scaleY(1.7);
+	}
+	to {
+		opacity: 0;
+		transform: scaleY(1);
+	}
+}
+
+.goal-pulse {
+	background: var(--money-35);
+	/* Invisible unless the animation runs: with reduced motion, nothing shows. */
+	opacity: 0;
+	animation: goal_land 520ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes milestone_land {
+	from {
+		opacity: 0.4;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+.milestone-land {
+	animation: milestone_land 460ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
 	*,
 	*::before,
 	*::after {
 		transition-duration: 0.01ms !important;
 		animation-duration: 0.01ms !important;
+	}
+	.goal-pulse,
+	.milestone-land {
+		animation: none;
 	}
 }

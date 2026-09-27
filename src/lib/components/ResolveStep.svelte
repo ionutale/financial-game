@@ -41,7 +41,9 @@
 		</h2>
 
 		{#if milestones.length}
-			<p class="mt-2 text-sm text-[var(--money)]">
+			<!-- The line eases in (app.css, reduced-motion-gated): emphasis
+			     only — the words are the announcement, and nothing dismisses it. -->
+			<p class="milestone-land mt-2 text-sm text-[var(--money)]">
 				{m.resolve_milestone({ names: milestones.join(', ') })}
 			</p>
 		{/if}

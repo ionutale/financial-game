@@ -125,8 +125,14 @@ function fakeContext() {
 }
 
 describe('the cue bank (ticket 30)', () => {
-	it('is four cues, every note quiet, tonal and time-ordered', () => {
-		expect(Object.keys(SFX_CUES).sort()).toEqual(['choice', 'crash', 'month_close', 'stage_up']);
+	it('is five cues, every note quiet, tonal and time-ordered', () => {
+		expect(Object.keys(SFX_CUES).sort()).toEqual([
+			'choice',
+			'crash',
+			'milestone',
+			'month_close',
+			'stage_up'
+		]);
 		for (const [cue, notes] of Object.entries(SFX_CUES)) {
 			expect(notes.length, cue).toBeGreaterThan(0);
 			let previous = 0;
@@ -184,6 +190,22 @@ describe('the cue bank (ticket 30)', () => {
 		expect(events[0]).toEqual({ kind: 'set', value: note.freq, at: 0 });
 		expect(events[1].kind).toBe('exponential');
 		expect(events[1].value).toBe(note.glide);
+	});
+
+	it('lands a Milestone as one rising note (gamification ticket 06)', () => {
+		const notes = SFX_CUES.milestone;
+		expect(notes).toHaveLength(1);
+		const note = notes[0];
+		// Rising, not falling: the end pitch is above the start.
+		expect(note.glide).toBeDefined();
+		expect(note.glide as number).toBeGreaterThan(note.freq);
+
+		const { ctx, oscillators } = fakeContext();
+		scheduleCue(ctx, 'milestone', 0);
+
+		const events = oscillators[0].frequency.events;
+		expect(events[0]).toEqual({ kind: 'set', value: note.freq, at: 0 });
+		expect(events[1]).toEqual({ kind: 'exponential', value: note.glide, at: note.duration });
 	});
 
 	it('stays silent when sound is off, or when Web Audio is unavailable', () => {

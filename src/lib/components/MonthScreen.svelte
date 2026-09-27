@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import { playCue } from '$lib/audio/sfx';
 	import { applyAction, createRun } from '$lib/game/loop';
+	import { milestonesNewThisMonth } from '$lib/game/milestones';
 	import { freshSeed } from '$lib/game/rng';
 	import type { Action, RunState } from '$lib/game/types';
 	import EventStep from './EventStep.svelte';
@@ -42,7 +43,11 @@
 		// Ticket 30: the cues ride the gestures that cause them, so the AudioContext
 		// is only ever created inside a click. Each is a quiet confirmation of
 		// something already visible; none of them is needed to play.
-		if (action.type === 'CONTINUE' && run.phase === 'resolve') playCue('month_close');
+		// Gamification ticket 06: a Milestone month hears the single rising note
+		// instead of the close's two ticks — one cue, still off by default.
+		if (action.type === 'CONTINUE' && run.phase === 'resolve') {
+			playCue(milestonesNewThisMonth(run).length ? 'milestone' : 'month_close');
+		}
 		if (action.type === 'NEXT_MONTH' && run.phase === 'stage_up') playCue('stage_up');
 		if (action.type === 'CONFIRM_PLAN' && run.card?.id === 'the_crash') playCue('crash');
 		// Committing at the month close is the one write per Turn (ticket 04); a

@@ -28,7 +28,7 @@ Everything else applies, including **4.1.3 Status Messages** — which the game 
 
 | Gate | Tool | Scope | Passes when |
 |---|---|---|---|
-| axe | `@axe-core/playwright` (axe-core with the `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa` tag set) | nine screens: intro/home, Plan, event + Feedback, month close, Stats Sheet, state chips, Stage-up (the Fork), privacy policy, Settings | zero violations |
+| axe | `@axe-core/playwright` (axe-core with the `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa` tag set) | eleven screens: intro/home, Plan (with the Named-Goal ticks), event + Feedback, month close (with its Milestone line), Stats Sheet (with its Milestones and Concept Coverage), state chips, Stage-up (the Fork, with its Year in Review), the Money Story (with its Milestones, Coverage, year-5 recap and inside-budget line), the Journal (empty and populated), privacy policy, Settings | zero violations |
 | Lighthouse | Lighthouse Node API, **accessibility category only** | the home screen | score ≥ 0.95 |
 
 The Lighthouse threshold is **0.95, not 1.0** on purpose: the score is weighted, and one
@@ -93,12 +93,17 @@ Per release, on the built app. Failures are filed as issues, not noted and forgo
 ### 1. Muted
 
 **Steps:** turn the device volume to zero (or mute the system). Play from the intro through a full
-month — Plan, card, Feedback, close. Nothing important may arrive only as sound.
+month — Plan, card, Feedback, close — then through the gamification surfaces: a Stage-up with its
+Year in Review, a Month Close with a Milestone line, the Stats Sheet's Milestones and Concept
+Coverage, a finished Run's Money Story and the Journal. Nothing important may arrive only as sound;
+every one of those blocks must read without it.
 
-**Status now:** vacuously passing — no audio ships at all (no `AudioContext`, `new Audio`,
-`<audio>` or `<video>` anywhere in `src/`). **Human-owed** from the first release that ships SFX;
-ticket 14 requires sound off by default, never load-bearing, and every sound with a visual
-counterpart.
+**Status now:** the SFX bank ships (ticket 30) and stays off until the player switches it on in
+Settings; the suite proves the off-by-default default, the toggle and its persistence. Gamification
+ticket 06 adds the one `milestone` cue on the same terms — a Milestone month hears it instead of
+the close's ticks, and the text line already carries the event. The mute pass itself is
+**human-owed** from the first release that ships SFX: ticket 14 requires sound off by default,
+never load-bearing, and every sound with a visual counterpart.
 
 ### 2. Zoomed
 
@@ -134,7 +139,10 @@ hear that it was spoken and made sense.
 Colour Filters → Greyscale; Windows: Settings → Accessibility → Colour filters → Grayscale), or
 add `html { filter: grayscale(1) }` in devtools. Play a month and check that Need / Want / Save
 remain distinguishable, the outcome band still reads, choice chips still name their costs, and the
-crash marker is still labelled on the chart.
+crash marker is still labelled on the chart. Then check the gamification blocks: the Month Close's
+Milestone line, the Stats Sheet's and Money Story's Milestones and Coverage words (Introduced /
+Experienced / Not yet), the Stage-up's Year in Review, and the Journal's Chapters, coverage and
+collected Milestones. Every state there is a word; colour may never be the only difference.
 
 **Status now: human-owed, entirely.** No tool can judge whether meaning survives colour removal.
 The DOM is built for it — every colour-bearing value also carries text (envelope labels, the
@@ -171,6 +179,13 @@ traces (`test-results/`) are uploaded as workflow artifacts on every run.
     overrides actually apply;
   - `max-w-full` on the Settings delete button, so its label can wrap instead of pushing the
     document 10px sideways at 200% text.
+- Later gate runs forced their own fixes, kept for the same reason (gamification tickets 03–04):
+  - the HUD's cash / free-time row gained `flex-wrap` — its 320px + 200%-text overflow made the
+    reflow proxy flaky;
+  - `app.css` darkened `--up` / `--down` (`#16794a` → `#126b41`, `#ad4f1c` → `#9c4413`) and added
+    the explicit `--up-wash` / `--down-wash` tints: the Money Story's band chip joined the gate and
+    measured 4.17:1 / 4.11:1 on its own wash, under AA's 4.5:1 — the `--money` precedent above,
+    applied again.
 - The Feedback's `aria-live="polite"` region, promised by ticket 14 but missing from the build,
   was added too — axe cannot detect that one.
 - **Judge calls on record:** axe runs with reduced motion (see above); Lighthouse gates only the

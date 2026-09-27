@@ -10,8 +10,10 @@ When a player opens the game, the server mints 32 random bytes and sets them in 
 `httpOnly; Secure; SameSite=Lax` cookie. The database stores only a **peppered SHA-256 digest** of
 that value — never the cookie itself — alongside the game state it points at: the Run in progress
 and any finished Runs kept for replay, each holding the month, the money, the plan and the choices
-made. Nothing else is derived from the player. There is no account, no name, no email, no IP
-address, no user agent, no fingerprinting and no analytics.
+made. **The Journal** (the gamification layer's cross-Run record) is a view over exactly this
+stored state — a new surface, not a new data class — and stores nothing of its own. Nothing else is
+derived from the player. There is no account, no name, no email, no IP address, no user agent, no
+fingerprinting and no analytics.
 
 The cookie exists for exactly one purpose: to find the player's saved Run on the next request.
 Delete the key and the game cannot know there is progress to resume.

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import {
 		formatMoney,
 		formatMoneyExact,
@@ -24,6 +25,30 @@
 	const saved = $derived(savedTowardGoal(run));
 	const pct = $derived(Math.max(0, Math.min(100, (saved / goal) * 100)));
 	const thread = $derived(threadChip(run));
+
+	/*
+	 * The Named Goal's quarter ticks (gamification ticket 06): decoration at
+	 * 25 / 50 / 75 / 100 %, aria-hidden, while the accessible reading of the
+	 * goal stays the money text below — unchanged.
+	 */
+	const TICKS = [25, 50, 75, 100] as const;
+
+	/*
+	 * A short emphasis when a tick lands. The effect compares the rendered
+	 * percentage with the previous one, so a month that pushes savings over a
+	 * quarter earns one pulse — never a timer, never a loop, and nothing on
+	 * first load. `untrack` keeps the write out of the effect's dependencies.
+	 */
+	let lastPct: number | null = null;
+	let landings = $state(0);
+
+	$effect(() => {
+		const current = pct;
+		if (lastPct !== null && TICKS.some((tick) => lastPct! < tick && current >= tick)) {
+			untrack(() => (landings += 1));
+		}
+		lastPct = current;
+	});
 </script>
 
 <header class="flex flex-col gap-6">
@@ -53,11 +78,31 @@
 	</div>
 
 	<div>
-		<div class="h-1.5 overflow-hidden rounded-full bg-[var(--wash)]">
+		<div class="relative h-1.5 overflow-hidden rounded-full bg-[var(--wash)]">
 			<div
 				class="h-full rounded-full bg-[var(--money)] transition-[width] duration-500 ease-out"
 				style="width: {pct}%"
 			></div>
+			<!--
+				The quarter ticks (gamification ticket 06): decoration only, hidden
+				from assistive tech. The goal's value is the fill plus the money text
+				below — this layer adds no meaning and no progressbar role.
+			-->
+			<div id="goal-ticks" class="absolute inset-0" aria-hidden="true">
+				{#each TICKS as tick (tick)}
+					<span
+						class="absolute top-0 h-full w-px bg-[var(--ink-25)] {tick === 100
+							? '-translate-x-full'
+							: ''}"
+						style="left: {tick}%"
+					></span>
+				{/each}
+			</div>
+			{#if landings > 0}
+				{#key landings}
+					<span class="goal-pulse absolute inset-0" aria-hidden="true"></span>
+				{/key}
+			{/if}
 		</div>
 		<div class="mt-2 flex items-baseline justify-between">
 			<span class="kicker">{goalName(run)}</span>
