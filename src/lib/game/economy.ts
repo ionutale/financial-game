@@ -119,15 +119,25 @@ export function spendable(state: Pick<RunState, 'cash' | 'pots'>): number {
 	return state.cash + state.pots.need + state.pots.want;
 }
 
+/**
+ * The Save the Fund can take (ticket 09): the Save envelope plus the savings
+ * account — the deposit's source of truth for the reducer and for the blocked
+ * Choice's message. Never cash, never Debt: the Fund cannot borrow.
+ */
+export function saveTotal(state: Pick<RunState, 'pots' | 'savings'>): number {
+	return state.pots.save + state.savings;
+}
+
 /** What counts toward the Named Goal: banked savings plus this month's earmark. */
 export function savedTowardGoal(state: Pick<RunState, 'savings' | 'fund' | 'pots'>): number {
-	return state.savings + state.fund + state.pots.save;
+	// `?? 0` keeps pre-wiring saves (fund: 0, or absent) rendering as today.
+	return state.savings + (state.fund ?? 0) + state.pots.save;
 }
 
 export function netWorth(
 	state: Pick<RunState, 'cash' | 'pots' | 'savings' | 'fund' | 'debt'>
 ): number {
-	return available(state) + state.savings + state.fund - state.debt;
+	return available(state) + state.savings + (state.fund ?? 0) - state.debt;
 }
 
 /**

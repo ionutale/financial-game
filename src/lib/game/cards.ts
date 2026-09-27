@@ -1752,8 +1752,9 @@ export const CARDS: Card[] = [
 		choices: [
 			{
 				id: 'open',
-				cost: 400,
-				category: 'save'
+				// Fun-pass ticket 09: a real deposit — Save moves into the Fund,
+				// blocked when unaffordable, and never from borrowed money.
+				sets: { fund: 400 }
 			},
 			{
 				id: 'wait',
@@ -1773,8 +1774,9 @@ export const CARDS: Card[] = [
 		choices: [
 			{
 				id: 'buy',
-				cost: 200,
-				category: 'save'
+				// Buying the dip (fun-pass ticket 09): the crash has already landed
+				// when this Choice is taken, so the deposit enters at the fallen price.
+				sets: { fund: 200 }
 			},
 			{
 				id: 'hold',
@@ -1785,7 +1787,9 @@ export const CARDS: Card[] = [
 				id: 'sell',
 				cost: 0,
 				freeTime: -2,
-				category: null
+				category: null,
+				// Selling locks the fallen value: the Fund moves to Savings.
+				sets: { sellFund: true }
 			}
 		]
 	},
@@ -1990,8 +1994,8 @@ export const CARDS: Card[] = [
 		choices: [
 			{
 				id: 'fund',
-				cost: 50,
-				category: 'save'
+				// Fun-pass ticket 09: the boring deposit, real at last.
+				sets: { fund: 50 }
 			},
 			{
 				id: 'chase',

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { beatArtFor } from '$lib/game/beats';
 	import { callbackFor } from '$lib/game/callbacks';
-	import { formatMoney } from '$lib/game/economy';
+	import { formatMoney, saveTotal } from '$lib/game/economy';
 	import { cardFormFor } from '$lib/game/forms';
 	import type { LedgerEntry } from '$lib/game/ledger';
 	import { isFirstEncounter } from '$lib/game/presentation';
@@ -62,9 +62,17 @@
 	const tight = $derived(card?.kind === 'shock');
 	const proseLeading = $derived(tight ? 'leading-snug' : 'leading-relaxed');
 
-	function blocked(c: Choice): boolean {
+	/*
+	 * Why a Choice is not takeable (fun-pass ticket 09): time is the shipped
+	 * rule; a Fund deposit is blocked when the Save envelope and the savings
+	 * account cannot cover it — the Fund never borrows. The reducer enforces
+	 * both; this only mirrors it so the tap is never a dead one.
+	 */
+	function blockedBy(c: Choice): 'time' | 'fund' | null {
 		const hours = c.freeTime ?? 0;
-		return hours < 0 && Math.abs(hours) > run.freeTime;
+		if (hours < 0 && Math.abs(hours) > run.freeTime) return 'time';
+		if (c.sets?.fund !== undefined && saveTotal(run) < c.sets.fund) return 'fund';
+		return null;
 	}
 
 	/*
@@ -201,7 +209,8 @@
 			<div class="mt-6 flex flex-col gap-2.5">
 				{#each card.choices as c (c.id)}
 					{@const chips = chipsFor(c, run.insurance)}
-					{@const off = blocked(c)}
+					{@const reason = blockedBy(c)}
+					{@const off = reason !== null}
 					<button
 						class="group w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3.5 text-left transition
 							{off ? 'opacity-40' : 'hover:border-[var(--ink-25)] active:scale-[0.995]'}"
@@ -222,9 +231,9 @@
 								<span class="text-[11px] text-[var(--muted)]">{m.event_no_cost()}</span>
 							{/if}
 						</span>
-						{#if off}
+						{#if reason}
 							<span class="mt-1.5 block text-[11px] text-[var(--down)]">
-								{m.event_blocked()}
+								{reason === 'fund' ? m.event_blocked_fund() : m.event_blocked()}
 							</span>
 						{/if}
 					</button>

@@ -11,8 +11,10 @@ import {
 	expectedIncome,
 	netWorth,
 	obligationsFor,
+	saveTotal,
 	stageOf
 } from './economy';
+import { CRASH_MONTH, crashFund, marketFactor } from './market';
 import { turnRng } from './rng';
 import { spineCardId } from './spine';
 import { THREADS, threadDue } from './threads';
@@ -289,6 +291,12 @@ export function closeMonth(s: RunState): RunState {
 	const interest = s.savings * SAVINGS_MONTHLY;
 	s.savings += interest;
 
+	// The Fund moves with the market (fun-pass ticket 09, ADR-0006): the
+	// month's seeded return, or the scripted recovery in months 56–58. Month
+	// 55's factor is 1 — its crash is applied when the month's Choice is taken
+	// (see CHOOSE), so the close never moves the Fund the crash already hit.
+	if ((s.fund ?? 0) > 0) s.fund = (s.fund ?? 0) * marketFactor(s.seed, s.month);
+
 	// Prices drift up for next month.
 	s.inflationIndex *= 1 + INFLATION_MONTHLY;
 
@@ -308,7 +316,8 @@ export function closeMonth(s: RunState): RunState {
 	s.history.push({
 		month: s.month,
 		netWorth: netWorth(s),
-		savings: s.savings + s.fund,
+		// The Fund rides in Savings; `?? 0` keeps pre-wiring saves from NaN.
+		savings: s.savings + (s.fund ?? 0),
 		debt: s.debt,
 		income: s.income,
 		saved: savedThisMonth,
@@ -402,6 +411,17 @@ export function applyAction(state: RunState, action: Action): RunState {
 			// Time is hard: money can be borrowed, hours cannot.
 			if ((choice.freeTime ?? 0) < 0 && hoursNeeded > s.freeTime) return s;
 
+			// The Fund cannot borrow (ticket 09): a deposit is blocked unless the
+			// Save envelope and the savings account can cover it. The Choice is
+			// refused exactly as an unaffordable hour is — the UI disables it too.
+			if (choice.sets?.fund !== undefined && saveTotal(s) < choice.sets.fund) return s;
+
+			// The spine's crash is month 55's market move (ticket 09): it lands
+			// when the month's Choice is taken, after the guards, so `sell`
+			// liquidates at the fallen value and `buy` deposits at the fallen
+			// price — and a refused Choice cannot crash the Fund twice.
+			if (s.month === CRASH_MONTH && (s.fund ?? 0) > 0) s.fund = crashFund(s.fund ?? 0);
+
 			const insured = choice.insuredCost !== undefined && s.insurance;
 			const cost = insured ? (choice.insuredCost as number) : (choice.cost ?? 0);
 
@@ -420,6 +440,22 @@ export function applyAction(state: RunState, action: Action): RunState {
 				}
 			}
 			if (choice.freeTime) s.freeTime += choice.freeTime;
+
+			// The Fund (ticket 09): Save → Fund only — the envelope first, then
+			// the savings account — so investing borrowed money is impossible by
+			// construction. `sellFund` returns the whole Fund to Savings at its
+			// current (possibly fallen) value.
+			if (choice.sets?.fund !== undefined) {
+				const amount = choice.sets.fund;
+				const fromPot = Math.min(s.pots.save, amount);
+				s.pots.save -= fromPot;
+				s.savings -= amount - fromPot;
+				s.fund = (s.fund ?? 0) + amount;
+			}
+			if (choice.sets?.sellFund) {
+				s.savings += s.fund ?? 0;
+				s.fund = 0;
+			}
 
 			if (choice.sets?.insurance) s.insurance = true;
 			if (choice.sets?.bnpl) s.bnpl = { amount: 30, monthsLeft: choice.sets.bnpl };

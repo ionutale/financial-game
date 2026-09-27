@@ -28,6 +28,12 @@ describe('cost chips', () => {
 		expect(chipsFor(shock, true)).toEqual(['covered']);
 	});
 
+	it('shows a Fund deposit as the money the Save side moves', () => {
+		expect(chipsFor(choice('the_fund', 'open'), false)).toEqual(['\u2212\u25c8400']);
+		expect(chipsFor(choice('boring_fund', 'fund'), false)).toEqual(['\u2212\u25c850']);
+		expect(chipsFor(choice('the_crash', 'buy'), false)).toEqual(['\u2212\u25c8200']);
+	});
+
 	it('says so when a choice costs nothing now', () => {
 		expect(chipsFor(choice('bnpl_trainers', 'skip'), false)).toEqual([]);
 	});

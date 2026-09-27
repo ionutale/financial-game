@@ -21,6 +21,12 @@ export function chipsFor(choice: Choice, insured: boolean): string[] {
 
 	if (choice.gain) chips.push('+' + formatMoney(choice.gain, locale));
 
+	// A Fund deposit chips as the money it moves: the Save envelope loses it
+	// (fun-pass ticket 09), so the amount is never hidden in the label.
+	if (choice.sets?.fund !== undefined) {
+		chips.push('\u2212' + formatMoney(choice.sets.fund, locale));
+	}
+
 	if (choice.freeTime) {
 		const hours = Math.abs(choice.freeTime);
 		chips.push((choice.freeTime > 0 ? '+' : '\u2212') + hours + 'h');

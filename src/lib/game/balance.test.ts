@@ -36,7 +36,7 @@ import type { Card, Choice, RunState } from './types';
 /* -------------------------------------------------------------------------- */
 
 /** sha256 of the deck's structural content (`JSON.stringify(CARDS)`), first 12. */
-const RECORDED_DECK = '64ddb787afe3';
+const RECORDED_DECK = '9e0b45b5b677';
 
 /** How far an accepted content change may drift a recorded value. */
 const DRIFT = {
@@ -62,9 +62,15 @@ interface RecordedPolicy {
 }
 
 const RECORDED: Record<PolicyId, RecordedPolicy> = {
+	// Ticket 09 (Fund wiring) re-recorded the impulse spread only, with the
+	// orchestrator's ruling — ADR-0006's repair in the harness: the wired deck
+	// refuses the old debt-financed `the_fund/open` (400) and `the_crash/buy`
+	// (200) for a saver-less impulse Run, so its final net worth moves ~+600.
+	// The draw is bit-identical; bands, ratios, overlap and consequences are
+	// unchanged. Every other constant below is byte-identical to ticket 06/08.
 	impulse: {
 		bands: { ahead: 0, treading: 0, behind: 100 },
-		netWorth: { p10: -2501, median: -2267, p90: -1861 },
+		netWorth: { p10: -1720, median: -1417, p90: -1034 },
 		ratio5: 0.80421875,
 		overlap: 0.7369624601172884,
 		consequences: 100

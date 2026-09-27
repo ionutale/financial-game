@@ -174,12 +174,13 @@ describe('a whole Run', () => {
 });
 
 /**
- * Fun-pass ticket 08: the villain cards use the existing effect vocabulary only
- * — no new fields, verbs or state. This is the fixture over the deck shape that
- * pins it: a card may carry only the fields the loop already applies, a Choice
- * only the shipped effect fields, `sets` only the shipped verbs, and `createRun`
- * only the stored state old saves already render. A new field would have to be
- * added here first — which is exactly the review this pin exists to force.
+ * Fun-pass tickets 08–09: new content and the Fund use the existing effect
+ * vocabulary only — no new fields, verbs or state beyond the two Fund verbs the
+ * ADR sanctions. This is the fixture over the deck shape that pins it: a card
+ * may carry only the fields the loop already applies, a Choice only the shipped
+ * effect fields, `sets` only the shipped verbs, and `createRun` only the stored
+ * state old saves already render. A new field would have to be added here
+ * first — which is exactly the review this pin exists to force.
  */
 describe('the deck shape (ADR-0005: content grows, the vocabulary is frozen)', () => {
 	const CARD_FIELDS = [
@@ -195,7 +196,18 @@ describe('the deck shape (ADR-0005: content grows, the vocabulary is frozen)', (
 		'choices'
 	];
 	const CHOICE_FIELDS = ['id', 'cost', 'gain', 'freeTime', 'category', 'insuredCost', 'sets'];
-	const SET_VERBS = ['insurance', 'bnpl', 'path', 'overdraft', 'minimumStreak', 'thread'];
+	const SET_VERBS = [
+		'insurance',
+		'bnpl',
+		'path',
+		'overdraft',
+		'minimumStreak',
+		'thread',
+		// Fun-pass ticket 09: the Fund's two verbs — a Save → Fund deposit, and
+		// the crash's liquidation back into Savings.
+		'fund',
+		'sellFund'
+	];
 
 	it('carries no card, choice or set field the loop cannot apply', () => {
 		for (const card of CARDS) {

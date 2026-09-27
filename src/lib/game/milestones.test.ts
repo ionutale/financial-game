@@ -65,9 +65,9 @@ function play(state: RunState, months: number): RunState {
 }
 
 /**
- * A Run that lived every signal the twelve Milestones derive from: a first
+ * A Run that lived every signal the fourteen Milestones derive from: a first
  * clean month, a quarter, a half-year, Save, interest, the goal, debt cleared,
- * the spine beats and the Fork.
+ * the spine beats, the Fork, and the Fund's open → crash → recovery.
  */
 function fullRun(): RunState {
 	return withState({
@@ -75,6 +75,7 @@ function fullRun(): RunState {
 		log: [
 			{ month: 25, card: 'first_payslip', choice: 'measured' },
 			{ month: 49, card: 'the_fork', choice: 'work' },
+			{ month: 49, card: 'the_fund', choice: 'open' },
 			{ month: 50, card: 'first_taxed_payslip', choice: 'read' },
 			{ month: 53, card: 'scam_opportunity', choice: 'check' },
 			{ month: 55, card: 'the_crash', choice: 'hold' }
@@ -90,14 +91,15 @@ function fullRun(): RunState {
 			row(7, { insideBudget: true, debt: 300 }),
 			row(8, { insideBudget: true, debt: 300 }),
 			row(9, { insideBudget: true, debt: 300 }),
-			row(10, { insideBudget: true, debt: 0, savings: GOAL_TARGET })
+			row(10, { insideBudget: true, debt: 0, savings: GOAL_TARGET }),
+			row(58)
 		]
 	});
 }
 
 describe('the Milestone catalogue', () => {
-	it('carries the twelve v1 ids', () => {
-		expect(MILESTONE_IDS).toHaveLength(12);
+	it('carries the fourteen ids', () => {
+		expect(MILESTONE_IDS).toHaveLength(14);
 	});
 
 	it('earns nothing from a fresh Run', () => {
@@ -115,9 +117,11 @@ describe('the Milestone catalogue', () => {
 			{ id: 'debt_cleared', month: 10 },
 			{ id: 'first_pay', month: 25 },
 			{ id: 'fork_chosen', month: 49 },
+			{ id: 'fund_opened', month: 49 },
 			{ id: 'payslip_read', month: 50 },
 			{ id: 'not_fooled', month: 53 },
-			{ id: 'weathered_the_crash', month: 55 }
+			{ id: 'weathered_the_crash', month: 55 },
+			{ id: 'rode_the_recovery', month: 58 }
 		]);
 	});
 
@@ -191,6 +195,22 @@ const FIRING: Array<{ id: MilestoneId; month: number; run: RunState }> = [
 		id: 'fork_chosen',
 		month: 49,
 		run: withState({ flags: [{ month: 49, kind: 'fork:work' }] })
+	},
+	{
+		id: 'fund_opened',
+		month: 49,
+		run: withState({ log: [{ month: 49, card: 'the_fund', choice: 'open' }] })
+	},
+	{
+		id: 'rode_the_recovery',
+		month: 58,
+		run: withState({
+			log: [
+				{ month: 49, card: 'the_fund', choice: 'open' },
+				{ month: 55, card: 'the_crash', choice: 'hold' }
+			],
+			history: [row(58)]
+		})
 	}
 ];
 
@@ -246,6 +266,68 @@ describe('the conditions a Choice can withhold', () => {
 		expect(earnedMilestones(run).filter((m) => m.id === 'goal_reached')).toEqual([
 			{ id: 'goal_reached', month: 2 }
 		]);
+	});
+});
+
+describe('the Fund Milestones (ticket 09)', () => {
+	const opened = { month: 49, card: 'the_fund', choice: 'open' } as const;
+	const weathered = { month: 55, card: 'the_crash', choice: 'hold' } as const;
+
+	it('opens the Fund on any deposit — including the boring fund and buying the crash', () => {
+		expect(
+			earnedMilestones(withState({ log: [{ month: 53, card: 'boring_fund', choice: 'fund' }] })).find(
+				(m) => m.id === 'fund_opened'
+			)
+		).toEqual({ id: 'fund_opened', month: 53 });
+		expect(
+			earnedMilestones(withState({ log: [{ month: 55, card: 'the_crash', choice: 'buy' }] })).find(
+				(m) => m.id === 'fund_opened'
+			)
+		).toEqual({ id: 'fund_opened', month: 55 });
+	});
+
+	it('does not open the Fund for the choices that leave it alone', () => {
+		const waited = withState({ log: [{ month: 49, card: 'the_fund', choice: 'wait' }] });
+		expect(idsOf(waited)).not.toContain('fund_opened');
+	});
+
+	it('rides the recovery only with money in the Fund and the fall held or bought', () => {
+		const rode = withState({ log: [opened, weathered], history: [row(58)] });
+		expect(earnedMilestones(rode).filter((m) => m.id === 'rode_the_recovery')).toEqual([
+			{ id: 'rode_the_recovery', month: 58 }
+		]);
+
+		// Buying the dip rides it too.
+		const bought = withState({
+			log: [opened, { month: 55, card: 'the_crash', choice: 'buy' }],
+			history: [row(58)]
+		});
+		expect(idsOf(bought)).toContain('rode_the_recovery');
+	});
+
+	it('does not ride a recovery the Run never funded, held, or reached', () => {
+		// Never any money in the Fund.
+		expect(idsOf(withState({ log: [weathered], history: [row(58)] }))).not.toContain(
+			'rode_the_recovery'
+		);
+		// Sold the crash: the recovery happened without the Fund.
+		expect(
+			idsOf(
+				withState({
+					log: [opened, { month: 55, card: 'the_crash', choice: 'sell' }],
+					history: [row(58)]
+				})
+			)
+		).not.toContain('rode_the_recovery');
+		// The recovery window is still open — the record has not reached month 58.
+		expect(
+			idsOf(withState({ log: [opened, weathered], history: [row(57)] }))
+		).not.toContain('rode_the_recovery');
+	});
+
+	it('never fires twice across later months', () => {
+		const run = withState({ log: [opened, weathered], history: [row(58), row(59), row(60)] });
+		expect(earnedMilestones(run).filter((m) => m.id === 'rode_the_recovery')).toHaveLength(1);
 	});
 });
 

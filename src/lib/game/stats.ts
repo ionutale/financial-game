@@ -62,13 +62,21 @@ export function statsSheet(run: RunState): StatsSheet {
 	// deck no longer carries; both stay openable rather than throwing.
 	const thread = run.thread ?? null;
 	const live = thread && THREADS[thread.id] ? thread : null;
+	// `?? 0` keeps a pre-wiring save (fund absent) rendering as zero.
+	const fund = run.fund ?? 0;
+
+	const rows: StatsRow[] = [{ key: 'savings', value: run.savings, tone: 'ink' }];
+	// The Fund row appears whenever the Fund holds money (fun-pass ticket 09,
+	// AC4): absent, never a dead zero — the close's own rule. Old saves with
+	// fund: 0 simply show no Fund row.
+	if (fund > 0) rows.push({ key: 'fund', value: fund, tone: 'ink' });
+	rows.push(
+		{ key: 'debt', value: run.debt, tone: run.debt > 0 ? 'down' : 'ink' },
+		{ key: 'score', value: run.score, tone: run.score === null ? 'muted' : 'ink' }
+	);
+
 	return {
-		rows: [
-			{ key: 'savings', value: run.savings, tone: 'ink' },
-			{ key: 'fund', value: run.fund, tone: 'ink' },
-			{ key: 'debt', value: run.debt, tone: run.debt > 0 ? 'down' : 'ink' },
-			{ key: 'score', value: run.score, tone: run.score === null ? 'muted' : 'ink' }
-		],
+		rows,
 		obligations: obligationsFor(run),
 		liveThread: live ? { id: live.id, months: threadDue(live) - run.month } : null,
 		history: threadHistory(run)

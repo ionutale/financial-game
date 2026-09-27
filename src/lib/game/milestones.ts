@@ -12,7 +12,9 @@
  * record does not carry those signals yet (spec, "Deferred").
  */
 
+import { cardById } from './cards';
 import { GOAL_TARGET, STUDY_BUFFER } from './economy';
+import { RECOVERY_MONTHS } from './market';
 import { computeMetrics } from './metrics';
 import type { MonthSnapshot, RunState } from './types';
 
@@ -29,7 +31,9 @@ export const MILESTONE_IDS = [
 	'not_fooled',
 	'weathered_the_crash',
 	'payslip_read',
-	'fork_chosen'
+	'fork_chosen',
+	'fund_opened',
+	'rode_the_recovery'
 ] as const;
 
 export type MilestoneId = (typeof MILESTONE_IDS)[number];
@@ -50,6 +54,9 @@ function months(run: Pick<RunState, 'history'>): MonthSnapshot[] {
 
 const log = (run: Pick<RunState, 'log'>) => run.log ?? [];
 const flags = (run: Pick<RunState, 'flags'>) => run.flags ?? [];
+
+/** The last month of the scripted recovery — the month it is complete. */
+const RECOVERY_COMPLETE_MONTH = Math.max(...Object.keys(RECOVERY_MONTHS).map(Number));
 
 /** The first month a row satisfies a condition, or null. */
 function firstMonth(h: MonthSnapshot[], holds: (r: MonthSnapshot) => boolean): number | null {
@@ -96,6 +103,37 @@ function forkMonth(run: Pick<RunState, 'log' | 'flags'>): number | null {
 }
 
 /**
+ * The first month a Choice moved money into the Fund (ticket 09): any played
+ * entry whose Choice carries a positive `sets.fund` — `the_fund`'s open, the
+ * boring fund, or buying the crash's dip. Derived from the log and the current
+ * deck, like every other played-card Milestone; legacy saves simply do not
+ * carry a deposit.
+ */
+function fundOpenedMonth(run: Pick<RunState, 'log'>): number | null {
+	let found: number | null = null;
+	for (const entry of log(run)) {
+		const choice = cardById(entry.card)?.choices.find((c) => c.id === entry.choice);
+		if ((choice?.sets?.fund ?? 0) > 0 && (found === null || entry.month < found)) {
+			found = entry.month;
+		}
+	}
+	return found;
+}
+
+/**
+ * Riding the recovery (ticket 09): money went into the Fund, the crash was
+ * weathered (held or bought, never sold), and the record reaches the last
+ * scripted recovery month (58). The fire month is the recovery's completion —
+ * the Fund is not stored per month, so the log and the closed record are the
+ * derivation, and a Run still inside the window does not fire early.
+ */
+function rodeTheRecoveryMonth(run: Pick<RunState, 'log' | 'history'>): number | null {
+	if (fundOpenedMonth(run) === null) return null;
+	if (firstPlayed(run, 'the_crash', ['hold', 'buy']) === null) return null;
+	return firstMonth(months(run), (r) => r.month >= RECOVERY_COMPLETE_MONTH);
+}
+
+/**
  * The Named Goal's target, mirroring `metrics.ts` (`goalProgress` is savings
  * plus Fund): the Study path saves a Buffer, the Work path the full target.
  */
@@ -123,7 +161,9 @@ export function earnedMilestones(run: RunState): EarnedMilestone[] {
 		['not_fooled', firstPlayed(run, 'scam_opportunity', ['check', 'block'])],
 		['weathered_the_crash', firstPlayed(run, 'the_crash', ['hold', 'buy'])],
 		['payslip_read', firstPlayed(run, 'first_taxed_payslip', ['read'])],
-		['fork_chosen', forkMonth(run)]
+		['fork_chosen', forkMonth(run)],
+		['fund_opened', fundOpenedMonth(run)],
+		['rode_the_recovery', rodeTheRecoveryMonth(run)]
 	];
 
 	return candidates

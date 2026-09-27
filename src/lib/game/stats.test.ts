@@ -33,6 +33,24 @@ describe('the Stats Sheet rows', () => {
 		const sheet = statsSheet(createRun());
 		expect(sheet.rows.find((row) => row.key === 'score')?.value).toBeNull();
 	});
+
+	it('shows the Fund row only when the Fund holds money (ticket 09)', () => {
+		// Absent, never a dead zero — the close's own rule (AC4).
+		expect(statsSheet(createRun()).rows.map((row) => row.key)).toEqual(['savings', 'debt', 'score']);
+
+		const funded = statsSheet(withState({ fund: 250 }));
+		expect(funded.rows.find((row) => row.key === 'fund')).toEqual({
+			key: 'fund',
+			value: 250,
+			tone: 'ink'
+		});
+	});
+
+	it('treats an absent Fund (a pre-wiring save) as zero without NaN', () => {
+		const legacy = statsSheet(withState({ fund: undefined as unknown as number }));
+		expect(legacy.rows.map((row) => row.key)).toEqual(['savings', 'debt', 'score']);
+		expect(legacy.rows.every((row) => row.value === null || Number.isFinite(row.value))).toBe(true);
+	});
 });
 
 describe('the Stats Sheet obligations', () => {

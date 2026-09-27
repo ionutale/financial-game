@@ -15,6 +15,9 @@ import {
 	EVENT_RUN,
 	FEEDBACK_RUN,
 	FINAL_MONTH_RUN,
+	FUND_BLOCKED_RUN,
+	FUND_CRASH_RUN,
+	FUNDED_RUN,
 	LEDGER_RUN,
 	MESSAGE_RUN,
 	MILESTONE_RUN,
@@ -324,6 +327,10 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 		await expect(page.getByRole('dialog', { name: 'Where the money is' })).toBeVisible();
 		// No month closed yet, so the Milestone list is honestly empty.
 		await expect(page.getByText('No milestones yet.')).toBeVisible();
+		// No Fund holds money, so its row is absent — never a dead zero
+		// (fun-pass ticket 09, AC4; the close's own rule).
+		const sheet = page.getByRole('dialog', { name: 'Where the money is' });
+		await expect(sheet.getByText('Fund', { exact: true })).toHaveCount(0);
 		await expectNoAxeViolations(page, 'the Stats Sheet');
 	});
 
@@ -1114,5 +1121,78 @@ test.describe('fun-pass ticket 08: the villain cards', () => {
 		await expect(page.getByText('The friend who joined — the check-in in 3 months')).toBeVisible();
 
 		await expectNoAxeViolations(page, 'the referral villain card with a live Thread');
+	});
+});
+
+/**
+ * Fun-pass ticket 09: the Fund is wired. A deposit moves Save → Fund (blocked
+ * when unaffordable, never borrowed), the crash is the month's real movement,
+ * and the Stats Sheet's Fund row carries live money. No excludes added.
+ */
+test.describe('fun-pass ticket 09: the Fund is wired', () => {
+	test('month screen: an unaffordable deposit is disabled with the reason in words', async ({
+		page
+	}) => {
+		await seedRun(page, FUND_BLOCKED_RUN);
+		await expect(page.getByRole('heading', { name: 'Something that actually grows' })).toBeVisible();
+
+		/* The Save side holds ◈200; the ◈400 deposit is blocked, never Debt. */
+		const open = page.getByRole('button', { name: /Put some in/ });
+		await expect(open).toBeDisabled();
+		await expect(
+			open.getByText('Not enough in Savings — the Fund cannot borrow.')
+		).toBeVisible();
+		await expect(page.getByRole('button', { name: /Leave it in savings/ })).toBeEnabled();
+
+		await expectNoAxeViolations(page, 'the Fund card with a blocked deposit');
+	});
+
+	test('month screen: the crash falls on a funded Fund, and the Ledger Line shows it', async ({
+		page
+	}) => {
+		await seedRun(page, FUND_CRASH_RUN);
+		await expect(page.getByRole('heading', { name: 'The market falls' })).toBeVisible();
+		await expect(
+			page.getByText(
+				'Everything in the fund is down a quarter in two months. Everyone on the internet has an opinion and all of them are panicking.'
+			)
+		).toBeVisible();
+
+		/* Holding takes the quarter: the Fund moves, visibly, in the Feedback. */
+		await page.getByRole('button', { name: 'Hold it' }).click();
+		await expect(page.locator('[aria-live="polite"] #ledger-line')).toHaveText('Fund −◈100');
+
+		await expectNoAxeViolations(page, 'the crash answer with the Fund moving');
+	});
+
+	test('month screen: the Stats Sheet’s Fund row carries live money', async ({ page }) => {
+		await seedRun(page, FUNDED_RUN);
+		await page.getByRole('button', { name: 'Stats' }).click();
+		const sheet = page.getByRole('dialog', { name: 'Where the money is' });
+		await expect(sheet).toBeVisible();
+
+		await expect(sheet.getByText('Fund', { exact: true })).toBeVisible();
+		await expect(sheet.getByText(formatMoneyExact(FUNDED_RUN.fund, 'en'))).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the Stats Sheet with a live Fund row');
+	});
+
+	test('the Money Story: the Fund Milestones derive from the Run’s own record', async ({
+		page
+	}) => {
+		await seedRun(page, FINAL_MONTH_RUN);
+		await page.getByRole('button', { name: 'Next' }).click();
+		await expect(page.getByRole('heading', { name: 'Five years, in one page.' })).toBeVisible();
+
+		/* The gate run funded the Fund and held the crash, so the two new
+		   Milestones land as names, derived — never a count. */
+		const milestones = earnedMilestones(FINAL_MONTH_RUN).map((milestone) => milestone.id);
+		expect(milestones).toContain('fund_opened');
+		expect(milestones).toContain('rode_the_recovery');
+		const list = page.getByRole('region', { name: 'Milestones', exact: true });
+		await expect(list.getByText(milestoneLabel('fund_opened'))).toBeVisible();
+		await expect(list.getByText(milestoneLabel('rode_the_recovery'))).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the Money Story with the Fund Milestones');
 	});
 });

@@ -43,6 +43,10 @@ export interface Choice {
 		minimumStreak?: number;
 		/** Plant this Thread when the Choice is taken (ticket 03). */
 		thread?: string;
+		/** Move this much Save → Fund; blocked when unaffordable (ticket 09). */
+		fund?: number;
+		/** The whole Fund returns to Savings — the crash's `sell` (ticket 09). */
+		sellFund?: boolean;
 	};
 }
 

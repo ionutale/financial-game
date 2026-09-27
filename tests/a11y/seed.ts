@@ -1,4 +1,6 @@
 import { applyAction, createRun } from '$lib/game/loop';
+import { saveTotal } from '$lib/game/economy';
+import { cardById } from '$lib/game/cards';
 import type { Action, PathId, RunState } from '$lib/game/types';
 
 /**
@@ -249,9 +251,52 @@ export const CAST_RUN: RunState = forcedCard('mum_late_pay');
 export const VILLAIN_SHIFT_RUN: RunState = forcedCard('phone_shop_shift');
 export const VILLAIN_REFERRAL_RUN: RunState = forcedCard('app_referral');
 
+/**
+ * Fun-pass ticket 09: the Fund holds money. `FUNDED_RUN` gives the Stats Sheet
+ * a live Fund row over the shipped milestone month; `FUND_CRASH_RUN` is month
+ * 55's crash card over a funded account — the fall has already landed when the
+ * Choice is taken, so the tap shows the Ledger Line carrying the Fund down.
+ */
+export const FUNDED_RUN: RunState = { ...MILESTONE_RUN, fund: 250 };
+
+export const FUND_CRASH_RUN: RunState = (() => {
+	const card = cardById('the_crash');
+	if (!card) throw new Error('the crash card moved');
+	return {
+		...seededRun({ type: 'DISMISS_INTRO' }),
+		month: 55,
+		stage: 5,
+		path: 'work',
+		fund: 400,
+		savings: 1000,
+		phase: 'event',
+		card
+	};
+})();
+
+/** The Fund card over Save money that cannot cover the deposit: blocked, honestly. */
+export const FUND_BLOCKED_RUN: RunState = (() => {
+	const card = cardById('the_fund');
+	if (!card) throw new Error('the fund card moved');
+	return {
+		...seededRun({ type: 'DISMISS_INTRO' }),
+		month: 49,
+		stage: 5,
+		path: 'work',
+		savings: 100,
+		pots: { need: 0, want: 0, save: 100 },
+		phase: 'event',
+		card
+	};
+})();
+
 function availableChoice(state: RunState) {
 	const choice = state.card?.choices.find(
-		(c) => (c.freeTime ?? 0) >= 0 || Math.abs(c.freeTime ?? 0) <= state.freeTime
+		(c) =>
+			((c.freeTime ?? 0) >= 0 || Math.abs(c.freeTime ?? 0) <= state.freeTime) &&
+			// The Fund cannot borrow (fun-pass ticket 09): a deposit beyond the
+			// Save side is disabled in the UI, so the gate never taps it.
+			(c.sets?.fund === undefined || saveTotal(state) >= c.sets.fund)
 	);
 	if (!choice) throw new Error('the gate seed dealt a card with no available choice');
 	return choice;
