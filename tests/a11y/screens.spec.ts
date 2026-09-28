@@ -388,7 +388,9 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 
 	test('month screen: state chips', async ({ page }) => {
 		await seedRun(page, CHIP_RUN);
-		await expect(page.getByText('BNPL')).toBeVisible();
+		// Ticket 10: the recurring-payment pill generalises to “Repayment” and
+		// carries the card Repayment's own exact per-payment amount.
+		await expect(page.getByText('Repayment — 6 payments of ◈47.5 left')).toBeVisible();
 		await expectNoAxeViolations(page, 'the month screen with state chips');
 	});
 

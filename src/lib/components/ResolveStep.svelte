@@ -97,7 +97,8 @@
 				</span>
 			</div>
 			<div
-				class="flex items-baseline justify-between border-b border-dashed border-[var(--line)] py-2"
+				class="flex items-baseline justify-between py-2
+					{close.bnpl ? 'border-b border-dashed border-[var(--line)]' : ''}"
 			>
 				<span class="text-sm text-[var(--muted)]">{m.resolve_obligations()}</span>
 				<span class="figure text-sm">{formatMoney(close.obligations, locale)}</span>
@@ -106,7 +107,10 @@
 				<div class="flex items-baseline justify-between py-2">
 					<span class="text-sm text-[var(--muted)]">{m.resolve_bnpl()}</span>
 					<span class="figure text-sm">
-						{formatMoney(close.bnpl.fromCash + close.bnpl.fromSavings + close.bnpl.toDebt, locale)}
+						{formatMoneyExact(
+							close.bnpl.fromCash + close.bnpl.fromSavings + close.bnpl.toDebt,
+							locale
+						)}
 					</span>
 				</div>
 			{/if}

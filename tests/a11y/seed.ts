@@ -204,8 +204,13 @@ export const NO_BUDGET_RUN: RunState = {
 	history: FINAL_MONTH_RUN.history.map((row) => ({ ...row, insideBudget: false }))
 };
 
-/** A run carrying state chips (the BNPL pill), so their contrast is gated. */
-export const CHIP_RUN: RunState = { ...PLAN_RUN, bnpl: { amount: 30, monthsLeft: 2 } };
+/**
+ * A run carrying state chips (the Repayment pill), so their contrast is gated.
+ * Ticket 10 renamed the chip and gave the card's minimum its own per-payment
+ * amount, so the gate sees the Repayment's real shape (◈47.50 over six months),
+ * not the shop's count-only ◈30 instalment.
+ */
+export const CHIP_RUN: RunState = { ...PLAN_RUN, bnpl: { amount: 47.5, monthsLeft: 6 } };
 
 /**
  * Fun-pass ticket 05: one card per format family (message / paper / receipt)

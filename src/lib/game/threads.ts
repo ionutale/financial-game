@@ -27,7 +27,11 @@ export const THREADS: Record<string, ThreadSpec> = {
 	// Fun-pass ticket 08: the villain cards' buyers — the friend who took the
 	// four-payment split, and the friend who joined off the app's referral link.
 	split_sold: { months: 3 },
-	referral_sold: { months: 3 }
+	referral_sold: { months: 3 },
+	// Fun-pass ticket 10: the two commitments the phantom-save audit hands to
+	// Threads — the trainers' drop, and the school trip's balance due.
+	trainer_drop: { months: 4 },
+	trip_balance: { months: 2 }
 };
 
 /** The month a Thread falls due. */

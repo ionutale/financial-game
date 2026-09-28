@@ -18,9 +18,23 @@ import { CRASH_MONTH, crashFund, marketFactor } from './market';
 import { turnRng } from './rng';
 import { spineCardId } from './spine';
 import { THREADS, threadDue } from './threads';
-import type { Action, Card, Category, DrawResult, PayResult, RunState } from './types';
+import type { Action, Card, Category, DrawResult, PayResult, RecurringTerms, RunState } from './types';
 
 export const RUN_MONTHS = 60;
+
+/** What the shipped count-only instalment pays each month (the shop's ◈30). */
+export const RECURRING_AMOUNT = 30;
+
+/**
+ * The stored recurring-payment shape from a Choice's terms (ticket 10): the
+ * shipped count-only form keeps the ◈30 instalment, and a Choice may name its
+ * own amount (the card's six-month Repayment). The stored state is unchanged.
+ */
+export function recurringFrom(terms: RecurringTerms): { amount: number; monthsLeft: number } {
+	return typeof terms === 'number'
+		? { amount: RECURRING_AMOUNT, monthsLeft: terms }
+		: { amount: terms.amount, monthsLeft: terms.months };
+}
 
 function clone<T>(value: T): T {
 	return structuredClone(value);
@@ -458,7 +472,7 @@ export function applyAction(state: RunState, action: Action): RunState {
 			}
 
 			if (choice.sets?.insurance) s.insurance = true;
-			if (choice.sets?.bnpl) s.bnpl = { amount: 30, monthsLeft: choice.sets.bnpl };
+			if (choice.sets?.bnpl) s.bnpl = recurringFrom(choice.sets.bnpl);
 			if (choice.sets?.overdraft) {
 				// Ticket 01: borrowing without agreeing to it costs a fee.
 				s.debt += 15;

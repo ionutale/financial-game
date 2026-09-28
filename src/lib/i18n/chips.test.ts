@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CARDS, cardById } from '$lib/game/cards';
 import type { Choice } from '$lib/game/types';
 import { chipsFor } from './chips';
+import { message } from './messages';
 
 function choice(cardId: string, choiceId: string): Choice {
 	const c = cardById(cardId)?.choices.find((x) => x.id === choiceId);
@@ -22,6 +23,17 @@ describe('cost chips', () => {
 		expect(chipsFor(choice('bnpl_trainers', 'bnpl'), false)).toEqual(['4 \u00d7 \u25c830']);
 	});
 
+	it('shows the card Repayment with its own six-month amount (ticket 10)', () => {
+		// The minimum is ◈15 now; the rest of the ◈300 statement follows over
+		// six months, and the chip must carry the exact per-payment amount.
+		expect(chipsFor(choice('minimum_payment', 'minimum'), false)).toEqual([
+			'\u2212\u25c815',
+			'6 \u00d7 \u25c847.5'
+		]);
+		// The count-only shop form keeps the shipped ◈30 instalment.
+		expect(chipsFor(choice('bnpl_offer', 'use'), false)).toEqual(['3 \u00d7 \u25c830']);
+	});
+
 	it('replaces a shock cost with "covered" once insured', () => {
 		const shock = choice('phone_cracked', 'ack');
 		expect(chipsFor(shock, false)).toEqual(['\u2212\u25c8120']);
@@ -36,6 +48,17 @@ describe('cost chips', () => {
 
 	it('says so when a choice costs nothing now', () => {
 		expect(chipsFor(choice('bnpl_trainers', 'skip'), false)).toEqual([]);
+	});
+});
+
+describe('the HUD’s recurring-payment chip (ticket 10)', () => {
+	it('names the state “Repayment”, whatever started it', () => {
+		expect(message('hud_bnpl', { months: 6, amount: '\u25c847.5' })).toBe(
+			'Repayment \u2014 6 payments of \u25c847.5 left'
+		);
+		expect(message('hud_bnpl', { months: 1, amount: '\u25c830' })).toBe(
+			'Repayment \u2014 1 payment of \u25c830 left'
+		);
 	});
 });
 

@@ -214,12 +214,6 @@ export const COPY_ALLOW_LIST: readonly CopyAllowance[] = [
 		reason: 'sweep debt: ‘most of what this stage teaches’'
 	},
 	{
-		key: 'card_interest_first_choice_more_feedback',
-		rule: 'frame',
-		match: 'this game',
-		reason: 'sweep debt: the narrator stepping out of the fiction'
-	},
-	{
 		key: 'card_the_fork_choice_study_feedback',
 		rule: 'frame',
 		match: 'the point',

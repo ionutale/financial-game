@@ -56,57 +56,37 @@
 		}
 		lastPct = current;
 	});
-
-	/*
-	 * The money moving (fun-pass ticket 04): one changed figure flashes — the
-	 * net-worth hero. The effect compares the hero with the previous render and
-	 * bumps a counter the markup keys on, so the one-shot animation replays.
-	 * UI state only, never RunState; the final value is in the DOM at all times
-	 * and nothing counts up.
-	 *
-	 * It stays quiet while an answer is on screen: the Feedback owns that
-	 * moment (its Ledger Line flashes the changed entries), and the close
-	 * flashes its own hero — so no screen runs more than two emphases.
-	 */
-	let previousNetWorth: number | null = null;
-	let netFlash = $state(0);
-
-	$effect(() => {
-		const current = netWorth(run);
-		const answered = run.chosen !== null;
-		const before = previousNetWorth;
-		untrack(() => {
-			if (before !== null && current !== before && !answered) netFlash += 1;
-		});
-		previousNetWorth = current;
-	});
 </script>
 
 <header class="flex flex-col gap-6">
-	<!-- You: the person, the date and the Stage — not a countdown. -->
-	<div class="flex items-start gap-3" role="group" aria-labelledby="hud-you">
-		<div class="h-11 w-11 shrink-0 rounded-full bg-[var(--wash)] p-1.5 text-[var(--ink-40)]">
-			<Avatar stage={run.stage} />
-		</div>
-		<div class="min-w-0 flex-1">
-			<p class="kicker text-[var(--ink)]" id="hud-you">{m.hud_band_you()}</p>
-			<!-- The Run starts in September, so the school years line up with the
-			     Stages; the date turns once, on the month's own change. -->
-			{#key run.month}
-				<p class="time-turn figure mt-1 text-sm">
-					{m.hud_date({
-						age: run.age,
-						year: runYear(run.month),
-						month: monthName(run.month, locale)
-					})}
+	<!-- You: the person, the date and the Stage — not a countdown. The Stats
+	     button sits outside the group (fun-pass ticket 10): it is a control,
+	     not part of the “You” reading. -->
+	<div class="flex items-start gap-3">
+		<div class="flex min-w-0 flex-1 items-start gap-3" role="group" aria-labelledby="hud-you">
+			<div class="h-11 w-11 shrink-0 rounded-full bg-[var(--wash)] p-1.5 text-[var(--ink-40)]">
+				<Avatar stage={run.stage} />
+			</div>
+			<div class="min-w-0 flex-1">
+				<p class="kicker text-[var(--ink)]" id="hud-you">{m.hud_band_you()}</p>
+				<!-- The Run starts in September, so the school years line up with the
+				     Stages; the date turns once, on the month's own change. -->
+				{#key run.month}
+					<p class="time-turn figure mt-1 text-sm">
+						{m.hud_date({
+							age: run.age,
+							year: runYear(run.month),
+							month: monthName(run.month, locale)
+						})}
+					</p>
+				{/key}
+				<p class="truncate text-sm">
+					{run.path
+						? m.hud_stage_path({ stage: name, path: pathLabel(run.path) })
+						: name}
 				</p>
-			{/key}
-			<p class="truncate text-sm">
-				{run.path
-					? m.hud_stage_path({ stage: name, path: pathLabel(run.path) })
-					: name}
-			</p>
-			<p class="mt-1.5 text-sm leading-snug text-[var(--muted)]">{life}</p>
+				<p class="mt-1.5 text-sm leading-snug text-[var(--muted)]">{life}</p>
+			</div>
 		</div>
 		<button
 			class="min-h-11 shrink-0 rounded-full border border-[var(--line)] bg-[var(--surface)] px-4 text-xs font-semibold transition active:scale-[0.99]"
@@ -121,11 +101,7 @@
 		<div>
 			<p class="kicker text-[var(--ink)]" id="hud-money">{m.hud_band_money()}</p>
 			<p class="kicker mt-3">{m.hud_net_worth()}</p>
-			{#key netFlash}
-				<span class="rounded-md {netFlash > 0 ? 'money-flash' : ''}">
-					<Money amount={netWorth(run)} size="hero" />
-				</span>
-			{/key}
+			<Money amount={netWorth(run)} size="hero" />
 		</div>
 
 		<div>
@@ -189,7 +165,10 @@
 			<p
 				class="w-fit rounded-full bg-[var(--money-wash)] px-3 py-1 text-xs text-[var(--money)]"
 			>
-				{m.hud_bnpl({ months: run.bnpl.monthsLeft, amount: formatMoney(run.bnpl.amount, locale) })}
+				{m.hud_bnpl({
+					months: run.bnpl.monthsLeft,
+					amount: formatMoneyExact(run.bnpl.amount, locale)
+				})}
 			</p>
 		{/if}
 	</div>

@@ -237,12 +237,17 @@ export const CARDS: Card[] = [
 		teaches: 'windfalls are where saving starts',
 		choices: [
 			{
+				// Ticket 10 (audit): the fifty lands for real and this Choice
+				// keeps it — the old cost withdrew from Save while promising
+				// “straight into savings”. The Plan's Save envelope is where the
+				// deposit truly lives.
 				id: 'save',
-				cost: 30,
-				category: 'save'
+				gain: 50,
+				category: null
 			},
 			{
 				id: 'treat',
+				gain: 50,
 				cost: 15,
 				category: 'want'
 			}
@@ -258,12 +263,38 @@ export const CARDS: Card[] = [
 		teaches: 'a deadline turns saving into a plan',
 		choices: [
 			{
+				// Ticket 10: the ◈20 is a real deposit paid to the trip; the
+				// Thread carries the balance due in two months.
 				id: 'deposit',
 				cost: 20,
-				category: 'save'
+				category: 'save',
+				sets: { thread: 'trip_balance' }
 			},
 			{
 				id: 'wait',
+				cost: 0,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'trip_balance_due',
+		kind: 'decision',
+		stages: [1, 2],
+		concept: 'saving_goals',
+		branch: 'shared',
+		weight: 5,
+		requires: ['thread:trip_balance'],
+		resolves: 'trip_balance',
+		teaches: 'the balance of a trip arrives in a month that already had plans',
+		choices: [
+			{
+				id: 'pay',
+				cost: 40,
+				category: 'save'
+			},
+			{
+				id: 'lose',
 				cost: 0,
 				category: null
 			}
@@ -279,12 +310,40 @@ export const CARDS: Card[] = [
 		teaches: 'planned purchases cost less than sudden ones',
 		choices: [
 			{
+				// Ticket 10 (audit): the drop has a deadline, so the Thread
+				// carries the commitment; the money stays in the envelope and
+				// the Choice costs the hour of setting it up.
 				id: 'save',
-				cost: 25,
-				category: 'save'
+				cost: 0,
+				freeTime: -1,
+				category: null,
+				sets: { thread: 'trainer_drop' }
 			},
 			{
 				id: 'later',
+				cost: 0,
+				category: null
+			}
+		]
+	},
+	{
+		id: 'the_drop',
+		kind: 'decision',
+		stages: [1, 2],
+		concept: 'saving_goals',
+		branch: 'shared',
+		weight: 5,
+		requires: ['thread:trainer_drop'],
+		resolves: 'trainer_drop',
+		teaches: 'the date was the commitment, not the purchase',
+		choices: [
+			{
+				id: 'buy',
+				cost: 90,
+				category: 'save'
+			},
+			{
+				id: 'let_go',
 				cost: 0,
 				category: null
 			}
@@ -405,9 +464,13 @@ export const CARDS: Card[] = [
 		teaches: 'saving without a name does not survive',
 		choices: [
 			{
+				// Ticket 10 (audit): naming the fund puts a face on the
+				// envelope; the old ◈30 was withdrawn while the copy promised
+				// the money was being kept.
 				id: 'bike',
-				cost: 30,
-				category: 'save'
+				cost: 0,
+				freeTime: -1,
+				category: null
 			},
 			{
 				id: 'number',
@@ -534,9 +597,12 @@ export const CARDS: Card[] = [
 		teaches: 'the first milestone is why the habit survives',
 		choices: [
 			{
+				// Ticket 10 (audit): the month's saving stays in the envelope;
+				// the milepost costs attention, not a phantom twenty.
 				id: 'add',
-				cost: 20,
-				category: 'save'
+				cost: 0,
+				freeTime: -1,
+				category: null
 			},
 			{
 				id: 'celebrate',
@@ -775,9 +841,12 @@ export const CARDS: Card[] = [
 		teaches: 'money can make money, slowly at first',
 		choices: [
 			{
+				// Ticket 10 (audit): the twenty lives in the Plan's Save
+				// envelope; the Choice spends an hour, not the money.
 				id: 'more',
-				cost: 20,
-				category: 'save'
+				cost: 0,
+				freeTime: -1,
+				category: null
 			},
 			{
 				id: 'nothing',
@@ -1115,9 +1184,11 @@ export const CARDS: Card[] = [
 		teaches: 'interest withdrawn is the snowball starting again',
 		choices: [
 			{
+				// Ticket 10 (audit): leaving the nine compounding takes
+				// nothing out; the old ◈10 cost was the opposite of the copy.
 				id: 'leave',
-				cost: 10,
-				category: 'save'
+				cost: 0,
+				category: null
 			},
 			{
 				id: 'skim',
@@ -1310,7 +1381,7 @@ export const CARDS: Card[] = [
 		concept: 'credit',
 		branch: 'shared',
 		weight: 4,
-		teaches: 'the minimum payment is the most expensive option on the page',
+		teaches: 'the minimum keeps the balance alive for six more months',
 		choices: [
 			{
 				id: 'full',
@@ -1318,10 +1389,13 @@ export const CARDS: Card[] = [
 				category: 'need'
 			},
 			{
+				// Ticket 10: the minimum is a real six-month Repayment — ◈15 on
+				// the statement and the rest carried at ◈47.50 a month, the
+				// shipped recurring state with its own per-Choice amount.
 				id: 'minimum',
 				cost: 15,
 				category: 'need',
-				sets: { minimumStreak: 1 }
+				sets: { minimumStreak: 1, bnpl: { amount: 47.5, months: 6 } }
 			}
 		]
 	},
@@ -1534,9 +1608,12 @@ export const CARDS: Card[] = [
 		teaches: 'the third instalment lands in a month you cannot see yet',
 		choices: [
 			{
+				// Ticket 10 (audit): the money waits in the envelope; the
+				// Choice costs the two months of waiting, not the forty.
 				id: 'save',
-				cost: 40,
-				category: 'save'
+				cost: 0,
+				freeTime: -1,
+				category: null
 			},
 			{
 				id: 'split',
@@ -2257,9 +2334,12 @@ export const CARDS: Card[] = [
 		teaches: 'living on a loan means the money is already spent',
 		choices: [
 			{
+				// Ticket 10 (audit): the term's rent is ring-fenced by the plan;
+				// the Choice spends the hour of setting it up, not the loan.
 				id: 'spread',
-				cost: 400,
-				category: 'save'
+				cost: 0,
+				freeTime: -1,
+				category: null
 			},
 			{
 				id: 'celebrate',

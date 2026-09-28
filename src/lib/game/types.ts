@@ -23,6 +23,14 @@ export type PathId = 'study' | 'work';
 
 export type Branch = 'shared' | 'study' | 'work';
 
+/**
+ * How a Choice starts a recurring payment (the Repayment, ticket 10): the
+ * shipped count-only form pays the shop's ◈30 a month, or the Choice names its
+ * own per-payment amount and count. Either way the stored state is the same
+ * `{ amount, monthsLeft }` old saves already carry.
+ */
+export type RecurringTerms = number | { amount: number; months: number };
+
 /** A Choice Effect, restricted in slice 1 to what the loop itself applies. */
 export interface Choice {
 	id: string;
@@ -37,7 +45,8 @@ export interface Choice {
 	insuredCost?: number;
 	sets?: {
 		insurance?: boolean;
-		bnpl?: number;
+		/** Start a recurring payment: the shipped count, or its own amount (ticket 10). */
+		bnpl?: RecurringTerms;
 		path?: PathId;
 		overdraft?: number;
 		minimumStreak?: number;

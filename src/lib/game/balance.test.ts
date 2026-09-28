@@ -33,10 +33,19 @@ import type { Card, Choice, RunState } from './types';
 /* -------------------------------------------------------------------------- */
 /* Recorded from the current deck (fun-pass ticket 06, before any content     */
 /* change). Re-record only when a deck change is accepted.                    */
+/*                                                                            */
+/* Ticket 10 (the Repayment, ADR-0006) is the one instrument change, ruled by */
+/* the orchestrator: no metric constant below was re-recorded. The steady     */
+/* policy's `reckless` predicate was refined instead, so the card's           */
+/* sanctioned six-month Repayment is read as debt servicing, not as the       */
+/* shop's count-only temptation (see the predicate and its pin test) —        */
+/* flagging it made steady pay the ◈300 in full, overdraw the month's         */
+/* envelopes by ◈20 and flip 87/100 Runs to `behind`. Only the deck           */
+/* fingerprint below moved.                                                   */
 /* -------------------------------------------------------------------------- */
 
 /** sha256 of the deck's structural content (`JSON.stringify(CARDS)`), first 12. */
-const RECORDED_DECK = '9e0b45b5b677';
+const RECORDED_DECK = 'd046cb929f27';
 
 /** How far an accepted content change may drift a recorded value. */
 const DRIFT = {
@@ -130,9 +139,10 @@ const impulse: Policy = {
 
 /**
  * Steady — works a steady schedule, covers the month's fixed costs in the plan
- * and saves the rest. Ranks by what protects the future: no pay-later, no
- * overdraft, a known small cost to delete an unknown big one (insurance), then
- * the cheaper option, then the one that pays.
+ * and saves the rest. Ranks by what protects the future: no count-only
+ * pay-later (the shop's free-now instalments), no overdraft, a known small cost
+ * to delete an unknown big one (insurance), then the cheaper option, then the
+ * one that pays.
  */
 const steady: Policy = {
 	id: 'steady',
@@ -157,7 +167,26 @@ const steady: Policy = {
 
 const buying = (c: Choice) => ((c.cost ?? 0) > 0 ? 1 : 0);
 const temptation = (c: Choice) => (c.sets?.bnpl || c.sets?.overdraft ? 1 : 0);
-const reckless = (c: Choice) => (c.sets?.bnpl || c.sets?.overdraft ? 1 : 0);
+
+/**
+ * The steady policy's “no pay-later” rule, refined by ticket 10's ruling after
+ * the harness caught the Repayment.
+ *
+ * The rule flags the **count-only** instalment form (`sets.bnpl: 4` — the
+ * shop's “nothing now, four payments later”) and any overdraft: those are the
+ * temptations the policy avoids. It deliberately does NOT flag the card's
+ * **named-amount** Repayment (`sets.bnpl: { amount, months }`, ticket 10):
+ * that Choice pays ◈15 today and carries the balance over six months — debt
+ * servicing, not purchase financing. Flagging it made the steady policy pay
+ * the ◈300 in full instead; a category draw cannot reach the savings account,
+ * so the payment overdrew the month's Need+Save envelopes by ◈20 and flipped
+ * 87/100 Runs to `behind` — a policy artifact, not economic drift (the draw
+ * and every economy number are unchanged). Pinned below: the three shipped
+ * temptations stay flagged, the Repayment is not, and no other Choice's
+ * flagged state moves — so no other card's steady order changes.
+ */
+const reckless = (c: Choice) =>
+	(typeof c.sets?.bnpl === 'number' || c.sets?.overdraft ? 1 : 0);
 const covered = (c: Choice) => (c.sets?.insurance ? 1 : 0);
 
 const POLICIES: Policy[] = [impulse, steady];
@@ -312,6 +341,31 @@ describe('the balance harness', () => {
 			expect(netWorth(second.state), `${policy.id}: net worth`).toBe(netWorth(first.state));
 			expect(second.state.history, `${policy.id}: history`).toEqual(first.state.history);
 		}
+	});
+
+	it('keeps the refined reckless predicate to the card Repayment alone', () => {
+		// Ticket 10's ruling, pinned: the shop's count-only instalments stay the
+		// temptation the steady policy avoids (nothing now, payments later).
+		for (const id of ['bnpl_trainers/bnpl', 'bnpl_offer/use', 'bnpl_pressure/split']) {
+			const [cardId, choiceId] = id.split('/');
+			const choice = cardById(cardId)?.choices.find((c) => c.id === choiceId);
+			if (!choice) throw new Error(`temptation fixture moved: ${id}`);
+			expect(reckless(choice), `${id} must stay flagged`).toBe(1);
+		}
+		// The card's Repayment — a real ◈15 today, the balance over six months —
+		// is debt servicing, not temptation.
+		const repayment = cardById('minimum_payment')?.choices.find((c) => c.id === 'minimum');
+		if (!repayment) throw new Error('the Repayment fixture moved');
+		expect(reckless(repayment), 'the Repayment must not be flagged').toBe(0);
+		expect(steady.rank(cardById('minimum_payment') as Card)[0]).toBe('minimum');
+		// Deck-wide: no other Choice's flagged state moves, so no other card's
+		// steady order can — the order is the flags plus fixed fields.
+		const before = (c: Choice) => (c.sets?.bnpl || c.sets?.overdraft ? 1 : 0);
+		for (const card of CARDS)
+			for (const choice of card.choices) {
+				if (card.id === 'minimum_payment' && choice.id === 'minimum') continue;
+				expect(reckless(choice), `${card.id}/${choice.id}: flagged state`).toBe(before(choice));
+			}
 	});
 
 	it('ran against the deck the bands were recorded from', () => {

@@ -3,7 +3,7 @@
  * card can hide a cost in its label or leak an outcome into one. Presentation
  * only — the loop never reads these strings.
  */
-import { formatMoney } from '$lib/game/economy';
+import { formatMoney, formatMoneyExact } from '$lib/game/economy';
 import { getLocale } from '$lib/paraglide/runtime';
 import type { Choice } from '$lib/game/types';
 import { message } from './messages';
@@ -33,7 +33,16 @@ export function chipsFor(choice: Choice, insured: boolean): string[] {
 	}
 
 	if (choice.sets?.bnpl) {
-		chips.push(message('chip_bnpl', { count: choice.sets.bnpl, amount: formatMoney(30, locale) }));
+		// The recurring payment's terms (ticket 10): the count-only shop form
+		// pays ◈30 a month; the card's Repayment names its own amount, shown
+		// exactly so the schedule never rounds into a different number.
+		const terms =
+			typeof choice.sets.bnpl === 'number'
+				? { months: choice.sets.bnpl, amount: 30 }
+				: { months: choice.sets.bnpl.months, amount: choice.sets.bnpl.amount };
+		chips.push(
+			message('chip_bnpl', { count: terms.months, amount: formatMoneyExact(terms.amount, locale) })
+		);
 	}
 
 	return chips;
