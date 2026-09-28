@@ -22,6 +22,14 @@ colour never load-bearing, light theme only, SFX only and off by default.
 Stage-5 Fork — gets a picture. The rule is *beats only, never per card*: about eighty cards stay
 typographic, nine card moments and the Money Story get art.
 
+**The design's one new beat is already satisfied by `crash`.** The fun pass's design §3.6 asked for
+one new beat — the market fall (`shock`) — with `debt_cleared` as the deferred alternate. The run's
+recorded ruling (`.scratch/fun/progress.md`, ticket 05 preflight): the shipped `crash` piece
+(`BEAT_ART` maps `the_crash` → `crash`; alt “A chart line climbing to a peak and then falling to the
+baseline”) *is* that beat, so no new illustration is chartered in code. The crash card carries its own
+bigger `crash` cue, and the `shock` **kind** is typography (a top ink rule, tight leading), not a
+drawing. A second beat remains a human art-pass question, not a code one.
+
 - `EventStep.svelte` renders `<BeatArt>` only when `beatArtFor(card.id)` returns a piece, and never
   for a `stage_up` card.
 - `StageUp.svelte` renders the Fork's own piece above its banner (it contains an `EventStep`, so
@@ -71,9 +79,9 @@ Fun-pass ticket 04 adds the two remaining cues. `deal` announces the card arrivi
 keeps its own bigger sound instead; `payoff` answers a Thread that comes back with money and
 **replaces** the tap's own `choice` cue rather than joining it. The `payoff` is positive-only by
 construction: when the ending is a scam survived, the Choice is answered in silence (`cueFor` in
-`src/lib/audio/moments.ts`). Settings also gains small preview buttons, one per cue: a preview is an
-explicit ask that sounds while the game is muted and never writes the preference, so the toggle
-stays the only thing that turns sound on.
+`src/lib/audio/moments.ts`). Settings also gains small preview buttons, one per cue (`settings_preview_*`
+×3 locales; the names are Fink-owed): a preview is an explicit ask that sounds while the game is muted
+and never writes the preference, so the toggle stays the only thing that turns sound on.
 
 Design rules, all deliberate:
 

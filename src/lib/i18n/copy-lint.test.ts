@@ -137,14 +137,15 @@ describe('the copy lint over the en catalogue', () => {
 });
 
 /**
- * The pilot copy wave (fun-pass ticket 03): every Stage 1–2 Choice is answered
- * with a Reaction beside its Why. This is the wave's ratchet — a Stage 1–2
- * Choice that loses its Reaction fails here — while a later Stage's Choice
- * still exercises the unauthored fallback.
+ * The copy waves (fun-pass tickets 03 and 12): every Choice in the deck is
+ * answered with a Reaction beside its Why. This is the waves' ratchet — a
+ * Choice that loses its Reaction fails here. The single-paragraph fallback
+ * remains the resolver's behaviour for an absent key (pinned in
+ * `card-text.test.ts`); no deck Choice uses it any more.
  */
-describe('the pilot copy wave (fun-pass ticket 03)', () => {
-	it('answers every Stage 1–2 Choice with a Reaction', () => {
-		for (const card of CARDS.filter((c) => c.stages.some((stage) => stage <= 2))) {
+describe('the copy waves (fun-pass tickets 03 and 12)', () => {
+	it('answers every Choice in the deck with a Reaction', () => {
+		for (const card of CARDS) {
 			for (const choice of card.choices) {
 				expect(
 					hasMessage(choiceReactionKey(card.id, choice.id)),
@@ -154,22 +155,35 @@ describe('the pilot copy wave (fun-pass ticket 03)', () => {
 		}
 	});
 
-	it('leaves the fallback alive outside the wave — a Stage 3–5 Choice with no Reaction', () => {
-		const unanswered = CARDS.some(
-			(card) =>
-				card.stages.every((stage) => stage >= 3) &&
-				card.choices.some((choice) => !hasMessage(choiceReactionKey(card.id, choice.id)))
-		);
-		expect(unanswered).toBe(true);
+	it('leaves only the fiction’s own words on the allow-list — the sweep debt is paid, not excused', () => {
+		// The whole catalogue's raw violations, allow-list aside: exactly the
+		// five words whose card is *about* them (the evening course, the Credit
+		// Score's points). Any other word anywhere in a situation, Why or
+		// Reaction fails this test before the allow-list can excuse it.
+		const expected = [
+			'card_credit_check_free_situation|reward|score',
+			'card_credit_limit_rise_situation|reward|points',
+			'card_evening_course_situation|classroom|course',
+			'card_score_check_situation|reward|points',
+			'card_score_goal_situation|reward|score'
+		];
+		const actual = catalogueViolations(en)
+			.map((v) => `${v.key}|${v.rule}|${v.match.toLowerCase()}`)
+			.sort();
+		expect(actual).toEqual(expected);
 	});
 
-	it('holds every Stage 1–2 moment string clean without the allow-list — the debt is paid, not excused', () => {
-		const wave = new Set(
-			CARDS.filter((card) => card.stages.some((stage) => stage <= 2)).map((card) => card.id)
-		);
-		const violations = catalogueViolations(en).filter((violation) =>
-			[...wave].some((id) => violation.key.startsWith(`card_${id}_`))
-		);
-		expect(violations).toEqual([]);
+	it('keeps the month-loop chrome (intro, plan, event, resolve) free of the ban list', () => {
+		// Ticket 03's chrome change shipped without a regression pin: the lint's
+		// card-moment scope never reached this copy. The lint is still not a
+		// chrome scanner (the record surfaces legitimately say "score" and
+		// "never"), but the surfaces a player meets before any card should not
+		// carry the classroom — pin the four prefixes.
+		const prefixes = ['intro_', 'plan_', 'event_', 'resolve_'];
+		for (const [key, value] of Object.entries(en)) {
+			if (!prefixes.some((prefix) => key.startsWith(prefix))) continue;
+			if (typeof value !== 'string') continue;
+			expect(lintText(value, 'situation'), `${key}: ${value}`).toEqual([]);
+		}
 	});
 });

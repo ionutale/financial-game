@@ -140,11 +140,15 @@ export interface CopyAllowance {
 /**
  * The curated allow-list. Not a place to put new copy: each entry pins one
  * offending word on one key, and the test fails the moment the word is gone
- * (a stale allowance) or another banned word arrives on that key. The pilot
- * copy wave (ticket 03) paid every Stage 1–2 row; the rest belong to ticket 12.
+ * (a stale allowance) or another banned word arrives on that key.
+ *
+ * After the copy waves (tickets 03 and 12) the only rows left are the
+ * fiction's own words: the college's evening course and the Credit Score's
+ * points, which are the subject of their cards, not a lesson about them. The
+ * sweep-debt rows the pilot could not reach were paid by ticket 12 and the
+ * staleness test forced their removal.
  */
 export const COPY_ALLOW_LIST: readonly CopyAllowance[] = [
-	// --- The fiction's own word -------------------------------------------------
 	{
 		key: 'card_evening_course_situation',
 		rule: 'classroom',
@@ -174,50 +178,6 @@ export const COPY_ALLOW_LIST: readonly CopyAllowance[] = [
 		rule: 'reward',
 		match: 'score',
 		reason: 'fiction’s own word: the Credit Score, seen for free'
-	},
-
-	// --- Sweep debt: the copy wave (ticket 12) rewrites these -------------------
-	{
-		key: 'card_the_crash_choice_hold_feedback',
-		rule: 'classroom',
-		match: 'lesson',
-		reason: 'sweep debt: ‘This is the whole lesson.’'
-	},
-	{
-		key: 'card_app_vanishes_choice_chalk_feedback',
-		rule: 'classroom',
-		match: 'learn',
-		reason: 'sweep debt: ‘to learn that guaranteed money is a story’'
-	},
-	{
-		key: 'card_app_vanishes_choice_chalk_feedback',
-		rule: 'classroom',
-		match: 'lesson',
-		reason: 'sweep debt: ‘a cheap version of a lesson’'
-	},
-	{
-		key: 'card_score_goal_choice_wait_feedback',
-		rule: 'classroom',
-		match: 'learn',
-		reason: 'sweep debt: ‘to learn which payments move the number’'
-	},
-	{
-		key: 'card_graduate_job_choice_take_feedback',
-		rule: 'classroom',
-		match: 'learn',
-		reason: 'sweep debt: ‘what you learn to do next’'
-	},
-	{
-		key: 'card_credit_limit_rise_choice_ignore_feedback',
-		rule: 'classroom',
-		match: 'teaches',
-		reason: 'sweep debt: ‘most of what this stage teaches’'
-	},
-	{
-		key: 'card_the_fork_choice_study_feedback',
-		rule: 'frame',
-		match: 'the point',
-		reason: 'sweep debt: ‘which is the point’'
 	}
 ];
 

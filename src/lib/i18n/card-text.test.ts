@@ -1,15 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CARDS, cardById } from '$lib/game/cards';
 import { cardLineKey, choiceReactionKey } from './card-keys';
 import { hasMessage, message } from './messages';
-import {
-	cardLines,
-	chosenFeedback,
-	chosenFeedbackParts,
-	choiceFeedback,
-	choiceReaction,
-	feedbackParts
-} from './card-text';
+import { cardLines, chosenFeedback, chosenFeedbackParts, choiceFeedback, feedbackParts } from './card-text';
 
 /**
  * The Reaction/Why seam (ADR-0004, ticket 01). A Choice may author an optional
@@ -23,22 +16,36 @@ describe('the Reaction/Why seam (ADR-0004, ticket 01)', () => {
 		expect(choiceReactionKey('two_wants', 'game')).toBe('card_two_wants_choice_game_reaction');
 	});
 
-	it('resolves an unauthored card to today’s single paragraph: no Reaction, the Why alone', () => {
-		// A Stage-5 Choice the pilot wave did not reach (ticket 03 authors every
-		// Stage 1–2 Reaction; the fallback is what remains).
-		const card = cardById('scam_opportunity');
-		const choice = card?.choices.find((c) => c.id === 'in');
-		if (!card || !choice) throw new Error('fixture card scam_opportunity/in moved');
+	it('resolves an unauthored Choice to today’s single paragraph: no Reaction, the Why alone', async () => {
+		// After the copy waves every deck Choice authors a Reaction, so the
+		// fallback is pinned against a catalogue that lacks the key: the
+		// resolver must still hand back `{ reaction: null, why }`, which is the
+		// component's byte-for-byte single-paragraph branch. This is the seam's
+		// promise for an older catalogue or a Choice authored without one.
+		vi.resetModules();
+		vi.doMock('./messages', async () => {
+			const actual = await vi.importActual<typeof import('./messages')>('./messages');
+			return {
+				...actual,
+				hasMessage: (key: string) =>
+					key.endsWith('_reaction') ? false : actual.hasMessage(key)
+			};
+		});
+		try {
+			const { feedbackParts: freshFeedbackParts } = await import('./card-text');
+			const card = cardById('scam_opportunity');
+			const choice = card?.choices.find((c) => c.id === 'in');
+			if (!card || !choice) throw new Error('fixture card scam_opportunity/in moved');
 
-		expect(feedbackParts(card, choice)).toEqual({
-			reaction: null,
-			why: choiceFeedback(card, choice)
-		});
-		expect(choiceReaction(card, choice)).toBeNull();
-		expect(chosenFeedbackParts(card, 'in')).toEqual({
-			reaction: null,
-			why: chosenFeedback(card, 'in')
-		});
+			expect(hasMessage(choiceReactionKey(card.id, choice.id))).toBe(true);
+			expect(freshFeedbackParts(card, choice)).toEqual({
+				reaction: null,
+				why: choiceFeedback(card, choice)
+			});
+		} finally {
+			vi.doUnmock('./messages');
+			vi.resetModules();
+		}
 	});
 
 	it('resolves the first authored Reaction (fun-pass ticket 02)', () => {

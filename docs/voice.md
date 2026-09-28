@@ -39,7 +39,7 @@ card, collapsed after — *taught once, trusted after*).
 
 | | Reaction | Why |
 | --- | --- | --- |
-| Shown as | under "What happened" | under "Why it happened" |
+| Shown as | under “How it went” | under “Why it happened” |
 | Length | one or two sentences, ≲ 15 words | one or two sentences, ≲ 40 words |
 | Job | what the world did, in the fiction | why it mattered, short and personal |
 | May state a general rule? | **never** | only where the card is that Concept's Teachable Moment |
@@ -75,18 +75,21 @@ could be said by a teacher, it belongs in the Why or nowhere.
 
 ## 4. Show, don't explain — worked before/after
 
-The shipped strings below are the *before*. The *after* columns are
-illustrations of the shape, not landed copy (the copy waves are tickets
-02–03 and 12). Notice the pattern: the general principle moves out of the
-moment, or becomes a Why at the first encounter.
+The shipped strings below are the *before*. The *after* columns began as
+illustrations of the shape; the waves (tickets 02–03, 12) have since landed
+the whole catalogue, so where a landing chose different words than the sheet's
+first illustration, the catalogue is now the record and this section shows the
+landed shape. The pattern: the general principle moves out of the moment, or
+becomes a Why at the first encounter — and the Rule of Thumb is quoted only at
+its Concept's Teachable Moment (§4.2).
 
 **the_allowance / spend — the first money**
 
 | | |
 | --- | --- |
 | Before (the whole Feedback) | "◈40 in and ◈40 out in the same month. The first money you ever control is the easiest to spend, because nothing is asking for it yet." |
-| Reaction | "Forty in, forty out, and the month is not over." |
-| Why (teachable: the first money) | "Nothing is asking for it yet. That is the whole problem with first money." |
+| Reaction (landed) | "The thing is yours. Forty is already gone." |
+| Why (teachable: earning & work) | "The first money costs no hours, and nothing is asking for it yet. Every hour you sell is an hour you cannot buy back." |
 
 **odd_job / take — the word "point" goes**
 
@@ -96,20 +99,12 @@ moment, or becomes a Why at the first encounter.
 | Reaction | "Two weekends gone. Thirty, in cash, in your hand." |
 | Why | "Fourteen hours for thirty. The first work you are paid for feels different from money someone handed you." |
 
-**hype_trainers / save — the maxim goes**
-
-| | |
-| --- | --- |
-| Before | "Now the drop is something you are ready for. Saved-for things cost less than wanted things — always." |
-| Reaction | "The drop lands. You were already waiting, with the money set aside." |
-| Why (teachable: saving & goals) | "Things you save for cost less than things you want today." — a Rule of Thumb, allowed *here*, at the first encounter, and nowhere later. |
-
 **subscription_creep / cut — "this game" goes**
 
 | | |
 | --- | --- |
 | Before | "◈14 a month back, forever, for ten minutes of admin. Nothing else in this game pays that well." |
-| Reaction | "Ten minutes on the phone, and ◈14 a month stops leaving." |
+| Reaction | "Ten minutes on the phone, and fourteen a month stops leaving." |
 | Why | "Fourteen a month is small enough to never notice and permanent enough to matter." |
 
 **credit_limit_rise / ignore — "teaches" goes**
@@ -117,7 +112,7 @@ moment, or becomes a Why at the first encounter.
 | | |
 | --- | --- |
 | Before | "A credit limit is a permission slip, not a raise. Knowing the difference is most of what this stage teaches." |
-| Reaction | "The limit stays where it was. Nothing arrives and nothing leaves." |
+| Reaction | "The trip waits for the savings, and the limit sits unused." |
 | Why | "The limit was never your money. It is the bank's number, not your raise." |
 
 **birthday_gift / make — an idiom, replaced by the scene**
@@ -128,13 +123,56 @@ moment, or becomes a Why at the first encounter.
 | Reaction | "Six hours at the kitchen table, and a present the others did not buy." |
 | Why | "It cost no money and it cost the evening. Both ledgers are real." |
 
-### Two rules of thumb, one place
+**hype_trainers / save — the maxim goes, and the moment is *not* this card**
+
+| | |
+| --- | --- |
+| Before | "Now the drop is something you are ready for. Saved-for things cost less than wanted things — always." |
+| Reaction | "The drop goes in the calendar: four months out." |
+| Why (personal; the rule lives at `savings_goal`) | "The money stays in the envelope, and the drop has a date now. The date is the commitment." |
+
+### 4.1 Two rules of thumb, one place
 
 At the Teachable Moment the Why may carry **one** short general rule — the
 Concept's Rule of Thumb — because a first experience is where a rule lands.
 Every later card of the Concept gets a Why about *this* month: the record and
 the Year in Review carry the rest. If a Why needs two rules to make sense, the
-card is teaching two Concepts.
+card is teaching two Concepts. The lint does not read Whys for maxims (that is
+the review's job, §6); the rule below is the budget it checks against.
+
+### 4.2 The eight Rules of Thumb and where each is said
+
+One rule per Concept, quoted in the Whys of the **designated card** only (both
+— or all three — Choices of it, because only the chosen Choice's Why renders).
+Ticket 03 landed the four Stage 1–2 rows; ticket 12 landed the rest.
+
+| Concept | Rule (canonical) | Designated card |
+| --- | --- | --- |
+| needs vs wants | Money you do not spend is the only money you keep. | `two_wants` |
+| earning & work | Every hour you sell is an hour you cannot buy back. | `the_allowance` |
+| budgeting & tracking | Decide where it goes before the month decides for you. | `phone_plan` |
+| saving & goals | Give the money a name and it survives. | `savings_goal` |
+| interest & compounding | Interest is the only money that works while you sleep. | `interest_first` |
+| credit & debt | The minimum is designed to be affordable forever. | `minimum_payment` |
+| investing & risk | You cannot time it. You can only stay in it. | `the_crash` |
+| taxes, insurance & scams | Urgency is the tell. | `scam_opportunity` |
+
+**Where the rule lands when the draw decides.** The Why auto-opens at the
+Concept's first *played* card (the first-encounter helper, ticket 01), and the
+designated card is the author's first-experience card. For the spine Concepts
+(`the_allowance`, `phone_plan`) the two coincide, so the rule renders open in
+every Run; for `the_crash` and `scam_opportunity` the spine still guarantees
+the rule is said at month 55 / 53, even where an earlier pool card met the
+Concept first. For the pool Concepts (`two_wants`, `saving_goals`,
+`interest_first`, `minimum_payment`) the draw decides which card comes first,
+so on some Runs the designated card's rule sits behind the collapsed
+disclosure at that card — present, one tap away, but not auto-opened. Ticket 12
+considered a guaranteed first card (a draw/spine change — frozen by the spec)
+and a `concept_<id>_rule` seam rendered above the Why (a presentation change
+outside a copy wave's authority). The accepted line, recorded for the Fink pass
+and the review: **the rule is said only in its designated card's Whys; the
+disclosure still opens at the true first encounter.** A future ticket may add
+the seam without touching this copy.
 
 ## 5. Humour
 
@@ -186,13 +224,11 @@ translate to the same letters. They are held by the translation brief
 
 ### The curated allow-list
 
-`COPY_ALLOW_LIST` in `src/lib/i18n/copy-lint.ts` records the current
-catalogue's exceptions, one per offending word. It exists so this ticket could
-land the gate before the copy waves; the test fails on a **stale** entry (the
+`COPY_ALLOW_LIST` in `src/lib/i18n/copy-lint.ts` records the catalogue's
+exceptions, one per offending word. The test fails on a **stale** entry (the
 word is gone — remove the entry) and on any **new** banned word on an allowed
-key, so the list can only shrink. Every row is a decision, not a shrug.
-
-**The fiction's own word** — the word is the right word here:
+key, so the list can only shrink. Every row is a decision, not a shrug. After
+the copy waves, the only rows left are these five — the fiction's own words:
 
 | Key | Rule | Word | Why it stands |
 | --- | --- | --- | --- |
@@ -202,21 +238,15 @@ key, so the list can only shrink. Every row is a decision, not a shrug.
 | `card_score_goal_situation` | reward | score | the credit check and the file |
 | `card_credit_check_free_situation` | reward | score | the Credit Score, seen for free |
 
-**Sweep debt** — old single-paragraph copy; tickets 03 and 12 remove these:
-
-| Key | Rule | Word | Why it stands |
-| --- | --- | --- | --- |
-| `card_the_crash_choice_hold_feedback` | classroom | lesson | "This is the whole lesson." |
-| `card_app_vanishes_choice_chalk_feedback` | classroom | learn / lesson | "to learn that guaranteed money is a story"; "a cheap version of a lesson" |
-| `card_score_goal_choice_wait_feedback` | classroom | learn | "to learn which payments move the number" |
-| `card_graduate_job_choice_take_feedback` | classroom | learn | "what you learn to do next" |
-| `card_credit_limit_rise_choice_ignore_feedback` | classroom | teaches | "most of what this stage teaches" |
-| `card_savings_milestone_choice_celebrate_feedback` | classroom | streak | "how the streak survives" |
-| `card_subscription_creep_choice_cut_feedback` | frame | this game | the narrator stepping outside the fiction |
-| `card_interest_first_choice_more_feedback` | frame | this game | the narrator stepping outside the fiction |
-| `card_odd_job_choice_take_feedback` | frame | the point | "which is exactly the point" |
-| `card_savings_milestone_choice_add_feedback` | frame | the point | "The number is not the point" |
-| `card_the_fork_choice_study_feedback` | frame | the point | "which is the point" |
+**The sweep debt is paid.** The gate landed before the waves with an
+allow-list of old single-paragraph copy ("this game", "the point", "the
+lesson"); ticket 03 paid every Stage 1–2 row and ticket 12 paid the rest, and
+the staleness test forced each row's removal. A copy-lint test now asserts the
+catalogue's *raw* violations are exactly those five words — any other banned
+word in a situation, Why or Reaction fails before the allow-list can excuse it.
+The same test pins the month-loop chrome (`intro_*`, `plan_*`, `event_*`,
+`resolve_*`) free of the ban list: ticket 03's chrome change had no regression
+pin until ticket 12.
 
 Review-gate cousins the lint does not match, and the review does:
 "that is what … is for", classroom nouns not on the list (homework, syllabus,
@@ -274,7 +304,9 @@ For `messages/it.json` and `messages/ro.json`, and for the Fink pass:
 - **No exclamation marks, no emoji, no chirp** in any locale. The dry register
   is the product, not the English.
 - The **Fink pass** is the release gate for the voice work; a rule of thumb
-  that lands only in en is a debt, recorded and paid.
+  that lands only in en is a debt, recorded and paid. The register of what the
+  pass owes — every machine-authored it/ro line from tickets 01–12 — is
+  `docs/fink-debt.md`.
 
 ## 9. Where the general lessons live now
 

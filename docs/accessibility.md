@@ -28,7 +28,7 @@ Everything else applies, including **4.1.3 Status Messages** — which the game 
 
 | Gate | Tool | Scope | Passes when |
 |---|---|---|---|
-| axe | `@axe-core/playwright` (axe-core with the `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa` tag set) | eleven screens: intro/home, Plan (with the Named-Goal ticks), event + Feedback, month close (with its Milestone line), Stats Sheet (with its Milestones and Concept Coverage), state chips, Stage-up (the Fork, with its Year in Review), the Money Story (with its Milestones, Coverage, year-5 recap and inside-budget line), the Journal (empty and populated), privacy policy, Settings | zero violations |
+| axe | `@axe-core/playwright` (axe-core with the `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa` tag set) | the run's screens and states — 69 Playwright tests in `tests/a11y/` (56 axe screens, 12 reflow proxies, one keyboard smoke): intro/home; the Plan step (month-one hint, suggested chip, Repeat-primary); the Feedback (Reaction, the Why open at a first encounter and collapsed after, the Ledger Line, the covered shock); the month close (In / Out / Next, the Debt line and Fund row, the Milestone line); the Stats Sheet; state chips; the Stage-up (Year in Review, the avatar); a Card Format per family and each kind identity; a Callback and a cast card with its Thread chip; the villain cards; the Fund (blocked deposit, the crash, the live rows, the Fund Milestones); the Money Story (Run Title, Reflections, Epilogue, The Other Path, the neutral band chip); the Journal (empty and populated, Titles, Cast, neutral band chips); the locale routes; privacy policy; Settings (sound toggle, cue previews, language switcher) | zero violations |
 | Lighthouse | Lighthouse Node API, **accessibility category only** | the home screen | score ≥ 0.95 |
 
 The Lighthouse threshold is **0.95, not 1.0** on purpose: the score is weighted, and one
@@ -36,6 +36,13 @@ non-AA best-practice audit can shave a few points without breaking a WCAG 2.2 AA
 real AA regression — contrast, accessible names, roles, the audits axe also watches — costs far
 more than 0.05 and lands below the line. Performance and SEO are deliberately not gated: a slow
 font load or a missing meta description must not fail an accessibility run.
+
+The fun pass extended the gate by **seeding, never by excluding**: every new state from tickets
+01–12 joined `tests/a11y/seed.ts` and `screens.spec.ts` — the Cold Open, the open and collapsed
+Why, the Ledger Line, the receipt's Debt/Fund rows, the date line and Life Line, a Card Format per
+family and each kind identity, a Callback, the villain cards, the Fund, and the ending's Title,
+Reflections, Epilogue and The Other Path — and the reflow proxies followed (12 screens at a 320px
+viewport and with text at 200 %). No axe `exclude` was added at any point in the pass.
 
 ### Running the gates
 
@@ -92,37 +99,48 @@ Per release, on the built app. Failures are filed as issues, not noted and forgo
 
 ### 1. Muted
 
-**Steps:** turn the device volume to zero (or mute the system). Play from the intro through a full
-month — Plan, card, Feedback, close — then through the gamification surfaces: a Stage-up with its
-Year in Review, a Month Close with a Milestone line, the Stats Sheet's Milestones and Concept
-Coverage, a finished Run's Money Story and the Journal. Nothing important may arrive only as sound;
-every one of those blocks must read without it.
+**Steps:** turn the device volume to zero (or mute the system). Play from the Cold Open through a
+full month — Plan, card, Reaction with its Ledger Line, the Why (open at the first encounter,
+collapsed after), the receipt close with its In / Out / Next grouping, Debt line and Fund row —
+then through the gamification and fun-pass surfaces: a Stage-up with its Year in Review and avatar,
+a Month Close with a Milestone line, the Stats Sheet's Milestones and Concept Coverage, the date
+line and Life Line, a Card Format per family and each kind's typographic identity, a Callback, the
+villain cards, the Fund screens, and a finished Run's Money Story — Title, Reflections, Epilogue
+and The Other Path — plus the Journal. Finally Settings: the seven cue previews, then the toggle.
+Nothing important may arrive only as sound; every one of those blocks must read without it.
 
 **Status now:** the SFX bank ships (ticket 30) and stays off until the player switches it on in
 Settings; the suite proves the off-by-default default, the toggle and its persistence. Gamification
 ticket 06 adds the one `milestone` cue on the same terms — a Milestone month hears it instead of
-the close's ticks, and the text line already carries the event. The mute pass itself is
-**human-owed** from the first release that ships SFX: ticket 14 requires sound off by default,
-never load-bearing, and every sound with a visual counterpart.
+the close's ticks, and the text line already carries the event. Fun-pass ticket 04 adds `deal` and
+`payoff`, and Settings' preview buttons sound explicitly while the setting stays off. The mute pass
+itself is **human-owed** from the first release that ships SFX: ticket 14 requires sound off by
+default, never load-bearing, and every sound with a visual counterpart.
 
 ### 2. Zoomed
 
 **Steps:** on desktop, set browser zoom to 200% and play the month screen: nothing clips, nothing
 scrolls sideways, every control stays reachable. Then try text-only zoom (Firefox → View → Zoom →
-Zoom Text Only) and a narrow window. Repeat on the Plan step, the month close and the Stats Sheet.
+Zoom Text Only) and a narrow window. Repeat on the Plan step, the Feedback with its Ledger Line, the
+month close with the Debt line and Fund row, the Stats Sheet, a Card Format card, the Stage-up, the
+ending's Money Story (Title, Reflections, Epilogue, The Other Path) and Settings' preview buttons.
 
-**Status now:** an automated proxy exists in `tests/a11y/zoom.spec.ts` — each key screen is rendered
-at a 320px viewport (what a 1280px window becomes at 400% zoom, WCAG 1.4.10) and again with the
-root font at 200% (WCAG 1.4.4), and must have no horizontal overflow. **Human-owed:** the visual
-judgement — clipped versus merely narrow, legibility at zoom, and the interactive states a
-screenshot-height check cannot see.
+**Status now:** an automated proxy exists in `tests/a11y/zoom.spec.ts` — 12 key screens (the Cold
+Open, the Plan step, the close with and without Debt/Fund, the Feedback with the Ledger Line, a
+message-format card, a Callback card, the Stage-up, the Money Story and its additions, the Journal
+with a Chapter, privacy, Settings) are each rendered at a 320px viewport (what a 1280px window
+becomes at 400% zoom, WCAG 1.4.10) and again with the root font at 200% (WCAG 1.4.4), and must have
+no horizontal overflow. **Human-owed:** the visual judgement — clipped versus merely narrow,
+legibility at zoom, and the interactive states a screenshot-height check cannot see.
 
 ### 3. Keyboard-only
 
-**Steps:** put the mouse away. From the intro: Tab to Next, Enter, twice more. On the Plan step Tab
-to each range and move it with the arrow keys, then Enter on *Start the month*. Tab to a Choice and
-Enter; Enter on Continue; Enter on Next month. Open and close the Stats Sheet with the keyboard
-alone. Throughout: focus is always visible, never trapped, never lands somewhere unreachable.
+**Steps:** put the mouse away. From the Cold Open: Tab to *Start month 1*, Enter. On the Plan step
+Tab to each range and move it with the arrow keys (or press Enter on *Keep last month*), then Enter
+on *Start the month*. Tab to a Choice and Enter; in the Feedback open and close the *Why it
+happened* disclosure with Enter; Enter on Continue; Enter on Next month. Open and close the Stats
+Sheet with the keyboard alone, follow The Other Path link from a finished Run, and preview a cue in
+Settings. Throughout: focus is always visible, never trapped, never lands somewhere unreachable.
 
 **Status now:** `tests/a11y/zoom.spec.ts` drives intro → Plan → work hours (ArrowRight) → month
 start → a reachable Choice using only Tab and Enter; axe verifies the names and roles; the Stats
@@ -138,15 +156,19 @@ hear that it was spoken and made sense.
 **Steps:** enable the OS greyscale filter (macOS: System Settings → Accessibility → Display →
 Colour Filters → Greyscale; Windows: Settings → Accessibility → Colour filters → Grayscale), or
 add `html { filter: grayscale(1) }` in devtools. Play a month and check that Need / Want / Save
-remain distinguishable, the outcome band still reads, choice chips still name their costs, and the
-crash marker is still labelled on the chart. Then check the gamification blocks: the Month Close's
-Milestone line, the Stats Sheet's and Money Story's Milestones and Coverage words (Introduced /
-Experienced / Not yet), the Stage-up's Year in Review, and the Journal's Chapters, coverage and
-collected Milestones. Every state there is a word; colour may never be the only difference.
+remain distinguishable, the outcome band still reads, choice chips still name their costs, the
+Ledger Line's signs still carry meaning, and the crash marker is still labelled on the chart. Check
+the kind identities (the shock's ink rule, the scam's sender line, the promoted odds, the stage-up's
+poster, the plain decision), then the gamification and fun-pass blocks: the Month Close's Milestone
+line and Debt/Fund rows, the date line and Life Line, the Stats Sheet's and Money Story's Milestones
+and Coverage words (*coming up* / *met* / *later*), the Stage-up's Year in Review, a Callback, the
+villain cards, and the ending's Chapter Titles, Reflections and Epilogue, plus the neutral band
+chips (words, not red/green). Every state there is a word; colour may never be the only difference.
 
 **Status now: human-owed, entirely.** No tool can judge whether meaning survives colour removal.
 The DOM is built for it — every colour-bearing value also carries text (envelope labels, the
-outcome word, chips, chart annotations) — but that is a design property to be seen, not asserted.
+outcome word, chips, chart annotations, the Ledger signs, the kind kickers) — but that is a design
+property to be seen, not asserted.
 
 ## What "done" means for the MVP
 

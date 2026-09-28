@@ -199,17 +199,17 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 
 		/* Fun-pass ticket 02: the Reaction shows what the world did… */
 		await expect(page.getByText('How it went')).toBeVisible();
-		await expect(page.getByText('The thing is yours. ◈40 is already gone.')).toBeVisible();
+		await expect(page.getByText('The thing is yours. Forty is already gone.')).toBeVisible();
 
 		/* …and “Why it happened” is a disclosure, open at the Concept's first
 		   encounter (ADR-0004: taught once, trusted after). The first encounter
-		   is also the Concept's Teachable Moment, so its Why carries the one
+		   is the Concept's Teachable Moment here, so its Why carries the one
 		   Rule of Thumb (fun-pass ticket 03). */
 		const why = page.locator('details');
 		await expect(why).toHaveCount(1);
 		expect(await why.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(true);
 		await expect(why.getByText('Why it happened')).toBeVisible();
-		await expect(why.getByText(/Nothing is asking for it yet/)).toBeVisible();
+		await expect(why.getByText(/The first money costs no hours/)).toBeVisible();
 		await expect(why.getByText(/Every hour you sell is an hour you cannot buy back/)).toBeVisible();
 
 		await expectNoAxeViolations(page, 'the Feedback with the Why open');
@@ -220,15 +220,15 @@ test.describe('axe: WCAG 2.2 AA screens', () => {
 
 		/* The same card, with an earlier earning & work card in the log: the
 		   Reaction still renders, the Why waits behind its summary. */
-		await expect(page.getByText('The thing is yours. ◈40 is already gone.')).toBeVisible();
+		await expect(page.getByText('The thing is yours. Forty is already gone.')).toBeVisible();
 		const why = page.locator('details');
 		await expect(why).toHaveCount(1);
 		expect(await why.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(false);
-		await expect(why.getByText(/Nothing is asking for it yet/)).toBeHidden();
+		await expect(why.getByText(/The first money costs no hours/)).toBeHidden();
 
 		/* The disclosure still opens by hand, natively. */
 		await why.getByText('Why it happened').click();
-		await expect(why.getByText(/Nothing is asking for it yet/)).toBeVisible();
+		await expect(why.getByText(/The first money costs no hours/)).toBeVisible();
 
 		await expectNoAxeViolations(page, 'the Feedback with the Why collapsed');
 	});
@@ -1100,7 +1100,7 @@ test.describe('fun-pass ticket 08: the villain cards', () => {
 		await expect(page.getByRole('heading', { name: 'The Saturday shift' })).toBeVisible();
 		await expect(
 			page.getByText(
-				'You pick up a Saturday at the phone shop. A mate walks in wanting the handset in the window, and the four-payment plan is the only way they leave with it today.'
+				'You pick up a Saturday at the phone shop. A mate walks in wanting the handset in the window; the four-payment plan is on the counter beside the till.'
 			)
 		).toBeVisible();
 
