@@ -133,7 +133,7 @@
 	"story_adherence": "Ai ținut planul pe care ți l-ai făcut în {months} din cele 60 de luni.",
 	"story_band_ahead": "Ai trecut dincolo de obiectivul pe care ținteai, cu un scor pe măsură.",
 	"story_band_treading": "Ai rămas în mișcare — nici înainte, nici scufundat.",
-	"story_band_behind": "Ai rămas în urmă față de unde trebuia să fii. De aici nimic nu e irecuperabil; exact asta e ideea celor cinci ani.",
+	"story_band_behind": "Ai rămas în urmă față de unde trebuia să fii. Cei cinci ani sunt în registru, exact așa cum au fost.",
 	"story_band_note": "finalul tău, din bani și din scor",
 	"story_moments": "Momentele care au decis totul",
 	"story_you_vs_you": "Tu, împotriva ta",
@@ -273,6 +273,7 @@
 	"milestone_fork_chosen": "Răscrucea aleasă",
 	"milestone_fund_opened": "Primii bani în Fond",
 	"milestone_rode_the_recovery": "Erai tot acolo când a revenit",
+	"milestone_the_climb": "Ridicat din nou după trei luni în coborâre",
 	"milestone_both_paths": "Ambele drumuri trăite",
 	"thread_course_enrolled_label": "Cursul",
 	"thread_course_enrolled_payoff": "certificat",
@@ -1119,5 +1120,41 @@
 	"card_split_comes_due_choice_leave_feedback": "Prietenul sună magazinul și își rezolvă săptămâna cum poate. Taxa ajunge pe contul lui, telefonul rămâne pornit, iar mesajele rămân scurte o vreme.",
 	"card_split_comes_due_choice_leave_reaction": "Următorul mesaj vine două săptămâni mai târziu, despre altceva.",
 	"thread_split_sold_label": "Telefonul vândut",
-	"thread_split_sold_payoff": "a treia rată"
+	"thread_split_sold_payoff": "a treia rată",
+	"chapter_title_market_fall": "Anul în care a căzut piața",
+	"chapter_title_the_climb": "Urcușul",
+	"chapter_title_quiet_year": "Anul liniștit",
+	"chapter_title_the_dip": "Luna în care contul a intrat pe minus",
+	"chapter_title_covered_years": "Anii cu asigurare",
+	"chapter_title_card_year": "Anul în care a sosit cardul",
+	"chapter_title_five_years": "Cinci ani",
+	"story_reflections": "Reflecții",
+	"reflection_packed_lunch": [
+		{
+			"declarations": ["input times", "local timesPlural = times: plural"],
+			"selectors": ["timesPlural"],
+			"match": {
+				"timesPlural=one": "Ai luat prânzul de acasă o dată.",
+				"timesPlural=few": "Ai luat prânzul de acasă de {times} ori.",
+				"timesPlural=other": "Ai luat prânzul de acasă de {times} de ori."
+			}
+		}
+	],
+	"reflection_best_year": "Anul {year}: {months} luni din douăsprezece în bugetul tău.",
+	"reflection_the_leak": "Dorințele au cântărit cel mai mult în anul {year}: {amount} în douăsprezece luni.",
+	"reflection_bank_interest": "Banca ți-a plătit {amount} dobândă în cinci ani.",
+	"reflection_saved_months": "Banii au intrat în economii în {months} luni din șaizeci.",
+	"story_epilogue": "La nouăsprezece ani",
+	"epilogue_ahead_study": "Nouăsprezece ani, și primul an de curs e în spate. Împrumutul e cel pe care l-ai plănuit, iar Rezerva e tot acolo unde ai pus-o. Cei cinci ani ți-au cumpărat studiul; te-au costat serile pe care le-ai plătit pentru el.",
+	"epilogue_treading_study": "Nouăsprezece ani, și cursul ți-e deja familiar: același autobuz, aceeași masă în bibliotecă. Împrumutul e cu tine și Rezerva la fel, și niciunul nu a crescut cât spunea planul. Cei cinci ani ți-au cumpărat studiul; marja de sub el e mai subțire decât voiai.",
+	"epilogue_behind_study": "Nouăsprezece ani, și cursul merge înainte, strecurat printre turele care îl plătesc. Împrumutul e mai mare decât spunea planul, iar Rezerva a ajuns în chirie mai mult de o dată. Aici te-au lăsat cei cinci ani; cursul încă se mișcă.",
+	"epilogue_ahead_work": "Nouăsprezece ani, și ucenicia a devenit un job cu numele tău pe tură. Fondul de urgență e strâns în întregime, nu datorezi nimănui nimic, iar chiria pleacă la timp. Cei cinci ani ți-au cumpărat startul pe care îl căutai; te-au costat anii de școală în care prietenii tăi erau încă acolo.",
+	"epilogue_treading_work": "Nouăsprezece ani, și jobul e destul de stabil ca să planifici pe el. Sunt bani puși deoparte și bani datorați, și niciuna dintre părți nu a câștigat. Cei cinci ani ți-au cumpărat salariul; restul e încă în lucru.",
+	"epilogue_behind_work": "Nouăsprezece ani, și orele sunt reale, dar banii nu au prins din urmă. Datoria are forma pe care i-au dat-o cei cinci ani, iar economiile nu au rămas. Nouăsprezece ani înseamnă jobul, orele și luna care tot vine.",
+	"story_other_path": "Cealaltă cale",
+	"story_other_path_body_chapter": "Ai trăit și cealaltă parte a răscrucii. Capitolul acela e în profilul tău.",
+	"story_other_path_link": "Citește acel capitol",
+	"story_other_path_study": "Cealaltă parte a răscrucii e studiul: cursul, împrumutul și o Rezervă în loc de salariu.",
+	"story_other_path_work": "Cealaltă parte a răscrucii e munca: orele uceniciei și un Fond de urgență în loc de împrumut.",
+	"event_covered_reaction": "Se ocupă polița. O plăteai deja din timp."
 }

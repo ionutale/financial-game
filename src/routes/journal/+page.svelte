@@ -8,10 +8,10 @@
 	 * and the retention sweep already cover everything shown here.
 	 */
 	import { buildJournal } from '$lib/game/journal';
-	import type { OutcomeBand } from '$lib/game/metrics';
 	import {
 		bandLabel,
 		castName,
+		chapterTitle,
 		conceptLabel,
 		coverageStateLabel,
 		flagText,
@@ -23,13 +23,6 @@
 	let { data } = $props();
 
 	const journal = $derived(buildJournal(data.active, data.archive));
-
-	/** The band chip's wash, by band — the words carry the meaning, never colour. */
-	const BAND_STYLE: Record<OutcomeBand, string> = {
-		behind: 'background: var(--down-wash); color: var(--down)',
-		ahead: 'background: var(--up-wash); color: var(--up)',
-		treading: 'background: var(--money-wash); color: var(--money)'
-	};
 
 	/** The stored finish date as the ISO day — locale-free and honest to the record. */
 	const dayOf = (finishedAt: string) => finishedAt.slice(0, 10);
@@ -82,10 +75,18 @@
 					<h2 id={`journal-chapter-${chapter.seed}`} class="kicker">
 						{m.journal_chapter({ number: index + 1 })}
 					</h2>
-					<span class="rounded-full px-3 py-1 text-xs font-semibold" style={BAND_STYLE[chapter.band]}>
+					<!--
+						The band chip is neutral (fun-pass ticket 11): the words say
+						where the money ended; colour never washes the person.
+					-->
+					<span class="rounded-full bg-[var(--wash)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
 						{bandLabel(chapter.band)}
 					</span>
 				</div>
+				<!-- The Chapter's own title (fun-pass ticket 11): the story it lived. -->
+				<p class="mt-1.5 text-[17px] leading-snug font-semibold tracking-tight">
+					{chapterTitle(chapter.title)}
+				</p>
 				<p class="mt-1 text-xs text-[var(--muted)]">
 					{m.journal_chapter_facts({ date: dayOf(chapter.finishedAt), seed: chapter.seed })}
 				</p>

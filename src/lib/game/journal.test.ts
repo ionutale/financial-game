@@ -2,11 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { STAGES } from './economy';
 import {
 	buildJournal,
+	CHAPTER_TITLE_IDS,
+	chapterRefs,
+	chapterTitleFor,
 	CONCEPT_IDS,
 	conceptCoverage,
 	coverageAcross,
 	coverageStateKey,
 	CROSS_RUN_MILESTONE_IDS,
+	otherPathChapter,
 	type ArchivedRunLike,
 	type ConceptCoverageEntry,
 	type ConceptCoverageState
@@ -255,6 +259,7 @@ describe('the Journal over the archive (ticket 05)', () => {
 				seed: 101,
 				finishedAt: '2026-02-01T09:00:00.000Z',
 				band: 'ahead',
+				title: 'the_dip',
 				turningPoints: [{ month: 20, kind: 'overdraft' }],
 				milestones: [
 					{ id: 'first_budget_month', month: 1 },
@@ -410,5 +415,179 @@ describe('the coverage display map (fun-pass ticket 02)', () => {
 		expect(coverageStateKey('introduced')).toBe('coverage_coming_up');
 		expect(coverageStateKey('experienced')).toBe('coverage_met');
 		expect(coverageStateKey('locked')).toBe('coverage_later');
+	});
+});
+
+/**
+ * The Chapter Titles (fun-pass ticket 11, design §3.7): a story-led derived
+ * title per Run (`market_fall`, `card_year`, `quiet_year` …). Derived from the
+ * stored record alone — never a band label, never ranked — and resolved to
+ * copy by the i18n layer.
+ */
+describe('the Chapter Titles (fun-pass ticket 11)', () => {
+	const cleanYear = (year: number) =>
+		Array.from({ length: 12 }, (_, i) =>
+			row((year - 1) * 12 + i + 1, { insideBudget: true })
+		);
+
+	const CASES: Array<{ title: string; run: RunState; expected: string }> = [
+		{
+			title: 'a Run with money in the Fund before the fall',
+			run: withState({ log: [{ month: 49, card: 'the_fund', choice: 'open' }] }),
+			expected: 'market_fall'
+		},
+		{
+			title: 'a Run that climbed back after three months down',
+			run: withState({
+				history: [
+					row(1, { netWorth: 100 }),
+					row(2, { netWorth: 90 }),
+					row(3, { netWorth: 80 }),
+					row(4, { netWorth: 70 }),
+					row(5, { netWorth: 80 })
+				]
+			}),
+			expected: 'the_climb'
+		},
+		{
+			title: 'a Run with a whole year inside its own budget',
+			run: withState({ history: cleanYear(2) }),
+			expected: 'quiet_year'
+		},
+		{
+			title: 'a Run that dipped into the red',
+			run: withState({ flags: [{ month: 20, kind: 'overdraft' }] }),
+			expected: 'the_dip'
+		},
+		{
+			title: 'a Run that carried cover',
+			run: withState({ log: [{ month: 8, card: 'insurance_offer', choice: 'insure' }] }),
+			expected: 'covered_years'
+		},
+		{
+			title: 'a Run the card reached, with nothing else marking it',
+			run: withState({ flags: [{ month: 49, kind: 'card_issued' }] }),
+			expected: 'card_year'
+		},
+		{
+			title: 'a legacy Run the record says nothing about',
+			run: withState({
+				history: undefined as unknown as RunState['history'],
+				log: undefined as unknown as RunState['log'],
+				flags: undefined as unknown as RunState['flags']
+			}),
+			expected: 'five_years'
+		}
+	];
+
+	for (const { title, run, expected } of CASES) {
+		it(`reads ${expected} from ${title}`, () => {
+			expect(chapterTitleFor(run)).toBe(expected);
+		});
+	}
+
+	it('names the catalogue in precedence order', () => {
+		expect(CHAPTER_TITLE_IDS).toEqual([
+			'market_fall',
+			'the_climb',
+			'quiet_year',
+			'the_dip',
+			'covered_years',
+			'card_year',
+			'five_years'
+		]);
+	});
+
+	it('prefers the bigger story when several hold: the fall over the climb', () => {
+		const run = withState({
+			log: [{ month: 49, card: 'the_fund', choice: 'open' }],
+			history: [
+				row(1, { netWorth: 100 }),
+				row(2, { netWorth: 90 }),
+				row(3, { netWorth: 80 }),
+				row(4, { netWorth: 70 }),
+				row(5, { netWorth: 80 })
+			]
+		});
+		expect(chapterTitleFor(run)).toBe('market_fall');
+	});
+
+	it('is never a band label and throws nothing on an untouched record', () => {
+		for (const band of ['ahead', 'treading', 'behind']) {
+			expect(CHAPTER_TITLE_IDS as readonly string[]).not.toContain(band);
+		}
+		expect(() => chapterTitleFor(createRun())).not.toThrow();
+		expect(chapterTitleFor(createRun())).toBe('five_years');
+	});
+
+	it('carries the derived title on the Journal’s Chapter', () => {
+		const journal = buildJournal(null, [WORK_CHAPTER, STUDY_CHAPTER]);
+		expect(journal.chapters.map((chapter) => chapter.title)).toEqual(['five_years', 'the_dip']);
+	});
+});
+
+/**
+ * The Other Path (fun-pass ticket 11, design §3.7): the unchosen Fork branch
+ * as a link to a real Chapter when the archive holds one, or null — the
+ * Money Story renders the authored portrait instead. Never a simulation,
+ * never a score; the refs carry no numbers beyond the seed the link needs.
+ */
+describe('The Other Path (fun-pass ticket 11)', () => {
+	it('reads an archive as link-ready Chapter refs, title and path derived', () => {
+		expect(chapterRefs([WORK_CHAPTER, STUDY_CHAPTER])).toEqual([
+			{ seed: 101, finishedAt: '2026-02-01T09:00:00.000Z', path: 'work', title: 'the_dip' },
+			{ seed: 202, finishedAt: '2026-01-01T09:00:00.000Z', path: 'study', title: 'five_years' }
+		]);
+	});
+
+	it('points a Study Run at the Work Chapter the archive holds', () => {
+		const other = otherPathChapter(
+			withState({ path: 'study' }),
+			chapterRefs([WORK_CHAPTER, STUDY_CHAPTER])
+		);
+		expect(other?.seed).toBe(101);
+		expect(other?.title).toBe('the_dip');
+	});
+
+	it('points a Work Run at the Study Chapter the archive holds', () => {
+		const other = otherPathChapter(withState({ path: 'work' }), chapterRefs([STUDY_CHAPTER]));
+		expect(other?.seed).toBe(202);
+	});
+
+	it('returns the most recently finished Chapter when the path was lived twice', () => {
+		const earlier = chapter(WORK_CHAPTER_STATE, 1, '2026-01-01T00:00:00.000Z');
+		const later = chapter(WORK_CHAPTER_STATE, 2, '2026-02-01T00:00:00.000Z');
+		const other = otherPathChapter(
+			withState({ path: 'study' }),
+			chapterRefs([later, earlier])
+		);
+		expect(other?.seed).toBe(2);
+	});
+
+	it('answers with nothing when the archive never lived the other path', () => {
+		expect(
+			otherPathChapter(withState({ path: 'study' }), chapterRefs([STUDY_CHAPTER]))
+		).toBeNull();
+		expect(otherPathChapter(withState({ path: 'study' }), [])).toBeNull();
+	});
+
+	it('reads a legacy Run without a path the way the band does: as work, so the other is study', () => {
+		const other = otherPathChapter(
+			withState({ path: null }),
+			chapterRefs([WORK_CHAPTER, STUDY_CHAPTER])
+		);
+		expect(other?.seed).toBe(202);
+	});
+
+	it('throws nothing on a legacy archive entry missing its collections', () => {
+		const bare: RunState = {
+			...createRun(),
+			path: null,
+			log: undefined as unknown as RunState['log'],
+			flags: undefined as unknown as RunState['flags'],
+			history: undefined as unknown as RunState['history']
+		};
+		expect(() => chapterRefs([chapter(bare, 7, '2026-05-01T00:00:00.000Z')])).not.toThrow();
+		expect(chapterRefs([chapter(bare, 7, '2026-05-01T00:00:00.000Z')])[0].title).toBe('five_years');
 	});
 });

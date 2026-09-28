@@ -1,15 +1,26 @@
 import { formatMoney, formatMoneyExact, goalTarget, savedTowardGoal } from '$lib/game/economy';
 import { castFor } from '$lib/game/cast';
-import { conceptCoverage, coverageAcross } from '$lib/game/journal';
+import { chapterTitleFor, conceptCoverage, coverageAcross } from '$lib/game/journal';
 import { outcomeBand, turningPoints } from '$lib/game/metrics';
 import { earnedMilestones, longestInsideBudgetMonths, yearInReview } from '$lib/game/milestones';
-import { bandLabel, castName, conceptLabel, flagText, milestoneLabel } from '$lib/i18n/game-text';
+import { reflectionsFor } from '$lib/game/reflections';
+import {
+	bandLabel,
+	castName,
+	chapterTitle,
+	conceptLabel,
+	epilogueText,
+	flagText,
+	milestoneLabel,
+	reflectionText
+} from '$lib/i18n/game-text';
 import { expect, expectNoAxeViolations, seedRun, test, waitForHydration } from './helpers';
 import {
 	CHIP_RUN,
 	CLOSE_DEBT_FUND_RUN,
 	CALLBACK_RUN,
 	CAST_RUN,
+	COVERED_RUN,
 	DONE_STUDY_RUN,
 	DONE_WORK_RUN,
 	EVENT_RUN,
@@ -1196,5 +1207,156 @@ test.describe('fun-pass ticket 09: the Fund is wired', () => {
 		await expect(list.getByText(milestoneLabel('rode_the_recovery'))).toBeVisible();
 
 		await expectNoAxeViolations(page, 'the Money Story with the Fund Milestones');
+	});
+});
+
+/**
+ * Fun-pass ticket 11: the record and the ending. The Money Story carries the
+ * Run's derived Chapter Title, its ≤ 4 Reflections and the authored Epilogue;
+ * "What next" carries The Other Path (a link to the other path's real Chapter
+ * when the archive holds one, the authored portrait otherwise); a covered
+ * shock answers with its dedicated Reaction. No excludes added.
+ */
+test.describe('fun-pass ticket 11: the record and the ending', () => {
+	test('the Money Story: the Run’s Title, its Reflections and the Epilogue at nineteen', async ({
+		page
+	}) => {
+		await seedRun(page, FINAL_MONTH_RUN);
+		await page.getByRole('button', { name: 'Next' }).click();
+		await expect(page.getByRole('heading', { name: 'Five years, in one page.' })).toBeVisible();
+
+		/* The Run's own title, derived from its record — never a band label. */
+		const title = chapterTitle(chapterTitleFor(FINAL_MONTH_RUN));
+		await expect(page.getByText(title)).toBeVisible();
+
+		/* The Reflections: ≤ 4 personal facts of this Run’s record. */
+		const reflections = reflectionsFor(FINAL_MONTH_RUN);
+		expect(reflections.length).toBeGreaterThan(0);
+		expect(reflections.length).toBeLessThanOrEqual(4);
+		const reflectionsSection = page.getByRole('region', { name: 'Reflections' });
+		await expect(reflectionsSection.getByRole('listitem')).toHaveCount(reflections.length);
+		for (const reflection of reflections) {
+			await expect(reflectionsSection.getByText(reflectionText(reflection))).toBeVisible();
+		}
+
+		/* The Epilogue: where the character is at 19, honest with the band. */
+		await expect(
+			page.getByText(epilogueText(outcomeBand(FINAL_MONTH_RUN), FINAL_MONTH_RUN.path))
+		).toBeVisible();
+
+		/* The band chip is neutral (ticket 11): colour never washes the person. */
+		const chip = page.getByText(bandLabel(outcomeBand(FINAL_MONTH_RUN)), { exact: true });
+		await expect(chip).toHaveClass(/bg-\[var\(--wash\)\]/);
+		await expect(chip).not.toHaveClass(/--down-wash|--up-wash|--money-wash/);
+
+		/* Facts → meaning → goodbye → play again: the close sits before What next. */
+		const order = await page.evaluate(() => {
+			const text = document.body.innerText;
+			return ['MILESTONES', 'REFLECTIONS', 'AT NINETEEN', 'WHAT NEXT'].map((needle) =>
+				text.indexOf(needle)
+			);
+		});
+		expect(order.every((at) => at >= 0), `missing a block: ${order.join(', ')}`).toBe(true);
+		expect(order).toEqual([...order].sort((a, b) => a - b));
+
+		await expectNoAxeViolations(page, 'the Money Story with Reflections and the Epilogue');
+	});
+
+	test('the Money Story: The Other Path is the portrait when no other Chapter exists', async ({
+		page
+	}) => {
+		await seedRun(page, FINAL_MONTH_RUN);
+		await page.getByRole('button', { name: 'Next' }).click();
+		await expect(page.getByRole('heading', { name: 'Five years, in one page.' })).toBeVisible();
+
+		await expect(page.getByText('The other path')).toBeVisible();
+		const portrait =
+			FINAL_MONTH_RUN.path === 'study'
+				? 'The other side of the Fork is the wage: the hours of the apprenticeship, and a Named Goal instead of a loan.'
+				: 'The other side of the Fork is the studying: the course, the student loan, and a Buffer instead of a wage.';
+		await expect(page.getByText(portrait)).toBeVisible();
+
+		/* No archive Chapter, no link — and the portrait carries no numbers. */
+		await expect(page.getByRole('link', { name: 'Read that Chapter' })).toHaveCount(0);
+		expect(portrait).not.toMatch(/\d/);
+
+		await expectNoAxeViolations(page, 'the Money Story with The Other Path portrait');
+	});
+
+	test('the Money Story: The Other Path links the other path’s real Chapter', async ({
+		page
+	}) => {
+		/*
+		 * The gate Run goes down the Study side, so the other path is Work:
+		 * seed the finished Work Run into the archive first, then play the
+		 * Study Run to its close. The Money Story's link must target that
+		 * Chapter, not a copy of it.
+		 */
+		const archived = FINAL_MONTH_RUN.path === 'study' ? DONE_WORK_RUN : DONE_STUDY_RUN;
+		await seedRun(page, archived);
+		await seedRun(page, FINAL_MONTH_RUN);
+		await page.getByRole('button', { name: 'Next' }).click();
+		await expect(page.getByRole('heading', { name: 'Five years, in one page.' })).toBeVisible();
+
+		await expect(
+			page.getByText('You have lived the other side of the Fork too. That Chapter is on your profile.')
+		).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Read that Chapter' })).toHaveAttribute(
+			'href',
+			`/journal#journal-chapter-${archived.seed}`
+		);
+		await expect(page.getByText('The other side of the Fork is the', { exact: false })).toHaveCount(0);
+
+		/* The link lands on the real Chapter in the Journal. */
+		await page.getByRole('link', { name: 'Read that Chapter' }).click();
+		await expect(page.getByRole('heading', { name: 'The life so far, kept.' })).toBeVisible();
+		await expect(
+			page.getByText(chapterTitle(chapterTitleFor(archived))).first()
+		).toBeVisible();
+
+		await expectNoAxeViolations(page, 'The Other Path link and its Chapter');
+	});
+
+	test('the Journal: each Chapter carries its derived Title, and the band chip is neutral', async ({
+		page
+	}) => {
+		await seedRun(page, DONE_STUDY_RUN);
+		await seedRun(page, DONE_WORK_RUN);
+		await page.goto('/journal');
+		await expect(page.getByRole('heading', { name: 'The life so far, kept.' })).toBeVisible();
+
+		for (const [index, run] of [
+			[0, DONE_STUDY_RUN],
+			[1, DONE_WORK_RUN]
+		] as const) {
+			const chapter = page.getByRole('region', { name: `Chapter ${index + 1}` });
+
+			/* The story-led Title, derived from the Chapter's own record. */
+			await expect(chapter.getByText(chapterTitle(chapterTitleFor(run)))).toBeVisible();
+
+			/* The band chip is neutral here too: the words say where the money
+			   ended, and colour never washes the person. */
+			const chip = chapter.getByText(bandLabel(outcomeBand(run)), { exact: true });
+			await expect(chip).toHaveClass(/bg-\[var\(--wash\)\]/);
+			await expect(chip).not.toHaveClass(/--down-wash|--up-wash|--money-wash/);
+		}
+
+		await expectNoAxeViolations(page, 'the Journal with Chapter Titles and neutral band chips');
+	});
+
+	test('month screen: a covered shock answers with the dedicated Reaction', async ({ page }) => {
+		await seedRun(page, COVERED_RUN);
+		await expect(page.getByRole('heading', { name: 'The phone goes down' })).toBeVisible();
+
+		/* The Choice was taken on an insured Run: the cover absorbed the bill,
+		   and the feedback carries both the card's Reaction and the payoff. */
+		await expect(
+			page.getByText('The screen is a spiderweb. The repair shop wants its money.')
+		).toBeVisible();
+		await expect(
+			page.getByText('The cover takes the bill. You were already paying for this one.')
+		).toBeVisible();
+
+		await expectNoAxeViolations(page, 'the covered shock with its dedicated Reaction');
 	});
 });

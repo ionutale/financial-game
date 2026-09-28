@@ -3,6 +3,7 @@
 	import { cueFor } from '$lib/audio/moments';
 	import { playCue } from '$lib/audio/sfx';
 	import { ledgerEntries, type LedgerEntry } from '$lib/game/ledger';
+	import type { ChapterRef } from '$lib/game/journal';
 	import { applyAction, createRun } from '$lib/game/loop';
 	import { freshSeed } from '$lib/game/rng';
 	import type { Action, RunState } from '$lib/game/types';
@@ -15,7 +16,7 @@
 	import StageUp from './StageUp.svelte';
 	import StatsSheet from './StatsSheet.svelte';
 
-	let { initial = null, seed = 1 }: { initial?: RunState | null; seed?: number } = $props();
+	let { initial = null, seed = 1, chapters = [] }: { initial?: RunState | null; seed?: number; chapters?: ChapterRef[] } = $props();
 
 	// `$state.raw` rather than `$state`: the reducer replaces the whole state object,
 	// and a deep proxy cannot be structuredClone'd (which is how the reducer copies).
@@ -96,7 +97,7 @@
 {#if run.showIntro}
 	<Intro onDone={() => dispatch({ type: 'DISMISS_INTRO' })} />
 {:else if run.phase === 'done'}
-	<MoneyStory {run} {saved} onNewRun={() => dispatch({ type: 'NEW_RUN', seed: freshSeed() })} />
+	<MoneyStory {run} {saved} {chapters} onNewRun={() => dispatch({ type: 'NEW_RUN', seed: freshSeed() })} />
 {:else}
 	<main class="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col gap-7 px-5 py-7">
 		<Hud {run} onStats={openStats} />

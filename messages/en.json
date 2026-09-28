@@ -132,7 +132,7 @@
 	"story_adherence": "You kept to the plan you set yourself in {months} of the 60 months.",
 	"story_band_ahead": "You ended up past the goal you were aiming at, with the score to go with it.",
 	"story_band_treading": "You ended up still moving — not ahead, and not sunk either.",
-	"story_band_behind": "You ended up behind where you needed to be. Nothing is unrecoverable from here; that is the point of the five years.",
+	"story_band_behind": "You ended up behind where you needed to be. The five years are on the record, exactly as they went.",
 	"story_band_note": "your ending, from the money and the score",
 	"story_moments": "The moments that decided it",
 	"story_you_vs_you": "You, against you",
@@ -271,6 +271,7 @@
 	"milestone_fork_chosen": "The Fork chosen",
 	"milestone_fund_opened": "First money into the Fund",
 	"milestone_rode_the_recovery": "Still in when it came back",
+	"milestone_the_climb": "Turned back up after three months down",
 	"milestone_both_paths": "Both paths lived",
 	"thread_course_enrolled_label": "The course",
 	"thread_course_enrolled_payoff": "certificate",
@@ -1116,5 +1117,40 @@
 	"card_split_comes_due_choice_leave_feedback": "The mate calls the shop and sorts it the slow way. The fee lands on their account, the phone stays on, and the messages stay short for a while.",
 	"card_split_comes_due_choice_leave_reaction": "Their next message arrives a fortnight later, about something else.",
 	"thread_split_sold_label": "The phone you sold",
-	"thread_split_sold_payoff": "the third payment"
+	"thread_split_sold_payoff": "the third payment",
+	"chapter_title_market_fall": "The year the market fell",
+	"chapter_title_the_climb": "The climb",
+	"chapter_title_quiet_year": "The quiet year",
+	"chapter_title_the_dip": "The month the account dipped",
+	"chapter_title_covered_years": "The years under cover",
+	"chapter_title_card_year": "The year the card arrived",
+	"chapter_title_five_years": "Five years",
+	"story_reflections": "Reflections",
+	"reflection_packed_lunch": [
+		{
+			"declarations": ["input times", "local timesPlural = times: plural"],
+			"selectors": ["timesPlural"],
+			"match": {
+				"timesPlural=one": "You packed lunch once.",
+				"timesPlural=other": "You packed lunch {times} times."
+			}
+		}
+	],
+	"reflection_best_year": "Year {year}: {months} of twelve months inside your own budget.",
+	"reflection_the_leak": "The wants ran heaviest in year {year}: {amount} over the twelve months.",
+	"reflection_bank_interest": "The bank paid you {amount} in interest over the five years.",
+	"reflection_saved_months": "Money went into savings in {months} of the sixty months.",
+	"story_epilogue": "At nineteen",
+	"epilogue_ahead_study": "Nineteen, and the first year of the course is behind you. The loan is the one you planned for and the Buffer is still where you put it. The five years bought you the studying; they cost you the evenings you paid for it.",
+	"epilogue_treading_study": "Nineteen, and the course is familiar — the same bus, the same desk in the library. The loan is with you and so is the Buffer, and neither grew the way the plan assumed. The five years bought the studying; the cushion under it is thinner than you meant.",
+	"epilogue_behind_study": "Nineteen, and the course is still going, fitted around the shifts that pay for it. The loan is larger than the plan said and the Buffer went to rent more than once. That is where the five years left you; the course is still moving.",
+	"epilogue_ahead_work": "Nineteen, and the apprenticeship has become a job with your name on the rota. The Named Goal is saved in full, nothing is owed, and the rent goes out on time. The five years bought you the start you were working towards; they cost you the school years your friends were still in.",
+	"epilogue_treading_work": "Nineteen, and the job is steady enough to plan around. There is money saved and there is money owed, and neither side has won. The five years bought you the wage; the rest is still being worked out.",
+	"epilogue_behind_work": "Nineteen, and the hours are real but the money has not caught up. The debt is the shape the five years left, and the savings did not stay. Nineteen is the job, the hours, and the month that keeps arriving.",
+	"story_other_path": "The other path",
+	"story_other_path_body_chapter": "You have lived the other side of the Fork too. That Chapter is on your profile.",
+	"story_other_path_link": "Read that Chapter",
+	"story_other_path_study": "The other side of the Fork is the studying: the course, the student loan, and a Buffer instead of a wage.",
+	"story_other_path_work": "The other side of the Fork is the wage: the hours of the apprenticeship, and a Named Goal instead of a loan.",
+	"event_covered_reaction": "The cover takes the bill. You were already paying for this one."
 }

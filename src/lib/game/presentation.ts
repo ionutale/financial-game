@@ -79,3 +79,20 @@ export function isFirstEncounter(run: Pick<RunState, 'log' | 'card'>): boolean {
 	}
 	return true;
 }
+
+/**
+ * The covered moment (fun-pass ticket 11, design §3.6): did the cover actually
+ * absorb this Choice's shock? True only when the taken Choice names an
+ * `insuredCost`, the Run holds insurance, and the cover moves the price — the
+ * same rule the reducer applies before the Feedback renders. Pure and legacy-
+ * safe: no card, no Choice, no cover or no saving all read false.
+ */
+export function insuranceAbsorbed(
+	run: Pick<RunState, 'card' | 'chosen' | 'insurance'>
+): boolean {
+	const card = run.card;
+	if (!card || !run.chosen || run.insurance !== true) return false;
+	const choice = card.choices.find((c) => c.id === run.chosen);
+	if (!choice || choice.insuredCost === undefined) return false;
+	return (choice.cost ?? 0) - choice.insuredCost > 0;
+}

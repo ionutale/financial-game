@@ -9,4 +9,4 @@
 	<title>{m.app_title()}</title>
 </svelte:head>
 
-<MonthScreen initial={data.saved} seed={data.seed} />
+<MonthScreen initial={data.saved} seed={data.seed} chapters={data.chapters} />

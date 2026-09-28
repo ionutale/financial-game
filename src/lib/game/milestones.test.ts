@@ -65,9 +65,10 @@ function play(state: RunState, months: number): RunState {
 }
 
 /**
- * A Run that lived every signal the fourteen Milestones derive from: a first
+ * A Run that lived every signal the fifteen Milestones derive from: a first
  * clean month, a quarter, a half-year, Save, interest, the goal, debt cleared,
- * the spine beats, the Fork, and the Fund's open → crash → recovery.
+ * the spine beats, the Fork, the Fund's open → crash → recovery, and the month
+ * the money turned back up after three months down.
  */
 function fullRun(): RunState {
 	return withState({
@@ -83,23 +84,23 @@ function fullRun(): RunState {
 		flags: [{ month: 49, kind: 'fork:work' }],
 		history: [
 			row(1, { insideBudget: true, saved: 40, netWorth: 100 }),
-			row(2, { insideBudget: true }),
-			row(3, { insideBudget: true }),
-			row(4, { interest: 0.1, debt: 300 }),
-			row(5, { insideBudget: true, debt: 300 }),
-			row(6, { insideBudget: true, debt: 300 }),
-			row(7, { insideBudget: true, debt: 300 }),
-			row(8, { insideBudget: true, debt: 300 }),
-			row(9, { insideBudget: true, debt: 300 }),
-			row(10, { insideBudget: true, debt: 0, savings: GOAL_TARGET }),
-			row(58)
+			row(2, { insideBudget: true, netWorth: 90 }),
+			row(3, { insideBudget: true, netWorth: 80 }),
+			row(4, { interest: 0.1, debt: 300, netWorth: 70 }),
+			row(5, { insideBudget: true, debt: 300, netWorth: 80 }),
+			row(6, { insideBudget: true, debt: 300, netWorth: 90 }),
+			row(7, { insideBudget: true, debt: 300, netWorth: 100 }),
+			row(8, { insideBudget: true, debt: 300, netWorth: 110 }),
+			row(9, { insideBudget: true, debt: 300, netWorth: 120 }),
+			row(10, { insideBudget: true, debt: 0, savings: GOAL_TARGET, netWorth: 130 }),
+			row(58, { netWorth: 140 })
 		]
 	});
 }
 
 describe('the Milestone catalogue', () => {
-	it('carries the fourteen ids', () => {
-		expect(MILESTONE_IDS).toHaveLength(14);
+	it('carries the fifteen ids', () => {
+		expect(MILESTONE_IDS).toHaveLength(15);
 	});
 
 	it('earns nothing from a fresh Run', () => {
@@ -112,6 +113,7 @@ describe('the Milestone catalogue', () => {
 			{ id: 'first_saved', month: 1 },
 			{ id: 'quarter_inside_budget', month: 3 },
 			{ id: 'first_interest', month: 4 },
+			{ id: 'the_climb', month: 5 },
 			{ id: 'half_year_inside_budget', month: 10 },
 			{ id: 'goal_reached', month: 10 },
 			{ id: 'debt_cleared', month: 10 },
@@ -210,6 +212,19 @@ const FIRING: Array<{ id: MilestoneId; month: number; run: RunState }> = [
 				{ month: 55, card: 'the_crash', choice: 'hold' }
 			],
 			history: [row(58)]
+		})
+	},
+	{
+		id: 'the_climb',
+		month: 5,
+		run: withState({
+			history: [
+				row(1, { netWorth: 100 }),
+				row(2, { netWorth: 90 }),
+				row(3, { netWorth: 80 }),
+				row(4, { netWorth: 70 }),
+				row(5, { netWorth: 80 })
+			]
 		})
 	}
 ];
@@ -328,6 +343,81 @@ describe('the Fund Milestones (ticket 09)', () => {
 	it('never fires twice across later months', () => {
 		const run = withState({ log: [opened, weathered], history: [row(58), row(59), row(60)] });
 		expect(earnedMilestones(run).filter((m) => m.id === 'rode_the_recovery')).toHaveLength(1);
+	});
+});
+
+describe('the climb (fun-pass ticket 11)', () => {
+	const down = (from: number) =>
+		Array.from({ length: from }, (_, i) => row(i + 1, { netWorth: 100 - (i + 1) * 10 }));
+
+	it('fires in the first month worth turns back up after three months down', () => {
+		const run = withState({
+			history: [
+				row(1, { netWorth: 100 }),
+				row(2, { netWorth: 90 }),
+				row(3, { netWorth: 80 }),
+				row(4, { netWorth: 70 }),
+				row(5, { netWorth: 60 }),
+				row(6, { netWorth: 70 })
+			]
+		});
+		expect(earnedMilestones(run).filter((m) => m.id === 'the_climb')).toEqual([
+			{ id: 'the_climb', month: 6 }
+		]);
+	});
+
+	it('needs three consecutive months down, not three falls anywhere', () => {
+		// Down, flat, down, down, up: the flat month breaks the run of falls.
+		const run = withState({
+			history: [
+				row(1, { netWorth: 100 }),
+				row(2, { netWorth: 90 }),
+				row(3, { netWorth: 90 }),
+				row(4, { netWorth: 80 }),
+				row(5, { netWorth: 70 }),
+				row(6, { netWorth: 80 })
+			]
+		});
+		expect(idsOf(run)).not.toContain('the_climb');
+	});
+
+	it('does not join a gap in the record', () => {
+		const run = withState({
+			history: [
+				row(1, { netWorth: 100 }),
+				row(2, { netWorth: 90 }),
+				row(3, { netWorth: 80 }),
+				row(5, { netWorth: 70 }),
+				row(6, { netWorth: 80 })
+			]
+		});
+		expect(idsOf(run)).not.toContain('the_climb');
+	});
+
+	it('needs a fall and a rise, not a flat record', () => {
+		expect(idsOf(withState({ history: down(4) }))).not.toContain('the_climb');
+	});
+
+	it('fires once, and only after the record shows the rise', () => {
+		const run = withState({
+			history: [
+				row(1, { netWorth: 100 }),
+				row(2, { netWorth: 90 }),
+				row(3, { netWorth: 80 }),
+				row(4, { netWorth: 70 }),
+				row(5, { netWorth: 80 }),
+				row(6, { netWorth: 90 })
+			]
+		});
+		expect(earnedMilestones(run).filter((m) => m.id === 'the_climb')).toEqual([
+			{ id: 'the_climb', month: 5 }
+		]);
+	});
+
+	it('leaves legacy records alone', () => {
+		const bare = withState({ history: undefined as unknown as RunState['history'] });
+		expect(() => earnedMilestones(bare)).not.toThrow();
+		expect(idsOf(bare)).not.toContain('the_climb');
 	});
 });
 

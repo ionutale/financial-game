@@ -19,14 +19,17 @@
 import { cardById } from './cards';
 import { castFor, type CastId } from './cast';
 import { STAGES } from './economy';
+import { CRASH_MONTH } from './market';
 import { outcomeBand, turningPoints, type OutcomeBand, type TurningPoint } from './metrics';
 import {
+	climbMonth,
 	earnedMilestones,
+	fundOpenedMonth,
 	MILESTONE_IDS,
 	type EarnedMilestone,
 	type MilestoneId
 } from './milestones';
-import type { ConceptId, RunState } from './types';
+import type { ConceptId, PathId, RunState } from './types';
 
 /** The ladder's Stages, ascending; their Concepts are the curriculum order. */
 const STAGE_NUMBERS = Object.keys(STAGES)
@@ -157,6 +160,119 @@ export interface ArchivedRunLike {
 	finishedAt: string;
 }
 
+/* ------------------------------------------------------------------------- */
+/* Chapter Titles (fun-pass ticket 11, design §3.7)                          */
+/* ------------------------------------------------------------------------- */
+
+/**
+ * The Chapter Title catalogue, in precedence order: the title is the story the
+ * Run actually lived — the market it was in when it fell, the climb back, a
+ * whole year inside its own budget, the dip into the red, the cover, the year
+ * the card arrived — and `five_years` is the honest fallback for a record the
+ * moments never marked. Language-neutral slugs; the copy lives in the
+ * catalogues as `chapter_title_<id>`. **Never a band label, never a rank.**
+ */
+export const CHAPTER_TITLE_IDS = [
+	'market_fall',
+	'the_climb',
+	'quiet_year',
+	'the_dip',
+	'covered_years',
+	'card_year',
+	'five_years'
+] as const;
+
+export type ChapterTitleId = (typeof CHAPTER_TITLE_IDS)[number];
+
+/** The record, read defensively: a legacy save may miss any collection. */
+const monthsOf = (run: Pick<RunState, 'history'>) =>
+	[...(run.history ?? [])].sort((a, b) => a.month - b.month);
+const logOf = (run: Pick<RunState, 'log'>) => run.log ?? [];
+const flagsOf = (run: Pick<RunState, 'flags'>) => run.flags ?? [];
+
+/** A year the record carried all twelve months inside both envelopes. */
+function yearFullyInsideBudget(run: Pick<RunState, 'history'>): boolean {
+	const inside = new Map<number, number>();
+	for (const month of monthsOf(run)) {
+		if (!month.insideBudget) continue;
+		const year = Math.floor((month.month - 1) / 12) + 1;
+		inside.set(year, (inside.get(year) ?? 0) + 1);
+	}
+	return [...inside.values()].some((count) => count === 12);
+}
+
+/** The Run took the cover: any played Choice that sets insurance. */
+function carriedCover(run: Pick<RunState, 'log'>): boolean {
+	return logOf(run).some(
+		(entry) => cardById(entry.card)?.choices.find((c) => c.id === entry.choice)?.sets?.insurance === true
+	);
+}
+
+/**
+ * The title this Run's record earns: the first moment that holds, in catalogue
+ * order. Derived only — no state, no band — and legacy-safe: a record the
+ * moments never marked reads as `five_years`.
+ */
+export function chapterTitleFor(run: RunState): ChapterTitleId {
+	// In the Fund when the market fell: a deposit before the crash month,
+	// whether it was held or sold when the fall landed.
+	const opened = fundOpenedMonth(run);
+	if (opened !== null && opened < CRASH_MONTH) return 'market_fall';
+	if (climbMonth(run) !== null) return 'the_climb';
+	if (yearFullyInsideBudget(run)) return 'quiet_year';
+	if (flagsOf(run).some((flag) => flag.kind === 'overdraft')) return 'the_dip';
+	if (carriedCover(run)) return 'covered_years';
+	if (flagsOf(run).some((flag) => flag.kind === 'card_issued')) return 'card_year';
+	return 'five_years';
+}
+
+/* ------------------------------------------------------------------------- */
+/* The Other Path (fun-pass ticket 11, design §3.7)                          */
+/* ------------------------------------------------------------------------- */
+
+/**
+ * One Chapter as the Money Story's "What next" needs it: the seed the Journal
+ * link targets, when it was lived, the path, and its derived title. The shape
+ * is deliberately tiny — it is the whole archive reduced for one link.
+ */
+export interface ChapterRef {
+	seed: number;
+	finishedAt: string;
+	path: PathId | null;
+	title: ChapterTitleId;
+}
+
+/** The archive as link-ready refs, in the archive's own stored order. */
+export function chapterRefs(archive: ArchivedRunLike[]): ChapterRef[] {
+	return archive.map((entry) => ({
+		seed: entry.seed,
+		finishedAt: entry.finishedAt,
+		// A legacy Chapter without a path reads as the Work side, as elsewhere.
+		path: entry.state?.path ?? null,
+		title: chapterTitleFor(readRecord(entry.state))
+	}));
+}
+
+/**
+ * The unchosen Fork branch's Chapter, when the archive holds one — else null,
+ * and the Money Story shows the authored portrait instead. The other path is
+ * the opposite of the Run's own; a legacy Run without a path reads as Work
+ * (the shipped convention, `outcomeBand` does the same). When the path was
+ * lived more than once, the most recently finished Chapter is the one linked.
+ * Never a simulation, never a score: the caller gets a seed, a date, a path
+ * and a title, and nothing else.
+ */
+export function otherPathChapter(
+	run: Pick<RunState, 'path'>,
+	chapters: ChapterRef[]
+): ChapterRef | null {
+	const chosen: PathId = run.path === 'study' ? 'study' : 'work';
+	const opposite = chosen === 'study' ? 'work' : 'study';
+	const matches = chapters.filter((chapter) => (chapter.path ?? 'work') === opposite);
+	if (matches.length === 0) return null;
+	return [...matches].sort(livedOrder)[matches.length - 1];
+}
+
 /** One finished Run as the Journal records it (CONTEXT.md: Chapter). */
 export interface JournalChapter {
 	/** The seed the Run was played from. */
@@ -165,6 +281,8 @@ export interface JournalChapter {
 	finishedAt: string;
 	/** Ahead / Treading water / Behind — from the money, never behaviour. */
 	band: OutcomeBand;
+	/** The story-led title derived from the record (fun-pass ticket 11). */
+	title: ChapterTitleId;
 	/** The flagged moments the Money Story narrates, in order. */
 	turningPoints: TurningPoint[];
 	/** The Run's earned Milestones, oldest first. */
@@ -209,7 +327,7 @@ function readRecord(state: RunState): RunState {
 }
 
 /** Oldest first: ISO 8601 UTC strings sort in time order, and the sort is stable. */
-function livedOrder(a: ArchivedRunLike, b: ArchivedRunLike): number {
+function livedOrder(a: { finishedAt: string }, b: { finishedAt: string }): number {
 	if (a.finishedAt === b.finishedAt) return 0;
 	return a.finishedAt < b.finishedAt ? -1 : 1;
 }
@@ -220,6 +338,7 @@ function toChapter(entry: ArchivedRunLike): JournalChapter {
 		seed: entry.seed,
 		finishedAt: entry.finishedAt,
 		band: outcomeBand(run),
+		title: chapterTitleFor(run),
 		turningPoints: turningPoints(run),
 		milestones: earnedMilestones(run),
 		cast: castFor(run)

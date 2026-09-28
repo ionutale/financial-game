@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { cardById } from './cards';
-import { firstMonthHintVisible, isFirstEncounter, planWarning, workHintVisible } from './presentation';
+import {
+	firstMonthHintVisible,
+	insuranceAbsorbed,
+	isFirstEncounter,
+	planWarning,
+	workHintVisible
+} from './presentation';
 import { applyAction, createRun, runActions } from './loop';
-import type { RunState } from './types';
+import type { Card, RunState } from './types';
 
 /** A fresh Run dropped into a given Stage by the test scaffolding. */
 function atStage(stage: number): RunState {
@@ -154,5 +160,79 @@ describe('the first encounter (ADR-0004, ticket 01)', () => {
 		);
 		expect(s.log.map((entry) => entry.card)).toEqual(['two_wants', 'birthday_gift']);
 		expect(isFirstEncounter(s)).toBe(false);
+	});
+});
+
+/**
+ * The covered moment (fun-pass ticket 11, design §3.6): when insurance
+ * actually absorbs a shock, the world answers with a dedicated line — the
+ * payoff for a decision made months earlier. Pure derivation: the card, the
+ * taken Choice and the cover flag; nothing else.
+ */
+describe('the covered shock (fun-pass ticket 11)', () => {
+	/** The cracked phone dealt at month 1, with the cover held or not. */
+	function shockRun(insured: boolean): RunState {
+		const run = runActions(
+			createRun(),
+			{ type: 'FORCE_CARD', id: 'phone_cracked' },
+			{ type: 'CONFIRM_PLAN' }
+		);
+		return { ...run, insurance: insured };
+	}
+
+	it('fires when the cover takes a shock the Run had insured against', () => {
+		const taken = applyAction(shockRun(true), { type: 'CHOOSE', choiceId: 'ack' });
+		expect(taken.cascade).toBeNull();
+		expect(insuranceAbsorbed(taken)).toBe(true);
+	});
+
+	it('stays quiet before the Choice is taken', () => {
+		expect(insuranceAbsorbed(shockRun(true))).toBe(false);
+	});
+
+	it('stays quiet without the cover — the bill is the month’s own', () => {
+		const taken = applyAction(shockRun(false), { type: 'CHOOSE', choiceId: 'ack' });
+		expect(insuranceAbsorbed(taken)).toBe(false);
+	});
+
+	it('fires for the burst pipe’s emergency call too, and never twice', () => {
+		const run = runActions(
+			createRun(),
+			{ type: 'FORCE_CARD', id: 'burst_pipe' },
+			{ type: 'CONFIRM_PLAN' }
+		);
+		const insured = { ...run, insurance: true };
+		const taken = applyAction(insured, { type: 'CHOOSE', choiceId: 'call_now' });
+		expect(insuranceAbsorbed(taken)).toBe(true);
+		// Not every insurance-bearing Choice absorbs: taping it costs the same
+		// with or without cover.
+		const taped = applyAction(insured, { type: 'CHOOSE', choiceId: 'tape_it' });
+		expect(insuranceAbsorbed(taped)).toBe(false);
+	});
+
+	it('does not fire where the cover changes nothing', () => {
+		const card: Card = {
+			id: 'a_shock_the_cover_does_not_move',
+			kind: 'shock',
+			stages: [1],
+			choices: [{ id: 'pay', cost: 40, insuredCost: 40 }]
+		};
+		const run = { card, chosen: 'pay', insurance: true } as Pick<
+			RunState,
+			'card' | 'chosen' | 'insurance'
+		>;
+		expect(insuranceAbsorbed(run)).toBe(false);
+	});
+
+	it('throws nothing on a legacy record with no card, no Choice or no cover field', () => {
+		expect(insuranceAbsorbed({ card: null, chosen: null, insurance: true })).toBe(false);
+		expect(
+			insuranceAbsorbed({ card: cardById('phone_cracked') ?? null, chosen: 'gone', insurance: true })
+		).toBe(false);
+		const legacy = { card: cardById('phone_cracked') ?? null, chosen: 'ack' } as Pick<
+			RunState,
+			'card' | 'chosen' | 'insurance'
+		>;
+		expect(insuranceAbsorbed(legacy)).toBe(false);
 	});
 });

@@ -295,6 +295,16 @@ export const FUND_BLOCKED_RUN: RunState = (() => {
 	};
 })();
 
+/**
+ * Fun-pass ticket 11: the covered shock. The cracked phone on an insured Run,
+ * with the Choice already taken — the cover absorbed the bill, so the dedicated
+ * Reaction renders in the Feedback beside the card's own.
+ */
+export const COVERED_RUN: RunState = applyAction({ ...SHOCK_RUN, insurance: true }, {
+	type: 'CHOOSE',
+	choiceId: 'ack'
+});
+
 function availableChoice(state: RunState) {
 	const choice = state.card?.choices.find(
 		(c) =>

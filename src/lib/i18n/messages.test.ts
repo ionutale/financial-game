@@ -2,8 +2,11 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CARDS } from '../game/cards';
 import { cardFormFor } from '../game/forms';
-import { CROSS_RUN_MILESTONE_IDS } from '../game/journal';
+import { CHAPTER_TITLE_IDS, CROSS_RUN_MILESTONE_IDS } from '../game/journal';
 import { MILESTONE_IDS } from '../game/milestones';
+import { REFLECTION_IDS } from '../game/reflections';
+import type { OutcomeBand } from '../game/metrics';
+import type { PathId } from '../game/types';
 import {
 	CARD_KEY_PREFIX,
 	cardLineKey,
@@ -14,6 +17,7 @@ import {
 	choiceLabelKey,
 	choiceReactionKey
 } from './card-keys';
+import { chapterTitleKey, epilogueKey, reflectionKey } from './record-keys';
 
 /**
  * Gate 3 of ticket 07/26, extended by ticket 01: the keys Paraglide cannot
@@ -116,6 +120,55 @@ describe('the milestone catalogue’s message keys (tickets 01, 05)', () => {
 		for (const locale of LOCALES) {
 			for (const key of Object.keys(catalogues[locale])) {
 				if (!key.startsWith(MILESTONE_KEY_PREFIX)) continue;
+				expect(allowed.has(key), `orphan key in ${locale}: ${key}`).toBe(true);
+			}
+		}
+	});
+});
+
+describe('the record and the ending’s message keys (fun-pass ticket 11)', () => {
+	/** Every Epilogue variant: three bands × two paths. */
+	const EPILOGUE_KEYS = (['ahead', 'treading', 'behind'] as OutcomeBand[]).flatMap((band) =>
+		(['study', 'work'] as PathId[]).map((path) => epilogueKey(band, path))
+	);
+
+	/** The whole key space the record and the ending can legitimately author. */
+	const RECORD_KEYS = [
+		...REFLECTION_IDS.map(reflectionKey),
+		...CHAPTER_TITLE_IDS.map(chapterTitleKey),
+		...EPILOGUE_KEYS
+	];
+
+	it('has every Reflection, Chapter Title and Epilogue key in all three locales', () => {
+		for (const key of RECORD_KEYS) {
+			for (const locale of LOCALES) {
+				// Plural variants are arrays; presence is what this gate pins,
+				// and the empty-string gate below holds the length.
+				expect(typeof catalogues[locale][key], `${locale} is missing ${key}`).not.toBe(
+					'undefined'
+				);
+			}
+		}
+	});
+
+	it('names six Epilogues, three bands across two paths', () => {
+		expect(EPILOGUE_KEYS).toEqual([
+			'epilogue_ahead_study',
+			'epilogue_ahead_work',
+			'epilogue_treading_study',
+			'epilogue_treading_work',
+			'epilogue_behind_study',
+			'epilogue_behind_work'
+		]);
+		expect(new Set(EPILOGUE_KEYS).size).toBe(6);
+	});
+
+	it('has no orphan reflection_*, chapter_title_* or epilogue_* key in any locale', () => {
+		const allowed = new Set(RECORD_KEYS);
+		const prefixes = ['reflection_', 'chapter_title_', 'epilogue_'];
+		for (const locale of LOCALES) {
+			for (const key of Object.keys(catalogues[locale])) {
+				if (!prefixes.some((prefix) => key.startsWith(prefix))) continue;
 				expect(allowed.has(key), `orphan key in ${locale}: ${key}`).toBe(true);
 			}
 		}

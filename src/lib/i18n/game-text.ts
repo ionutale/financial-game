@@ -4,9 +4,11 @@
  * source of truth for the English wording; everything here comes from the
  * message catalogue, so only ids stay in TypeScript.
  */
+import { formatMoneyExact } from '$lib/game/economy';
 import { threadDue, THREADS } from '$lib/game/threads';
 import type { CallbackId } from '$lib/game/callbacks';
 import type { CastId } from '$lib/game/cast';
+import type { ChapterTitleId } from '$lib/game/journal';
 import {
 	coverageStateKey,
 	type ConceptCoverageState,
@@ -14,10 +16,13 @@ import {
 } from '$lib/game/journal';
 import type { LedgerEntryKey } from '$lib/game/ledger';
 import type { MilestoneId } from '$lib/game/milestones';
+import type { Reflection } from '$lib/game/reflections';
 import type { CardKind, ConceptId, PathId, RunState } from '$lib/game/types';
 import type { ComparisonId, OutcomeBand } from '$lib/game/metrics';
+import { getLocale } from '$lib/paraglide/runtime';
 import { callbackKey } from './card-keys';
 import { message } from './messages';
+import { chapterTitleKey, epilogueKey, reflectionKey } from './record-keys';
 
 export function conceptLabel(id: ConceptId): string {
 	return message(`concept_${id}`);
@@ -128,6 +133,32 @@ export function threadChip(run: Pick<RunState, 'thread' | 'month'>): string | nu
 /** A Milestone's player-facing name — the in-Run ids and the cross-Run `both_paths` (tickets 01/05). */
 export function milestoneLabel(id: MilestoneId | CrossRunMilestoneId): string {
 	return message(`milestone_${id}`);
+}
+
+/** A Chapter Title's copy (fun-pass ticket 11): the Run's story, never a band. */
+export function chapterTitle(id: ChapterTitleId): string {
+	return message(chapterTitleKey(id));
+}
+
+/**
+ * The Epilogue's copy (fun-pass ticket 11): where the character is at 19,
+ * keyed by the Outcome Band and the path; written with the band, never as a
+ * verdict. A legacy Run without a path reads as the Work side, as elsewhere.
+ */
+export function epilogueText(band: OutcomeBand, path: PathId | null): string {
+	return message(epilogueKey(band, path ?? 'work'));
+}
+
+/**
+ * A Reflection's line (fun-pass ticket 11): the record's own fact, with money
+ * formatted exactly as the rest of the Money Story formats it.
+ */
+export function reflectionText(reflection: Reflection): string {
+	const params: Record<string, string | number> = { ...reflection.params };
+	if (typeof params.amount === 'number') {
+		params.amount = formatMoneyExact(params.amount, getLocale());
+	}
+	return message(reflectionKey(reflection.id), params);
 }
 
 const COMPARISON_KEYS: Record<ComparisonId, string> = {

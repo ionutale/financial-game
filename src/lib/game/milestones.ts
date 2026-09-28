@@ -33,7 +33,8 @@ export const MILESTONE_IDS = [
 	'payslip_read',
 	'fork_chosen',
 	'fund_opened',
-	'rode_the_recovery'
+	'rode_the_recovery',
+	'the_climb'
 ] as const;
 
 export type MilestoneId = (typeof MILESTONE_IDS)[number];
@@ -107,9 +108,10 @@ function forkMonth(run: Pick<RunState, 'log' | 'flags'>): number | null {
  * entry whose Choice carries a positive `sets.fund` — `the_fund`'s open, the
  * boring fund, or buying the crash's dip. Derived from the log and the current
  * deck, like every other played-card Milestone; legacy saves simply do not
- * carry a deposit.
+ * carry a deposit. Exported for the Chapter Title (`market_fall`), which needs
+ * the same fact (`fun-pass ticket 11`).
  */
-function fundOpenedMonth(run: Pick<RunState, 'log'>): number | null {
+export function fundOpenedMonth(run: Pick<RunState, 'log'>): number | null {
 	let found: number | null = null;
 	for (const entry of log(run)) {
 		const choice = cardById(entry.card)?.choices.find((c) => c.id === entry.choice);
@@ -131,6 +133,33 @@ function rodeTheRecoveryMonth(run: Pick<RunState, 'log' | 'history'>): number | 
 	if (fundOpenedMonth(run) === null) return null;
 	if (firstPlayed(run, 'the_crash', ['hold', 'buy']) === null) return null;
 	return firstMonth(months(run), (r) => r.month >= RECOVERY_COMPLETE_MONTH);
+}
+
+/**
+ * The climb (fun-pass ticket 11): the first month worth turned back up after
+ * three consecutive months down. Derived from the net-worth column alone —
+ * the record the Money Story already keeps — and reported at the month the
+ * rise first shows, so it fires once and old saves simply do not carry it.
+ */
+export function climbMonth(run: Pick<RunState, 'history'>): number | null {
+	const h = months(run);
+	for (let i = 4; i < h.length; i++) {
+		const [first, second, third, fourth, turn] = h.slice(i - 4, i + 1);
+		// Consecutive months only: a gap in the record is not a run of falls.
+		const consecutive =
+			second.month === first.month + 1 &&
+			third.month === second.month + 1 &&
+			fourth.month === third.month + 1 &&
+			turn.month === fourth.month + 1;
+		if (!consecutive) continue;
+
+		const threeDown =
+			second.netWorth < first.netWorth &&
+			third.netWorth < second.netWorth &&
+			fourth.netWorth < third.netWorth;
+		if (threeDown && turn.netWorth > fourth.netWorth) return turn.month;
+	}
+	return null;
 }
 
 /**
@@ -163,7 +192,8 @@ export function earnedMilestones(run: RunState): EarnedMilestone[] {
 		['payslip_read', firstPlayed(run, 'first_taxed_payslip', ['read'])],
 		['fork_chosen', forkMonth(run)],
 		['fund_opened', fundOpenedMonth(run)],
-		['rode_the_recovery', rodeTheRecoveryMonth(run)]
+		['rode_the_recovery', rodeTheRecoveryMonth(run)],
+		['the_climb', climbMonth(run)]
 	];
 
 	return candidates

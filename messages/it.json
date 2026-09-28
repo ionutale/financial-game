@@ -132,7 +132,7 @@
 	"story_adherence": "Hai rispettato il piano che ti eri dato in {months} mesi su 60.",
 	"story_band_ahead": "Sei arrivato oltre l’obiettivo che ti eri posto, con un punteggio adeguato.",
 	"story_band_treading": "Sei rimasto in movimento — non avanti, ma nemmeno affondato.",
-	"story_band_behind": "Sei finito dietro a dove dovevi essere. Da qui niente è irrecuperabile; è proprio questo il senso dei cinque anni.",
+	"story_band_behind": "Sei finito dietro a dove dovevi essere. I cinque anni sono nel registro, esattamente come sono andati.",
 	"story_band_note": "il tuo finale, tra soldi e punteggio",
 	"story_moments": "I momenti che hanno deciso tutto",
 	"story_you_vs_you": "Tu contro te",
@@ -271,6 +271,7 @@
 	"milestone_fork_chosen": "Il bivio scelto",
 	"milestone_fund_opened": "Primi soldi nel Fondo",
 	"milestone_rode_the_recovery": "Eri ancora dentro quando è risalito",
+	"milestone_the_climb": "Risalito dopo tre mesi in discesa",
 	"milestone_both_paths": "Entrambe le strade vissute",
 	"thread_course_enrolled_label": "Il corso",
 	"thread_course_enrolled_payoff": "certificato",
@@ -1116,5 +1117,40 @@
 	"card_split_comes_due_choice_leave_feedback": "L’amico chiama il negozio e sistema la settimana come può. La penale finisce sul suo conto, il telefono resta acceso, e i messaggi restano corti per un po’.",
 	"card_split_comes_due_choice_leave_reaction": "Il messaggio dopo arriva due settimane più tardi, per altro.",
 	"thread_split_sold_label": "Il telefono che hai venduto",
-	"thread_split_sold_payoff": "la terza rata"
+	"thread_split_sold_payoff": "la terza rata",
+	"chapter_title_market_fall": "L’anno in cui è caduto il mercato",
+	"chapter_title_the_climb": "La risalita",
+	"chapter_title_quiet_year": "L’anno tranquillo",
+	"chapter_title_the_dip": "Il mese in cui il conto è andato sotto",
+	"chapter_title_covered_years": "Gli anni con la copertura",
+	"chapter_title_card_year": "L’anno in cui è arrivata la carta",
+	"chapter_title_five_years": "Cinque anni",
+	"story_reflections": "Riflessioni",
+	"reflection_packed_lunch": [
+		{
+			"declarations": ["input times", "local timesPlural = times: plural"],
+			"selectors": ["timesPlural"],
+			"match": {
+				"timesPlural=one": "Hai portato il pranzo da casa una volta.",
+				"timesPlural=other": "Hai portato il pranzo da casa {times} volte."
+			}
+		}
+	],
+	"reflection_best_year": "Anno {year}: {months} mesi su dodici dentro il tuo budget.",
+	"reflection_the_leak": "I desideri sono pesati di più nell’anno {year}: {amount} in dodici mesi.",
+	"reflection_bank_interest": "La banca ti ha pagato {amount} di interessi in cinque anni.",
+	"reflection_saved_months": "I soldi sono entrati nei risparmi in {months} mesi su sessanta.",
+	"story_epilogue": "A diciannove anni",
+	"epilogue_ahead_study": "Diciannove anni, e il primo anno di corso è alle spalle. Il prestito è quello che avevi previsto e il Cuscinetto è ancora dove l’hai messo. I cinque anni ti hanno comprato lo studio; ti sono costati le serate che hai pagato per farlo.",
+	"epilogue_treading_study": "Diciannove anni, e il corso ormai ti è familiare: lo stesso autobus, lo stesso tavolo in biblioteca. Il prestito è con te e il Cuscinetto pure, e nessuno dei due è cresciuto come diceva il piano. I cinque anni ti hanno comprato lo studio; il margine sotto è più sottile di quanto volessi.",
+	"epilogue_behind_study": "Diciannove anni, e il corso va avanti, incastrato tra i turni che lo pagano. Il prestito è più grande di quanto diceva il piano e il Cuscinetto è finito nell’affitto più di una volta. Qui ti hanno lasciato i cinque anni; il corso è ancora in movimento.",
+	"epilogue_ahead_work": "Diciannove anni, e l’apprendistato è diventato un lavoro con il tuo nome in turno. Il Fondo di emergenza è al completo, non devi niente a nessuno e l’affitto esce in tempo. I cinque anni ti hanno comprato la partenza che cercavi; ti sono costati gli anni di scuola che i tuoi amici stavano ancora vivendo.",
+	"epilogue_treading_work": "Diciannove anni, e il lavoro è abbastanza stabile da programmarci sopra. Ci sono soldi da parte e soldi da restituire, e nessuna delle due parti ha vinto. I cinque anni ti hanno comprato lo stipendio; il resto è ancora in lavorazione.",
+	"epilogue_behind_work": "Diciannove anni, e le ore sono reali ma i soldi non hanno recuperato. Il debito ha la forma che gli hanno dato i cinque anni, e i risparmi non sono rimasti. Diciannove anni sono il lavoro, le ore e il mese che continua ad arrivare.",
+	"story_other_path": "L’altra strada",
+	"story_other_path_body_chapter": "Hai vissuto anche l’altra parte del bivio. Quel capitolo è sul tuo profilo.",
+	"story_other_path_link": "Leggi quel capitolo",
+	"story_other_path_study": "L’altra parte del bivio è lo studio: il corso, il prestito e un Cuscinetto al posto di uno stipendio.",
+	"story_other_path_work": "L’altra parte del bivio è il lavoro: le ore dell’apprendistato e un Fondo di emergenza al posto di un prestito.",
+	"event_covered_reaction": "Se ne occupa la copertura. La stavi già pagando in anticipo."
 }

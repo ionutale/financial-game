@@ -5,20 +5,35 @@
 	 * in Review that no Stage-up carries, and a retrospective inside-budget
 	 * line — prose, never a live counter. Everything is derived from the stored
 	 * record (ADR-0002) and purely retrospective (ADR-0003).
+	 *
+	 * Fun-pass ticket 11 closes it: the Run's **Chapter Title**, its
+	 * **Reflections**, the authored **Epilogue** at nineteen, and **The Other
+	 * Path** in "What next" — a link to the other path's Chapter when the
+	 * profile holds one, the authored portrait otherwise. No numbers in the
+	 * Other Path, no verdict in the close.
 	 */
 	import { formatMoney, formatMoneyExact } from '$lib/game/economy';
-	import { conceptCoverage } from '$lib/game/journal';
+	import {
+		chapterTitleFor,
+		conceptCoverage,
+		otherPathChapter,
+		type ChapterRef
+	} from '$lib/game/journal';
 	import { computeMetrics, outcomeBand, turningPoints } from '$lib/game/metrics';
 	import { earnedMilestones, longestInsideBudgetMonths, yearInReview } from '$lib/game/milestones';
+	import { reflectionsFor } from '$lib/game/reflections';
 	import type { RunState } from '$lib/game/types';
 	import {
 		bandLabel,
+		chapterTitle,
 		comparisonLabel,
 		conceptLabel,
 		coverageStateLabel,
+		epilogueText,
 		flagText,
 		goalName,
-		milestoneLabel
+		milestoneLabel,
+		reflectionText
 	} from '$lib/i18n/game-text';
 	import { localizedHref } from '$lib/i18n/href';
 	import { m } from '$lib/i18n/messages';
@@ -30,11 +45,14 @@
 	let {
 		run,
 		onNewRun,
-		saved
+		saved,
+		chapters = []
 	}: {
 		run: RunState;
 		onNewRun: () => void;
 		saved: 'saving' | 'saved' | 'offline';
+		/** The archive's link-ready Chapters, for The Other Path (ticket 11). */
+		chapters?: ChapterRef[];
 	} = $props();
 
 	const locale = getLocale();
@@ -45,6 +63,21 @@
 			.map((moment) => ({ ...moment, text: flagText(moment.kind, moment.month) }))
 			.filter((moment): moment is { month: number; kind: string; text: string } => moment.text !== null)
 	);
+
+	/*
+	 * This Run as a story: its derived Chapter Title (ticket 11) — the title the
+	 * record earned, never a band — and its Reflections, the ≤ 4 personal facts
+	 * the Money Story closes with.
+	 */
+	const title = $derived(chapterTitleFor(run));
+	const reflections = $derived(reflectionsFor(run));
+	/*
+	 * The Other Path (ticket 11): the unchosen Fork branch, as the other path's
+	 * Chapter when the archive holds one, else null and the authored portrait
+	 * shows. The caller's refs are tiny on purpose — a seed, a date, a path, a
+	 * title — so this is a link, never a simulation.
+	 */
+	const otherPath = $derived(otherPathChapter(run, chapters));
 
 	/*
 	 * This Run's Milestones, oldest first — names, never a count and never a
@@ -94,6 +127,8 @@
 		<h1 class="mt-3 text-[32px] leading-[1.12] font-semibold tracking-tight">
 			{m.story_title()}
 		</h1>
+		<!-- The Run's own title (ticket 11): derived from the record, never a band. -->
+		<p class="mt-2 text-xl leading-snug font-semibold tracking-tight">{chapterTitle(title)}</p>
 
 		<!-- The closing panel (ticket 30): five years as five bars. -->
 		<div class="mt-5">
@@ -106,16 +141,13 @@
 			{/each}
 		</div>
 
+		<!--
+			The band chip is neutral (fun-pass ticket 11): the words carry the
+			meaning, and colour never washes the person. The same treatment is on
+			the Journal's Chapters.
+		-->
 		<div class="mt-6 flex items-center gap-3">
-			<span
-				class="rounded-full px-3 py-1 text-xs font-semibold"
-				style="background: {band === 'behind'
-					? 'var(--down-wash)'
-					: band === 'ahead'
-						? 'var(--up-wash)'
-						: 'var(--money-wash)'};
-					color: {band === 'behind' ? 'var(--down)' : band === 'ahead' ? 'var(--up)' : 'var(--money)'}"
-			>
+			<span class="rounded-full bg-[var(--wash)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
 				{bandLabel(band)}
 			</span>
 			<span class="text-xs text-[var(--muted)]">{m.story_band_note()}</span>
@@ -313,10 +345,62 @@
 		</a>
 	</section>
 
+	<!--
+		Fun-pass ticket 11: the Reflections — ≤ 4 personal facts of this Run's
+		own record, derived at the close, never live, never a lesson. A record
+		with nothing to observe renders nothing.
+	-->
+	{#if reflections.length}
+		<section aria-labelledby="story-reflections-title">
+			<p class="kicker" id="story-reflections-title">{m.story_reflections()}</p>
+			<ul class="mt-2 flex flex-col gap-2">
+				{#each reflections as reflection (reflection.id)}
+					<li class="border-l-2 border-[var(--line)] pl-3 text-sm leading-relaxed">
+						{reflectionText(reflection)}
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
+
+	<!--
+		Fun-pass ticket 11: the Epilogue — where the character is at 19, keyed
+		by the Outcome Band and the path. Honest with the band, never a verdict;
+		the close comes immediately before "What next".
+	-->
+	<section aria-labelledby="story-epilogue-title">
+		<p class="kicker" id="story-epilogue-title">{m.story_epilogue()}</p>
+		<p class="mt-2 text-[15px] leading-relaxed">{epilogueText(band, run.path)}</p>
+	</section>
+
 	<section>
 		<p class="kicker">{m.story_what_next()}</p>
 		<p class="mt-2 text-sm text-[var(--muted)]">{m.story_what_next_body()}</p>
-		<p class="mt-2 text-xs leading-relaxed" aria-live="polite">
+
+		<!--
+			The Other Path (fun-pass ticket 11, design §3.7): the unchosen Fork
+			branch. A link to the other path's Chapter when the archive holds
+			one, the authored portrait otherwise — never a simulation, never a
+			score, and no numbers.
+		-->
+		<div class="mt-4 border-t border-dashed border-[var(--line)] pt-3">
+			<p class="kicker">{m.story_other_path()}</p>
+			{#if otherPath}
+				<p class="mt-2 text-sm leading-relaxed">{m.story_other_path_body_chapter()}</p>
+				<a
+					class="mt-2 inline-block text-sm underline underline-offset-2"
+					href={`${localizedHref('/journal')}#journal-chapter-${otherPath.seed}`}
+				>
+					{m.story_other_path_link()}
+				</a>
+			{:else}
+				<p class="mt-2 text-sm leading-relaxed">
+					{run.path === 'study' ? m.story_other_path_work() : m.story_other_path_study()}
+				</p>
+			{/if}
+		</div>
+
+		<p class="mt-3 text-xs leading-relaxed" aria-live="polite">
 			{#if saved === 'saved'}
 				<span class="text-[var(--muted)]">{m.story_saved()}</span>
 			{:else if saved === 'offline'}

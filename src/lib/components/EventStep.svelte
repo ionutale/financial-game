@@ -4,7 +4,7 @@
 	import { formatMoney, saveTotal } from '$lib/game/economy';
 	import { cardFormFor } from '$lib/game/forms';
 	import type { LedgerEntry } from '$lib/game/ledger';
-	import { isFirstEncounter } from '$lib/game/presentation';
+	import { isFirstEncounter, insuranceAbsorbed } from '$lib/game/presentation';
 	import type { Action, Choice, RunState } from '$lib/game/types';
 	import {
 		cardLines,
@@ -50,6 +50,14 @@
 	 */
 	const feedback = $derived(chosenFeedbackParts(card, run.chosen));
 	const whyOpen = $derived(isFirstEncounter(run));
+	/*
+	 * The covered moment (fun-pass ticket 11, design §3.6): when insurance
+	 * actually absorbed the shock — the taken Choice's `insuredCost` moved the
+	 * price — a dedicated Reaction answers the decision made months earlier.
+	 * Text only, no motion, no count-up; the chip and the Ledger Line carry the
+	 * money exactly as before.
+	 */
+	const covered = $derived(insuranceAbsorbed(run));
 
 	/*
 	 * Kind identity is typography only (design §3.6, fun-pass ticket 05): the
@@ -250,6 +258,16 @@
 					<!-- No Reaction authored: today's exact rendering, byte for byte. -->
 					<p class="kicker">{m.event_what_happened()}</p>
 					<p class="mt-2 text-[15px] leading-relaxed">{feedback.why}</p>
+				{/if}
+
+				{#if covered}
+					<!--
+						The covered shock (fun-pass ticket 11): the dedicated Reaction
+						for the month the cover paid. It sits in the same polite region
+						as the Reaction, so it is announced once with it, and it is
+						plain text — nothing moves and no figure counts up.
+					-->
+					<p class="mt-2 text-[15px] leading-relaxed">{m.event_covered_reaction()}</p>
 				{/if}
 
 				{#if ledger && ledger.length}
