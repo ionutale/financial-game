@@ -13,9 +13,10 @@ Glossary for this project. Terms only — no implementation detail.
 - **Stage** — a life phase within a Run (e.g. school years, first job, independence). Each Stage
   unlocks specific Concepts and frames its Event Cards. Stages only ever add — the **Add-only
   rule**: nothing a player has learned is taken away.
-- **Stage-up Card** — the interstitial that announces a new Stage: its age, income tier, unlocked
-  Concept and that Concept's Teachable Moment. It also carries the **Year in Review** for the Stage
-  just ended. It is not one of a Stage's Event Cards.
+- **Stage-up Card** — the interstitial that announces a new Stage: its age, income tier, the Concept
+  it carries and that Concept's Teachable Moment, plus the **Year in Review** for the Stage just
+  ended. It carries a **Year Beat** and "What you'll meet" in place of a curriculum list. It is not
+  one of a Stage's Event Cards.
 - **Wage Hint** — the one-time note at the start of Stage 3 that the allowance has stopped and
   hours are the money; it stays while the plan holds zero hours and never returns once hours are set.
 - **Teachable Moment** — the single first experience that introduces a Concept (the first payslip,
@@ -26,10 +27,10 @@ Glossary for this project. Terms only — no implementation detail.
 - **Event Card** — one authored, data-driven scenario a Turn draws: a situation plus a set of
   Choices, tagged to a Stage and a Concept.
 - **Choice** — one option presented by an Event Card.
-- **Choice Effect** — the consequence of a Choice: a mechanical change (money, state) and an
-  educational Feedback explaining why it played out that way.
-- **Feedback** — the in-game explanation shown after a Choice, connecting the outcome to the
-  Concept it teaches.
+- **Choice Effect** — the consequence of a Choice: a mechanical change (money, state) and the
+  **Feedback** that shows it — the **Reaction** first, then the **Why**.
+- **Feedback** — the two-part answer shown after a Choice: the **Reaction** — what the world did — and
+  the **Why** — why it mattered. It replaced the single teaching paragraph.
 - **Card Kind** — one of `decision`, `shock`, `risk-moment`, `scam`, `stage-up`; every Event Card
   is exactly one.
 - **Effect Chip** — the mechanically-derived cost label shown on a Choice (`◈12 · 2h`). Chips
@@ -61,7 +62,8 @@ Glossary for this project. Terms only — no implementation detail.
 - **Named Goal** — the single savings target shown with a progress bar; funding it from early in a
   Run is what makes the final year's Obligations survivable.
 - **Cascade** — the order in which an overspent Envelope is absorbed: Save first, then Debt.
-- **Fund** — the market-investment pot; the only place money can grow faster than inflation.
+- **Fund** — the market-investment pot: money moved out of Save grows or falls with the Run's seeded
+  market, and the scripted crash is its risk made real. It counts toward the Named Goal and Net Worth.
 - **Credit Score** — the number representing creditworthiness, moved by payment behaviour.
 - **Overdraft** — what an uncoverable missed Obligation becomes.
 - **Net Worth** — Cash + Savings + Fund − Debt; the single figure that rewards good play across
@@ -80,7 +82,8 @@ Glossary for this project. Terms only — no implementation detail.
   personal data.
 - **Money Story** — the end-of-Run report showing the player's decisions and their financial
   trajectory across the Run. It also carries the Run's **Milestones**, its **Concept Coverage** and
-  the way into the **Journal**.
+  the way into the **Journal**. It closes with its **Reflections**, an **Epilogue**, the Run's
+  **Chapter Title** and **The Other Path**.
 - **Outcome Band** — the descriptive verdict at the end of a Run — Ahead / Treading water /
   Behind — computed from money, the path's goal and the Credit Score, never from behaviour.
 - **Turning Point** — a flagged moment in a Run (debt taken, a minimum-payment streak, a skipped
@@ -142,3 +145,91 @@ _Avoid_: save, replay, record
 A thing may be shown live during a Run only if it is already legible in the fiction and does not
 invite the player to optimise a number; anything competence-derived and numeric is held for the
 **Year in Review** or the **Money Story**.
+
+## Voice and feel
+
+**Reaction**:
+The first part of a **Feedback**: what actually happened, in the fiction — a person's line, a
+message, a fact. It never states a general rule.
+_Avoid_: explanation, narration, verdict
+
+**Why**:
+The second part of a **Feedback**: why the outcome mattered, short and personal. It is shown as
+"Why it happened" and is the only place a **Rule of Thumb** may appear.
+_Avoid_: lesson, tip, explainer, teaching text
+
+**Rule of Thumb**:
+One of the eight short money rules — one per **Concept** — taught by a **Why** at its **Teachable
+Moment** and quoted nowhere else in the moment.
+_Avoid_: maxim, moral, takeaway
+
+**Taught once, trusted after**:
+The rule that a **Concept**'s **Why** opens by itself at its **Teachable Moment** and stays collapsed
+at every later card: the first encounter carries the guarantee, the rest of the Run trusts the player.
+_Avoid_: tutorial, drip-feed
+
+**Cold Open**:
+The short scene shown before month 1, in place of a tutorial sequence: who the character is and the
+**Named Goal** as the horizon. How a month works is taught where it is needed.
+_Avoid_: onboarding, intro sequence, tutorial, splash
+
+**Year Beat**:
+The one authored, in-fiction line a **Stage-up Card** carries in place of a curriculum announcement,
+beside "What you'll meet".
+_Avoid_: unlock line, syllabus, module
+
+**Ledger Line**:
+The one-line account inside a **Feedback** of what a **Choice** actually moved — the changed balances
+and Free Time, with signs. It appears only after the Choice.
+_Avoid_: toast, popup, delta, counter
+
+**The Cast**:
+The small set of named recurring people in the character's life — Priya, Ravi, Danny, Mum, Grandma.
+Authored content, never data about the player; a finished Run's Cast derives from its log.
+_Avoid_: characters, NPCs, personas
+
+**Callback**:
+One authored line, derived from the Run's record, in which the world shows it remembers a past
+**Choice**. At most one per card; never a number; never a maxim.
+_Avoid_: easter egg, flashback, cameo
+
+**Life Line**:
+The one authored sentence in the HUD that says what the character's life is outside money, this
+**Stage**. Text only; never a wellbeing stat.
+_Avoid_: mood, status, vibe
+
+**True Dilemma**:
+An **Event Card** whose **Choices** are all defensible — the tension is in values, not arithmetic —
+and whose Feedback declares no winner. Authoring rule: at least one card in three per **Stage**.
+_Avoid_: hard choice, no-win, impossible choice
+
+**Villain Card**:
+An **Event Card** that casts the player as the one selling, lending or recruiting, so a predatory
+mechanic is learned from the inside; a **Thread** carries the buyer's consequence back. The game never
+flags the choice as wrong.
+_Avoid_: Shady Sam card, evil option, role-play card
+
+**Repayment**:
+A recurring monthly payment a **Choice** commits the character to — a BNPL instalment or a card
+minimum carried. Distinct from an **Obligation** (living costs): a Repayment services debt.
+_Avoid_: loan, debt schedule
+
+**Reflection**:
+One derived, personal observation about the player's own finished record, shown only in the **Money
+Story** — never an imperative, never a general law, never live.
+_Avoid_: insight, grade, summary
+
+**Epilogue**:
+The closing passage of the **Money Story**: where the character is at 19, written per path and per
+**Outcome Band**. It says what the five years bought and cost; it never ranks the Run.
+_Avoid_: ending, verdict, grade
+
+**Chapter Title**:
+The story-led name a finished Run carries in the **Journal**, drawn from its own record — never a
+band label, never ranked.
+_Avoid_: grade, rank, tag
+
+**The Other Path**:
+The **Money Story**'s view of the unchosen Stage-5 Fork branch — a link to the other **Chapter** when
+one exists, otherwise an authored portrait. It describes; it never simulates.
+_Avoid_: counterfactual, what-if, simulation
