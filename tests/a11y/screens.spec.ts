@@ -1310,11 +1310,37 @@ test.describe('fun-pass ticket 11: the record and the ending', () => {
 		/* The link lands on the real Chapter in the Journal. */
 		await page.getByRole('link', { name: 'Read that Chapter' }).click();
 		await expect(page.getByRole('heading', { name: 'The life so far, kept.' })).toBeVisible();
-		await expect(
-			page.getByText(chapterTitle(chapterTitleFor(archived))).first()
-		).toBeVisible();
+		await expect(page.locator(`#journal-chapter-${archived.seed}`)).toBeVisible();
 
 		await expectNoAxeViolations(page, 'The Other Path link and its Chapter');
+	});
+
+	test('the Money Story: a Chapter finished after load is linked without a reload', async ({
+		page
+	}) => {
+		/*
+		 * The same-session replay case (fix round 1): the page loads with an
+		 * empty archive, then a Chapter lands in it after the load — exactly
+		 * what a previous Run's finish does — and nothing reloads. Finishing
+		 * this Run must refresh the compact refs, so the Other Path links the
+		 * Chapter just archived instead of degrading to the portrait.
+		 */
+		await seedRun(page, FINAL_MONTH_RUN);
+
+		/* The other path's Chapter, written through the game's own API after
+		   the load. `seedRun` reloads `/` after every write; this must not. */
+		const response = await page.request.post('/api/run', { data: { state: DONE_WORK_RUN } });
+		expect(response.ok(), `archiving the other path failed: ${response.status()}`).toBeTruthy();
+
+		await page.getByRole('button', { name: 'Next' }).click();
+		await expect(page.getByRole('heading', { name: 'Five years, in one page.' })).toBeVisible();
+
+		await expect(page.getByRole('link', { name: 'Read that Chapter' })).toHaveAttribute(
+			'href',
+			`/journal#journal-chapter-${DONE_WORK_RUN.seed}`
+		);
+
+		await expectNoAxeViolations(page, 'the Money Story with a Chapter finished after load');
 	});
 
 	test('the Journal: each Chapter carries its derived Title, and the band chip is neutral', async ({

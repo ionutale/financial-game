@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { invalidateAll } from '$app/navigation';
 	import { cueFor } from '$lib/audio/moments';
 	import { playCue } from '$lib/audio/sfx';
 	import { ledgerEntries, type LedgerEntry } from '$lib/game/ledger';
@@ -73,7 +74,18 @@
 		if (action.type === 'CONTINUE' && run.phase === 'resolve') void persist(run);
 		if (action.type === 'NEXT_MONTH' && run.phase === 'done') {
 			const finished = run;
-			void persist(finished).then((ok) => (saved = ok ? 'saved' : 'offline'));
+			void persist(finished).then(async (ok) => {
+				saved = ok ? 'saved' : 'offline';
+				/*
+				 * The finish has just archived the Run, which can add the other
+				 * path's Chapter to the profile (fun-pass ticket 11). Re-run
+				 * this route's loader — the same single profile read as first
+				 * paint — so the Money Story's Other Path links the Chapter
+				 * just archived without a reload. An offline finish changed
+				 * nothing server-side, so there is nothing to refresh.
+				 */
+				if (ok) await invalidateAll();
+			});
 		}
 	}
 
