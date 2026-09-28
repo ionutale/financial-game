@@ -63,3 +63,27 @@ the accessibility passes — never noted and forgotten.
   one issue per finding in the issue tracker.
 - Failures that name a card cut it or rewrite it; a failure that names the
   whole register reopens `docs/voice.md`, not a card.
+
+## The facilitator's sheet
+
+One card per player; fill it while they play (quotes in their own words; note the locale they read).
+
+| Field | Notes / quotes |
+| --- | --- |
+| Age · locale · prior gaming | |
+| 1. Time to a settled plan; seconds + taps for one month (sample 2–3 months) | |
+| 2. Any Reaction that made them laugh — read it back; any moment that felt like being told off | |
+| 3. Did they open "Why it happened" at the first encounter? Later? Why / why not | |
+| 4. Retell one decision that came back (Thread, Callback, crash, Repayment) | |
+| 5. Did they name a person unprompted? Which Chapter felt theirs? | |
+| 6. Villain cards: told-off / trick / trap / fine? (ADR-0007's cut rule applies) | |
+| 7. Close as receipt; the ending (Reflections, Epilogue, Title, Other Path); second Run? Why? | |
+| 8. **"Game or lesson?"** — asked at the end, verbatim | |
+
+Session checklist:
+
+- [ ] Consent noted; no recording; no accounts (the game's random id only).
+- [ ] One instruction only: *play for a while and say what you are thinking* — explain nothing.
+- [ ] Stop where they stop; note the Stage reached.
+- [ ] File each finding as one issue (quote + screen + locale), exactly like the a11y passes.
+- [ ] Write the short summary and attach it to the run record.
