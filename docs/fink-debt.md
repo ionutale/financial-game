@@ -12,6 +12,29 @@ This file is the register of what that pass owes. It is not a test; nothing in
 the suite can close it. If a line changes here, the catalogues change together
 (the parity gate enforces it).
 
+## Machine polish (2026-09-28)
+
+A machine best-effort pass ran the register's priorities 1–3 over
+`messages/it.json` and `messages/ro.json` (`en` untouched; no key, placeholder or
+glossary term changed). **It does not close the pass.** Fixed: all six
+**Epilogues** (the ro ones had shipped the Italian word *Diciannove* for
+`nouăsprezece`; one had “keeps roughly up with it” reversed; “the rest is still
+being worked out” read as work-in-progress in both; the it/ro “on the record”
+lines now match `story_band_behind`), the **villain cards'** prose and thread
+copy, the eight **Rules of Thumb** (the ro interest rule had no agreement; “you
+cannot time it” was a calque in both), the Stage-4 **Life Line**, and
+`milestone_the_climb` / `story_band_behind`. The **Repayment** vocabulary was
+checked and left as shipped: the ro plurals render “2 plăți” / “20 de plăți”,
+and `◈47.5` is exact.
+
+Left to the human ear (detail in the report): `thread_referral_sold_payoff`
+(“the check-in”), the “in anticipo” / “din timp” gloss in
+`event_covered_reaction`, the Epilogues' “gli anni di scuola che i tuoi amici
+vivevano ancora” / “pe care prietenii tăi îi trăiau încă” and “incastrato nei
+turni”, the it term “referral”, and the participle in `milestone_the_climb`
+(“Risalito” / “Urcat din nou…”). See
+`.scratch/fun/reports/fink-machine-pass.md`.
+
 ## How to run the pass
 
 ```sh
