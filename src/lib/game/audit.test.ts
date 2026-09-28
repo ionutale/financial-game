@@ -77,7 +77,7 @@ const AUDITED: Audited[] = [
 		card: 'grandma_windfall',
 		choice: 'save',
 		cost: null,
-		note: 'the windfall lands for real (gain 50); the choice keeps it, and the envelope holds it'
+		note: 'the windfall lands for real (gain 50, in Cash); the “Straight into savings” label is the intent, not the effect — nothing is withdrawn'
 	},
 	{
 		card: 'bnpl_pressure',

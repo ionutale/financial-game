@@ -4,6 +4,7 @@
  * only — the loop never reads these strings.
  */
 import { formatMoney, formatMoneyExact } from '$lib/game/economy';
+import { RECURRING_AMOUNT } from '$lib/game/loop';
 import { getLocale } from '$lib/paraglide/runtime';
 import type { Choice } from '$lib/game/types';
 import { message } from './messages';
@@ -38,7 +39,7 @@ export function chipsFor(choice: Choice, insured: boolean): string[] {
 		// exactly so the schedule never rounds into a different number.
 		const terms =
 			typeof choice.sets.bnpl === 'number'
-				? { months: choice.sets.bnpl, amount: 30 }
+				? { months: choice.sets.bnpl, amount: RECURRING_AMOUNT }
 				: { months: choice.sets.bnpl.months, amount: choice.sets.bnpl.amount };
 		chips.push(
 			message('chip_bnpl', { count: terms.months, amount: formatMoneyExact(terms.amount, locale) })

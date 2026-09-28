@@ -253,7 +253,9 @@ Review-gate cousins the lint does not match, and the review does:
 grade, pupil), a maxim in a Why that is not the Teachable Moment, and any line
 that would read as a lecture in it or ro. Card **titles, Choice labels and
 odds** are review-gated rather than linted — the moment is where the lecture
-bites — and they currently hold none of the ban list's words.
+bites — and their current copy holds none of the ban list's words but one
+label: `card_score_goal_choice_wait_label` (“Wait and build the score”) keeps
+the Credit Score's own word, the same precedent the allow-listed situations set.
 
 ## 7. The cast
 

@@ -185,6 +185,9 @@ const temptation = (c: Choice) => (c.sets?.bnpl || c.sets?.overdraft ? 1 : 0);
  * temptations stay flagged, the Repayment is not, and no other Choice's
  * flagged state moves — so no other card's steady order changes.
  */
+// Count-only `bnpl` is the pay-later temptation (flagged); the named-amount
+// form is debt servicing — the ticket-10 Repayment (not flagged), keyed to the
+// representation, so a named-amount financing choice would still need review.
 const reckless = (c: Choice) =>
 	(typeof c.sets?.bnpl === 'number' || c.sets?.overdraft ? 1 : 0);
 const covered = (c: Choice) => (c.sets?.insurance ? 1 : 0);
